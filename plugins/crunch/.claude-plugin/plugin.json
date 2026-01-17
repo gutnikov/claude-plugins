@@ -1,0 +1,8 @@
+{
+  "name": "crunch",
+  "description": "A plugin for crunching data and numbers",
+  "version": "1.0.0",
+  "author": {
+    "name": "Claude Plugins Marketplace"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "claude-plugins",
+  "owner": {
+    "name": "Claude Plugins Marketplace"
+  },
+  "metadata": {
+    "description": "A marketplace for Claude Code plugins",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "crunch",
+      "source": "./plugins/crunch",
+      "description": "A plugin to orchestrate the project lifecycle",
+      "version": "1.0.0",
+      "author": {
+        "name": "Claude Plugins Marketplace"
+      }
+    }
+  ]
+}
