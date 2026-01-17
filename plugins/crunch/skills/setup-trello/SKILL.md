@@ -243,6 +243,7 @@ After collecting credentials, check if the project has a secrets backend configu
    Record secrets storage choice:
    ```markdown
    ## Collected Information
+
    - **Secrets Backend**: [Vault / SOPS / None]
    - **Credentials Stored In Backend**: [Yes / No]
    ```

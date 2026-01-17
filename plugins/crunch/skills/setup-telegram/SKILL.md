@@ -250,6 +250,7 @@ After collecting the bot token, check if the project has a secrets backend confi
 
 4. **Update progress file**
    Record secrets storage choice:
+
    ```markdown
    ## Collected Information
 

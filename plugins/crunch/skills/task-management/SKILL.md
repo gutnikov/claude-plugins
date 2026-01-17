@@ -16,28 +16,28 @@ This skill provides a unified interface for task management by detecting the con
 
 ## Supported Backends
 
-| Backend      | Detection                       | Operations                                  |
-| ------------ | ------------------------------- | ------------------------------------------- |
-| **Trello**   | `## MCP Servers` → `### Trello` | MCP tools (`trello_*`)                      |
-| *(Future)*   | `## MCP Servers` → `### Jira`   | MCP tools (`jira_*`)                        |
-| *(Future)*   | `## MCP Servers` → `### Asana`  | MCP tools (`asana_*`)                       |
-| *(Future)*   | `## MCP Servers` → `### Linear` | MCP tools (`linear_*`)                      |
-| *(Future)*   | `## MCP Servers` → `### GitHub` | MCP tools (`github_*` for Issues/Projects) |
+| Backend    | Detection                       | Operations                                 |
+| ---------- | ------------------------------- | ------------------------------------------ |
+| **Trello** | `## MCP Servers` → `### Trello` | MCP tools (`trello_*`)                     |
+| _(Future)_ | `## MCP Servers` → `### Jira`   | MCP tools (`jira_*`)                       |
+| _(Future)_ | `## MCP Servers` → `### Asana`  | MCP tools (`asana_*`)                      |
+| _(Future)_ | `## MCP Servers` → `### Linear` | MCP tools (`linear_*`)                     |
+| _(Future)_ | `## MCP Servers` → `### GitHub` | MCP tools (`github_*` for Issues/Projects) |
 
 ## Supported Operations
 
-| Operation       | Description                              | Example                                      |
-| --------------- | ---------------------------------------- | -------------------------------------------- |
-| **Create**      | Create a new task/card/issue             | "create task 'Fix login bug'"                |
-| **List**        | List tasks in a board/project/list       | "show tasks in the Sprint board"             |
-| **Get**         | Get details of a specific task           | "show details of the login bug task"         |
-| **Update**      | Update task title, description, etc.     | "update the description of task X"           |
-| **Move**        | Move task to different list/status       | "move 'Fix login' to Done"                   |
-| **Assign**      | Assign task to a user                    | "assign the bug to @alice"                   |
-| **Label**       | Add/remove labels/tags                   | "add 'urgent' label to the task"             |
-| **Comment**     | Add comment to a task                    | "comment 'Working on it' on the bug"         |
-| **Delete**      | Delete/archive a task                    | "archive the old task"                       |
-| **Due Date**    | Set/update due date                      | "set due date to Friday"                     |
+| Operation    | Description                          | Example                              |
+| ------------ | ------------------------------------ | ------------------------------------ |
+| **Create**   | Create a new task/card/issue         | "create task 'Fix login bug'"        |
+| **List**     | List tasks in a board/project/list   | "show tasks in the Sprint board"     |
+| **Get**      | Get details of a specific task       | "show details of the login bug task" |
+| **Update**   | Update task title, description, etc. | "update the description of task X"   |
+| **Move**     | Move task to different list/status   | "move 'Fix login' to Done"           |
+| **Assign**   | Assign task to a user                | "assign the bug to @alice"           |
+| **Label**    | Add/remove labels/tags               | "add 'urgent' label to the task"     |
+| **Comment**  | Add comment to a task                | "comment 'Working on it' on the bug" |
+| **Delete**   | Delete/archive a task                | "archive the old task"               |
+| **Due Date** | Set/update due date                  | "set due date to Friday"             |
 
 ## Workflow
 
@@ -103,18 +103,18 @@ This skill provides a unified interface for task management by detecting the con
 
 Understand what operation the user wants:
 
-| Intent          | Keywords                                    | Target Hints                    |
-| --------------- | ------------------------------------------- | ------------------------------- |
-| **Create task** | create, add, new, make                      | task, card, ticket, issue       |
-| **List tasks**  | list, show, get, what's in                  | board, list, column, sprint     |
-| **Get details** | show, details, describe, what is            | specific task name/ID           |
-| **Update**      | update, change, edit, modify, rename        | title, description, details     |
-| **Move**        | move, transfer, change status               | to [list/column], done, in progress |
-| **Assign**      | assign, give to, set owner                  | @user, to [person]              |
-| **Label**       | label, tag, add label, remove label         | label name, color               |
-| **Comment**     | comment, note, add comment                  | on [task]                       |
-| **Delete**      | delete, remove, archive                     | task name/ID                    |
-| **Due date**    | due, deadline, set due, due date            | date, tomorrow, next week       |
+| Intent          | Keywords                             | Target Hints                        |
+| --------------- | ------------------------------------ | ----------------------------------- |
+| **Create task** | create, add, new, make               | task, card, ticket, issue           |
+| **List tasks**  | list, show, get, what's in           | board, list, column, sprint         |
+| **Get details** | show, details, describe, what is     | specific task name/ID               |
+| **Update**      | update, change, edit, modify, rename | title, description, details         |
+| **Move**        | move, transfer, change status        | to [list/column], done, in progress |
+| **Assign**      | assign, give to, set owner           | @user, to [person]                  |
+| **Label**       | label, tag, add label, remove label  | label name, color                   |
+| **Comment**     | comment, note, add comment           | on [task]                           |
+| **Delete**      | delete, remove, archive              | task name/ID                        |
+| **Due date**    | due, deadline, set due, due date     | date, tomorrow, next week           |
 
 **Extract from request:**
 
@@ -520,22 +520,22 @@ User: "add task 'Quick fix'"
 
 ### Trello-Specific Errors
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `board not found` | Board doesn't exist | Check name, list boards |
-| `list not found` | List doesn't exist | Check name, get board lists |
-| `card not found` | Card doesn't exist | Check name/ID, list cards |
-| `unauthorized` | Token lacks permission | Re-run setup-trello |
-| `invalid id` | Malformed ID | Verify ID format |
-| `rate limited` | Too many requests | Wait and retry |
+| Error             | Cause                  | Solution                    |
+| ----------------- | ---------------------- | --------------------------- |
+| `board not found` | Board doesn't exist    | Check name, list boards     |
+| `list not found`  | List doesn't exist     | Check name, get board lists |
+| `card not found`  | Card doesn't exist     | Check name/ID, list cards   |
+| `unauthorized`    | Token lacks permission | Re-run setup-trello         |
+| `invalid id`      | Malformed ID           | Verify ID format            |
+| `rate limited`    | Too many requests      | Wait and retry              |
 
 ### General Errors
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `MCP not available` | Server not running | Restart Claude Code |
-| `timeout` | Network/server issue | Check connectivity |
-| `no backend configured` | Missing setup | Run setup-trello |
+| Error                   | Cause                | Solution            |
+| ----------------------- | -------------------- | ------------------- |
+| `MCP not available`     | Server not running   | Restart Claude Code |
+| `timeout`               | Network/server issue | Check connectivity  |
+| `no backend configured` | Missing setup        | Run setup-trello    |
 
 ---
 
@@ -599,24 +599,28 @@ This skill is designed to be extended with additional backends. When adding a ne
 ### Future Backend Considerations
 
 **Jira:**
+
 - Projects instead of boards
 - Issue types (bug, story, epic)
 - Sprints and versions
 - Custom fields
 
 **GitHub Issues:**
+
 - Repository-based
 - Milestones
 - Project boards
 - Pull request linking
 
 **Asana:**
+
 - Workspaces and projects
 - Sections instead of lists
 - Subtasks support
 - Portfolio views
 
 **Linear:**
+
 - Teams and projects
 - Cycles (sprints)
 - Roadmaps

@@ -16,10 +16,10 @@ This skill provides a unified interface for communicating with users across diff
 
 ## Supported Backends
 
-| Backend      | Detection                        | Primary Use                        |
-| ------------ | -------------------------------- | ---------------------------------- |
-| **Slack**    | `## MCP Servers` → `### Slack`   | Team messaging, channel notifications |
-| **Telegram** | `## MCP Servers` → `### Telegram`| Direct messaging, bot notifications |
+| Backend      | Detection                         | Primary Use                           |
+| ------------ | --------------------------------- | ------------------------------------- |
+| **Slack**    | `## MCP Servers` → `### Slack`    | Team messaging, channel notifications |
+| **Telegram** | `## MCP Servers` → `### Telegram` | Direct messaging, bot notifications   |
 
 ## Supported Operations
 
@@ -466,28 +466,28 @@ User: "reply to the last one"
 
 ### Slack-Specific Errors
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `channel_not_found` | Channel doesn't exist | Check spelling, list channels |
-| `not_in_channel` | Bot not in private channel | Invite bot to channel |
-| `rate_limited` | Too many requests | Wait and retry |
-| `invalid_auth` | Token expired/invalid | Re-run setup-slack |
+| Error               | Cause                      | Solution                      |
+| ------------------- | -------------------------- | ----------------------------- |
+| `channel_not_found` | Channel doesn't exist      | Check spelling, list channels |
+| `not_in_channel`    | Bot not in private channel | Invite bot to channel         |
+| `rate_limited`      | Too many requests          | Wait and retry                |
+| `invalid_auth`      | Token expired/invalid      | Re-run setup-slack            |
 
 ### Telegram-Specific Errors
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `chat not found` | Invalid chat ID | Verify chat ID, user must /start |
-| `bot was blocked` | User blocked the bot | User needs to unblock |
-| `Unauthorized` | Invalid bot token | Re-run setup-telegram |
-| `Bad Request` | Invalid parameters | Check message format |
+| Error             | Cause                | Solution                         |
+| ----------------- | -------------------- | -------------------------------- |
+| `chat not found`  | Invalid chat ID      | Verify chat ID, user must /start |
+| `bot was blocked` | User blocked the bot | User needs to unblock            |
+| `Unauthorized`    | Invalid bot token    | Re-run setup-telegram            |
+| `Bad Request`     | Invalid parameters   | Check message format             |
 
 ### General Errors
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `MCP not available` | Server not running | Restart Claude Code |
-| `timeout` | Network/server issue | Check connectivity |
+| Error               | Cause                | Solution            |
+| ------------------- | -------------------- | ------------------- |
+| `MCP not available` | Server not running   | Restart Claude Code |
+| `timeout`           | Network/server issue | Check connectivity  |
 
 ---
 

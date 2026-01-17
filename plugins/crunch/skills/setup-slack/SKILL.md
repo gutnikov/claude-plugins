@@ -244,6 +244,7 @@ After collecting tokens, check if the project has a secrets backend configured:
 
 4. **Update progress file**
    Record secrets storage choice:
+
    ```markdown
    ## Collected Information
 
