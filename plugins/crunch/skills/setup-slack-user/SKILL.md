@@ -1,5 +1,5 @@
 ---
-name: setup-slack
+name: setup-slack-user
 description: Interactive setup wizard for Slack MCP integration using user tokens. Guides user through obtaining OAuth credentials, configuring the korotovsky/slack-mcp-server, and verifying the connection by reading and posting a test message.
 ---
 
