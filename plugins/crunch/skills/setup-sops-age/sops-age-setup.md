@@ -128,6 +128,30 @@ age-keygen -y ~/.config/sops/age/keys.txt
 # age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p
 ```
 
+### Configure Shell Environment (REQUIRED)
+
+After generating your key, you **must** configure your shell so SOPS can find it:
+
+```bash
+# Add to ~/.zshrc or ~/.bashrc
+export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
+```
+
+Then reload your shell:
+
+```bash
+source ~/.zshrc  # or source ~/.bashrc
+```
+
+**Verify configuration:**
+
+```bash
+echo $SOPS_AGE_KEY_FILE
+# Should output: /Users/<you>/.config/sops/age/keys.txt
+```
+
+> **Important:** Without this environment variable, SOPS will fail with "no identity matched any of the recipients" when trying to decrypt files.
+
 ### Multiple Keys
 
 You can have multiple keys in the key file:
@@ -418,6 +442,26 @@ deploy:
 | `EDITOR`            | Editor for `sops` command | `vim`, `code --wait`          |
 
 ## Troubleshooting
+
+### "no identity matched any of the recipients"
+
+This is the most common error. It means SOPS cannot find your age private key.
+
+```bash
+# 1. Check if environment variable is set
+echo $SOPS_AGE_KEY_FILE
+# If empty, that's the problem!
+
+# 2. Set it for this session
+export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
+
+# 3. Make it permanent - add to ~/.zshrc or ~/.bashrc:
+echo 'export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt' >> ~/.zshrc
+source ~/.zshrc
+
+# 4. Verify key file exists
+ls -la ~/.config/sops/age/keys.txt
+```
 
 ### "no key found"
 

@@ -190,6 +190,44 @@ vault kv destroy -versions=all secret/<path>
 - Check for pattern in CLAUDE.md
 - Default to `secrets/secrets.yaml` or `secrets.enc.yaml`
 
+### Pre-flight Check (REQUIRED before any SOPS operation)
+
+Before running any SOPS decrypt/encrypt command, verify the environment is configured:
+
+```bash
+# Check if SOPS_AGE_KEY_FILE is set
+if [ -z "$SOPS_AGE_KEY_FILE" ] && [ -z "$SOPS_AGE_KEY" ]; then
+  echo "ERROR: No SOPS age key configured"
+fi
+
+# Verify the key file exists (if using SOPS_AGE_KEY_FILE)
+if [ -n "$SOPS_AGE_KEY_FILE" ]; then
+  ls -la "$SOPS_AGE_KEY_FILE"
+fi
+```
+
+**If not configured, guide the user:**
+
+```
+⚠️ SOPS age key not found in environment.
+
+SOPS needs to know where your age private key is located.
+
+To fix this, add to your shell profile (~/.zshrc or ~/.bashrc):
+
+  export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
+
+Then reload your shell:
+
+  source ~/.zshrc
+
+Or set it for this session only:
+
+  export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
+```
+
+**Only proceed with SOPS operations after confirming the key is accessible.**
+
 ### Get Secret
 
 ```bash
@@ -462,7 +500,8 @@ Proceed? (yes/no)
 **SOPS Errors:**
 | Error | Cause | Solution |
 |-------|-------|----------|
-| `no key found` | Private key missing | Check `~/.config/sops/age/keys.txt` |
+| `no identity matched any of the recipients` | `SOPS_AGE_KEY_FILE` not set or key file not found | Set `export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt` in shell profile and reload |
+| `no key found` | Private key missing | Check `~/.config/sops/age/keys.txt` exists |
 | `MAC mismatch` | File corrupted/modified | Re-encrypt from source |
 | `could not find common keys` | Wrong key for file | Check `.sops.yaml` recipients |
 

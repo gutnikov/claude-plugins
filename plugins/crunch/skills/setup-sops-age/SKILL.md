@@ -273,11 +273,29 @@ First, determine what kind of setup the user needs:
    - This will be used in `.sops.yaml` configuration
    - Can be shared with team members
 
-4. **Set environment variable (optional)**
+4. **Set environment variable (REQUIRED)**
+
+   SOPS needs to know where to find the private key. Set this in your shell profile:
 
    ```bash
+   # Add to ~/.zshrc or ~/.bashrc
    export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
    ```
+
+   Then reload the shell:
+
+   ```bash
+   source ~/.zshrc  # or source ~/.bashrc
+   ```
+
+   **Verify it's set:**
+
+   ```bash
+   echo $SOPS_AGE_KEY_FILE
+   # Should output: /Users/<you>/.config/sops/age/keys.txt (expanded path)
+   ```
+
+   > **Why is this required?** SOPS looks for the age key in specific locations. Without `SOPS_AGE_KEY_FILE` set, you'll get "no identity matched any of the recipients" errors when decrypting.
 
 5. **Backup reminder**
    - IMPORTANT: Backup `~/.config/sops/age/keys.txt`
