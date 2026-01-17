@@ -204,20 +204,10 @@ If user needs to create a Slack App and obtain credentials, guide them through t
 2. **Configure Bot Token Scopes**
    Navigate to "OAuth & Permissions" in the sidebar, then add these Bot Token Scopes:
 
-   | Scope              | Purpose                    |
-   | ------------------ | -------------------------- |
-   | `channels:history` | View messages in channels  |
-   | `channels:read`    | View channel information   |
-   | `chat:write`       | Send messages              |
-   | `reactions:write`  | Add emoji reactions        |
-   | `users:read`       | View user profiles         |
-   | `users:read.email` | View user email addresses  |
-
-   **Optional scopes for extended functionality:**
-   - `groups:history` - View messages in private channels
-   - `groups:read` - View private channel information
-   - `im:history` - View direct messages
-   - `im:read` - View direct message information
+   | Scope               | Purpose                                         |
+   | ------------------- | ----------------------------------------------- |
+   | `chat:write`        | Send messages to channels, DMs, and threads     |
+   | `chat:write.public` | Write to public channels without explicit invite |
 
 3. **Install App to Workspace**
    - Click "Install to Workspace" button
@@ -230,10 +220,9 @@ If user needs to create a Slack App and obtain credentials, guide them through t
      - The URL will contain the team ID: `https://app.slack.com/client/T01234567/...`
    - Alternatively, use the Slack API test endpoint
 
-5. **Invite bot to channels**
-   - In Slack, go to a channel where you want the bot to operate
-   - Type `/invite @YourBotName` or mention the bot
-   - The bot needs to be in a channel to read/send messages there
+5. **Bot channel access**
+   - With `chat:write.public`, the bot can post to any public channel without being invited
+   - For private channels, invite the bot with `/invite @YourBotName`
 
 **Information to collect from user:**
 - Bot User OAuth Token (xoxb-...)
@@ -559,7 +548,7 @@ Once test is confirmed:
    - **Status**: Configured
    - **Config location**: `.mcp.json`
    - **Setup mode**: [Full Setup / Connect Only]
-   - **Capabilities**: List channels, read messages, send messages, add reactions, view users
+   - **Capabilities**: Send messages to channels, DMs, and threads
    - **Usage**: Available via MCP tools when Claude Code is running
    - **Security**: Bot credentials stored in `.mcp.json` (gitignored)
    - **Secrets backend**: [Vault / SOPS / None] - Credentials also stored at `slack/bot_token` and `slack/team_id` if backend configured
@@ -576,12 +565,10 @@ Once test is confirmed:
 3. **Provide next steps**
    - How to use Slack MCP in future sessions
    - Common operations available:
-     - List channels
-     - Read channel messages
      - Send messages to channels
-     - Add emoji reactions
-     - View user profiles
-   - Remind user the bot must be invited to channels to access them
+     - Send messages to DMs
+     - Reply to threads
+   - Note: With `chat:write.public`, bot can post to public channels without being invited
 
 4. **Security reminders**
    - Never commit `.mcp.json` with credentials
@@ -628,8 +615,9 @@ Once test is confirmed:
 
 **"not_in_channel" error:**
 
-- Bot hasn't been invited to the channel
+- Bot hasn't been invited to a private channel
 - Use `/invite @BotName` in the target channel
+- For public channels, ensure `chat:write.public` scope is enabled
 
 **"team_not_found" error:**
 
