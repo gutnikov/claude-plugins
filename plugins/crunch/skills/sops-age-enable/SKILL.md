@@ -1,9 +1,9 @@
 ---
-name: setup-sops-age
-description: Interactive setup wizard for SOPS with age encryption. Guides user through installing tools, generating keys, configuring SOPS, and verifying by encrypting/decrypting a test secrets file.
+name: sops-age-enable
+description: Interactive setup wizard for SOPS with age encryption. Guides user through installing tools, generating keys, configuring SOPS, and verifying by encrypting/decrypting a test file.
 ---
 
-# Setup SOPS with age Encryption
+# Enable SOPS with age
 
 This skill guides users through the complete end-to-end process of setting up SOPS (Secrets OPerationS) with age encryption for file-based secrets management.
 
@@ -23,7 +23,6 @@ The setup is complete when:
 | **age**  | Modern, simple encryption tool (replacement for PGP)                    |
 
 **Benefits:**
-
 - Encrypted files can be committed to git (only values are encrypted, keys visible)
 - Simple key management (no PGP complexity)
 - Supports multiple recipients (team members)
@@ -33,18 +32,18 @@ The setup is complete when:
 
 This skill supports two setup modes:
 
-| Mode             | Description                            | Use When                        |
-| ---------------- | -------------------------------------- | ------------------------------- |
-| **Full Setup**   | Install tools + generate new age key   | Starting fresh                  |
-| **Connect Only** | Configure SOPS to use existing age key | Key already exists (team setup) |
+| Mode               | Description                            | Use When                        |
+| ------------------ | -------------------------------------- | ------------------------------- |
+| **Full Setup**     | Install tools + generate new age key   | Starting fresh                  |
+| **Use Existing**   | Configure SOPS to use existing age key | Key already exists (team setup) |
 
 ## Progress Tracking
 
-Since SOPS setup may require session restarts (e.g., after environment changes), progress is tracked in a file.
+Since setup may require session restarts, progress is tracked in a file.
 
-### Progress File: `setup-sops-age-progress.md`
+### Progress File: `sops-age-setup-progress.md`
 
-Location: Project root (`./setup-sops-age-progress.md`)
+Location: Project root (`./sops-age-setup-progress.md`)
 
 **Format:**
 
@@ -53,86 +52,97 @@ Location: Project root (`./setup-sops-age-progress.md`)
 
 ## Status
 
-- **Started**: 2024-01-15 10:30:00
-- **Current Phase**: Phase 4A - Configure SOPS
-- **Setup Mode**: Full Setup (Path A)
+- **Started**: {timestamp}
+- **Current Phase**: Phase {N} - {Phase Name}
+- **Setup Mode**: {Selected Mode}
 
 ## Completed Steps
 
 - [x] Phase 1: Prerequisites & Mode Selection
-- [x] Phase 2A: Install Tools
-- [x] Phase 3A: Generate age Key
-- [ ] Phase 4A: Configure SOPS ← CURRENT
-- [ ] Phase 5: Test Encryption
-- [ ] Phase 6: Completion
+- [ ] Phase 2: {Next Phase} <- CURRENT
+- [ ] Phase 3: ...
 
 ## Collected Information
 
-- **Setup Mode**: Full Setup (New Key)
+- **Setup Mode**: {value}
 - **Public Key**: age1xxxxxxxxx...
 - **Key Location**: ~/.config/sops/age/keys.txt
 - **Config File**: .sops.yaml
-
-## Notes
-
-- Key generated successfully
-- Resume from Phase 5 if session interrupted
 ```
 
 ### Progress Tracking Rules
 
-1. **Create progress file** at the start of Phase 1
-2. **Update after each phase** completion
-3. **Store collected information** (non-sensitive) for resumption
-4. **Delete progress file** only after successful DOD verification
-5. **On session start**, check for existing progress file and resume
+1. Create progress file at Phase 1 start
+2. Update after each phase completion
+3. Store non-sensitive data only (public key is OK, private key is NOT)
+4. Delete only after successful DoD verification
+5. Check for existing progress on session start
 
 ## Workflow
 
 Follow these steps interactively, confirming each stage with the user before proceeding.
 
-### Phase 0: Check for Existing Progress
+### Phase 0: Check for Existing Installation & Progress
 
 **ALWAYS start here.** Before anything else:
+
+#### Step 1: Check for Existing SOPS Configuration
+
+First, detect if SOPS+age is already set up in this project:
+
+```bash
+# Check CLAUDE.md for SOPS configuration
+grep -A 10 "### SOPS" CLAUDE.md 2>/dev/null
+
+# Check for .sops.yaml
+ls -la .sops.yaml 2>/dev/null
+
+# Check for existing age key
+ls -la ~/.config/sops/age/keys.txt 2>/dev/null
+
+# Check environment variable
+echo $SOPS_AGE_KEY_FILE
+```
+
+**If SOPS+age is already configured:**
+
+Display status and offer options:
+
+```
+SOPS+age is already configured!
+
+Current Configuration:
+  Key location: ~/.config/sops/age/keys.txt
+  Public key: age1xxxxxxxxx...
+  Config: .sops.yaml
+  Documented in: CLAUDE.md
+
+What would you like to do?
+1. Keep current setup (exit - you can use /sops-age-use for operations)
+2. Reconfigure (update .sops.yaml and CLAUDE.md settings)
+3. Start fresh (run /sops-age-disable first, then set up again)
+```
+
+#### Step 2: Check for Progress File
 
 1. **Check for progress file**
 
    ```bash
-   cat setup-sops-age-progress.md 2>/dev/null
+   cat sops-age-setup-progress.md 2>/dev/null
    ```
 
 2. **If progress file exists:**
    - Parse current phase and collected information
-   - Display status to user:
+   - Display status and offer to resume or start over
 
-     ```
-     Found existing SOPS+age setup in progress!
-
-     Current Phase: Phase 4A - Configure SOPS
-     Setup Mode: Full Setup (New Key)
-     Public Key: age1xxxxxxxxx...
-
-     Would you like to:
-     1. Resume from where you left off
-     2. Start over (will delete progress)
-     ```
-
-   - If resuming, skip to the indicated phase with collected information
-   - If starting over, delete progress file and begin Phase 1
-
-3. **If no progress file:**
+3. **If no progress file and no existing configuration:**
    - Proceed to Phase 1
 
 ### Phase 1: Prerequisites & Mode Selection
 
 First, determine what kind of setup the user needs:
 
-1. **Check for existing configuration**
-   - Check for `~/.config/sops/age/keys.txt` (age key file)
-   - Look for `.sops.yaml` in project root
-   - Check for `SOPS_AGE_KEY_FILE` or `SOPS_AGE_KEY` environment variables
-
-2. **Ask the user about setup mode**:
+1. **Ask the user about setup mode**:
 
    "How would you like to set up SOPS with age?"
 
@@ -151,35 +161,11 @@ First, determine what kind of setup the user needs:
    - Ask: "Has your team already set up age keys for this project?"
    - Ask: "Do you have an age private key file or key string?"
 
-3. **Based on selection, proceed to appropriate phase:**
-   - Option A → Continue to Phase 2A (Full Setup)
-   - Option B → Skip to Phase 2B (Use Existing Key)
+2. **Based on selection, proceed to appropriate phase:**
+   - Option A -> Continue to Phase 2A (Full Setup)
+   - Option B -> Skip to Phase 2B (Use Existing Key)
 
-4. **Create progress file**
-   Create `setup-sops-age-progress.md` with initial status:
-
-   ```markdown
-   # SOPS+age Setup Progress
-
-   ## Status
-
-   - **Started**: [timestamp]
-   - **Current Phase**: Phase 2A/2B
-   - **Setup Mode**: [Full Setup / Use Existing Key]
-
-   ## Completed Steps
-
-   - [x] Phase 1: Prerequisites & Mode Selection
-   - [ ] Phase 2: [Install Tools / Gather Key Information]
-   - [ ] Phase 3: [Generate Key / Configure SOPS]
-   - [ ] Phase 4: Configure SOPS
-   - [ ] Phase 5: Test Encryption
-   - [ ] Phase 6: Completion
-
-   ## Collected Information
-
-   - **Setup Mode**: [selected mode]
-   ```
+3. **Create progress file**
 
 ---
 
@@ -199,19 +185,16 @@ First, determine what kind of setup the user needs:
 2. **Install age**
 
    **macOS (Homebrew):**
-
    ```bash
    brew install age
    ```
 
    **Ubuntu/Debian:**
-
    ```bash
    sudo apt install age
    ```
 
    **Go install:**
-
    ```bash
    go install filippo.io/age/cmd/...@latest
    ```
@@ -222,13 +205,11 @@ First, determine what kind of setup the user needs:
 3. **Install SOPS**
 
    **macOS (Homebrew):**
-
    ```bash
    brew install sops
    ```
 
    **Ubuntu/Debian:**
-
    ```bash
    # Download latest release
    curl -LO https://github.com/getsops/sops/releases/download/v3.8.1/sops-v3.8.1.linux.amd64
@@ -237,7 +218,6 @@ First, determine what kind of setup the user needs:
    ```
 
    **Go install:**
-
    ```bash
    go install github.com/getsops/sops/v3/cmd/sops@latest
    ```
@@ -263,7 +243,6 @@ First, determine what kind of setup the user needs:
    ```
 
    This outputs the public key:
-
    ```
    Public key: age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
    ```
@@ -289,13 +268,12 @@ First, determine what kind of setup the user needs:
    ```
 
    **Verify it's set:**
-
    ```bash
    echo $SOPS_AGE_KEY_FILE
-   # Should output: /Users/<you>/.config/sops/age/keys.txt (expanded path)
+   # Should output the full path
    ```
 
-   > **Why is this required?** SOPS looks for the age key in specific locations. Without `SOPS_AGE_KEY_FILE` set, you'll get "no identity matched any of the recipients" errors when decrypting.
+   > **Why is this required?** Without `SOPS_AGE_KEY_FILE` set, you'll get "no identity matched any of the recipients" errors when decrypting.
 
 5. **Backup reminder**
    - IMPORTANT: Backup `~/.config/sops/age/keys.txt`
@@ -334,11 +312,11 @@ First, determine what kind of setup the user needs:
    ```
 
 4. **Verify .gitignore**
-   - Ensure `~/.config/sops/age/keys.txt` is NOT committed
+   - Ensure `~/.config/sops/age/keys.txt` is NOT committed (it's outside project anyway)
    - The `.sops.yaml` file CAN be committed (contains only public keys)
    - Ensure decrypted files are gitignored if using decrypt-to-file workflow
 
-→ Proceed to Phase 5: Test Encryption
+-> Proceed to Phase 5: Test Encryption
 
 ---
 
@@ -351,7 +329,6 @@ Ask the user for existing key information:
 1. **Key source** - Ask: "Where is your age private key?"
 
    **Option 1: Key file**
-
    ```bash
    # Default location
    ~/.config/sops/age/keys.txt
@@ -361,7 +338,6 @@ Ask the user for existing key information:
    ```
 
    **Option 2: Environment variable**
-
    ```bash
    # File path
    export SOPS_AGE_KEY_FILE=/path/to/keys.txt
@@ -389,7 +365,6 @@ Ask the user for existing key information:
 1. **Set up key access**
 
    **Option: Copy to default location**
-
    ```bash
    mkdir -p ~/.config/sops/age
    cp /path/to/provided/key.txt ~/.config/sops/age/keys.txt
@@ -397,7 +372,6 @@ Ask the user for existing key information:
    ```
 
    **Option: Use environment variable**
-
    ```bash
    export SOPS_AGE_KEY_FILE=/path/to/key.txt
    ```
@@ -410,7 +384,7 @@ Ask the user for existing key information:
    - If project already has `.sops.yaml`, verify user's key is listed
    - If not, they may need to be added as a recipient
 
-→ Proceed to Phase 5: Test Encryption
+-> Proceed to Phase 5: Test Encryption
 
 ---
 
@@ -471,9 +445,6 @@ This is the critical verification step (same for both paths):
 Once test is confirmed:
 
 1. **Document in CLAUDE.md**
-   - Check if `CLAUDE.md` exists in project root
-   - If not, create it with basic project structure
-   - Add or update the "Integrations" or "Secrets Management" section:
 
    ```markdown
    ## Secrets Management
@@ -495,9 +466,6 @@ Once test is confirmed:
      - Encrypted files CAN be committed (values encrypted, keys visible)
    - **Team**: Add members by including their public key in `.sops.yaml`
    ```
-
-   - If CLAUDE.md already has secrets section, append SOPS configuration
-   - Preserve existing content in the file
 
 2. **Summarize what was configured**
    - age key location
@@ -527,106 +495,103 @@ Once test is confirmed:
    sops --decrypt --extract '["database"]["password"]' secrets.yaml
    ```
 
-4. **Git workflow**
-
-   ```bash
-   # Safe to commit encrypted files
-   git add secrets/test.yaml
-   git commit -m "Add encrypted secrets"
-
-   # The encrypted file contains:
-   # - Visible keys (structure)
-   # - Encrypted values
-   # - SOPS metadata (recipients, MAC)
-   ```
-
-5. **Security reminders**
+4. **Security reminders**
    - NEVER commit private key (`keys.txt`)
    - Public key can be shared/committed
    - Backup private key securely
    - Add team members by adding their public keys to `.sops.yaml`
 
-6. **Cleanup suggestion**
+5. **Cleanup suggestion**
    - "Would you like to keep the test file for reference, or delete it?"
 
-   ```bash
-   rm secrets/test.yaml
+6. **Clean up progress file**
    ```
-
-7. **Clean up progress file**
-   After successful DOD verification:
-   ```bash
-   rm setup-sops-age-progress.md
-   ```
-   Inform user:
-   ```
-   ✓ SOPS+age setup complete!
-   ✓ Progress file cleaned up
-   ✓ Configuration documented in CLAUDE.md
+   OK SOPS+age setup complete!
+   OK Progress file cleaned up
+   OK Configuration documented in CLAUDE.md
    ```
 
 ## Error Handling
 
 ### Common Issues
 
-**"no key found" or "failed to decrypt":**
+**"no identity matched any of the recipients" error:**
 
+This is the most common error. It means SOPS cannot find your age private key.
+
+```bash
+# 1. Check if environment variable is set
+echo $SOPS_AGE_KEY_FILE
+# If empty, that's the problem!
+
+# 2. Set it for this session
+export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
+
+# 3. Make it permanent - add to ~/.zshrc or ~/.bashrc:
+echo 'export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt' >> ~/.zshrc
+source ~/.zshrc
+
+# 4. Verify key file exists
+ls -la ~/.config/sops/age/keys.txt
+```
+
+**"no key found" error:**
 - Key file not in expected location
-- `SOPS_AGE_KEY_FILE` not set
-- Wrong key for this file (encrypted for different recipient)
+- Check environment variable is set
 
-**"could not find common encryption keys":**
-
+**"could not find common encryption keys" error:**
 - `.sops.yaml` doesn't match file path
 - No creation rule matches the file
 - Use `--age` flag explicitly
 
 **"MAC mismatch" error:**
-
 - File was modified after encryption
 - File corrupted
 - May need to re-encrypt from decrypted source
 
-**"failed to get the data key":**
-
+**"failed to get the data key" error:**
 - None of your keys can decrypt this file
 - You need to be added as a recipient
 - Ask file owner to re-encrypt with your public key
 
-**"age: no identity matched any recipient":**
-
-- Public key in `.sops.yaml` doesn't match your private key
-- Verify public key with: `age-keygen -y ~/.config/sops/age/keys.txt`
-
 **Permission errors:**
-
 - Key file permissions too open
 - Fix with: `chmod 600 ~/.config/sops/age/keys.txt`
 
+### Error Table
+
+| Error                       | Cause                    | Solution                              |
+| --------------------------- | ------------------------ | ------------------------------------- |
+| `no identity matched`       | SOPS_AGE_KEY_FILE not set| Set environment variable              |
+| `no key found`              | Key file missing         | Verify key file path                  |
+| `could not find common keys`| .sops.yaml mismatch      | Check path regex, use --age flag      |
+| `MAC mismatch`              | File corrupted/modified  | Re-encrypt from source                |
+| `failed to get data key`    | Not a recipient          | Ask owner to add your public key      |
+| `permission denied`         | Key file permissions     | chmod 600 keys.txt                    |
+
 ## Interactive Checkpoints
 
-At each phase, confirm with user before proceeding:
-
 ### Mode Selection
-
 - [ ] "Which setup mode: Full Setup (new key) or Use Existing Key?"
 
 ### Path A (Full Setup) Checkpoints
-
 - [ ] "SOPS and age installed. Ready to generate key?"
 - [ ] "Key generated. Here's your public key - please save it. Ready to configure SOPS?"
 - [ ] "Do you want to add additional recipients (team members)?"
 - [ ] ".sops.yaml created. Ready to test?"
 
 ### Path B (Use Existing Key) Checkpoints
-
 - [ ] "Where is your age private key? (file path or key string)"
 - [ ] "Key verified. Ready to configure SOPS?"
 - [ ] "Configuration complete. Ready to test?"
 
 ### Final Verification (Both Paths)
-
 - [ ] "Test file encrypted and decrypted successfully. Setup complete?"
 - [ ] "Would you like to keep or delete the test file?"
 
 **Definition of Done:** Only mark setup as complete when user confirms successful encrypt/decrypt of test file.
+
+## Related Skills
+
+- `/sops-age-use` - Encrypt/decrypt secrets with SOPS
+- `/sops-age-disable` - Remove SOPS+age configuration

@@ -1,89 +1,130 @@
 ---
-name: setup-trello
-description: Interactive setup wizard for Trello MCP integration. Guides user through obtaining API credentials, configuring the MCP, and verifying the connection by creating a test card.
+name: trello-enable
+description: Interactive setup wizard for Trello MCP integration. Guides user through enabling Trello, configuring authentication, and verifying access by creating a test card.
 ---
 
-# Setup Trello MCP
+# Enable Trello
 
-This skill guides users through the complete end-to-end process of setting up Trello MCP (Model Context Protocol) integration in their project.
+This skill guides users through the complete end-to-end process of setting up Trello MCP integration for task management in their project.
 
 ## Definition of Done
 
 The setup is complete when:
 
-1. MCP configuration is added to the project (either new server or existing server connection)
-2. User sees a test card created in Trello via the configured MCP
+1. Trello MCP is accessible (either local MCP server or connection to existing)
+2. Authentication is configured (API Key + Token)
+3. User successfully creates and sees a test card in Trello
 
 ## Setup Modes
 
 This skill supports two setup modes:
 
-| Mode             | Description                                        | Use When                         |
-| ---------------- | -------------------------------------------------- | -------------------------------- |
-| **Full Setup**   | Get Trello API credentials + run local MCP server  | Starting fresh, need everything  |
-| **Connect Only** | Configure client to connect to existing MCP server | Server already running elsewhere |
+| Mode             | Description                                 | Use When                             |
+| ---------------- | ------------------------------------------- | ------------------------------------ |
+| **Full Setup**   | Get API credentials + run local MCP server  | Starting fresh, local development    |
+| **Connect Only** | Configure client to connect to existing MCP | MCP server already running elsewhere |
 
 ## Progress Tracking
 
 Since MCP setup requires reloading Claude Code (which loses session context), progress is tracked in a file.
 
-### Progress File: `setup-trello-progress.md`
+### Progress File: `trello-setup-progress.md`
 
-Location: Project root (`./setup-trello-progress.md`)
+Location: Project root (`./trello-setup-progress.md`)
 
 **Format:**
 
 ```markdown
-# Trello MCP Setup Progress
+# Trello Setup Progress
 
 ## Status
 
-- **Started**: 2024-01-15 10:30:00
-- **Current Phase**: Phase 4A - MCP Configuration
-- **Setup Mode**: Full Setup (Path A)
+- **Started**: {timestamp}
+- **Current Phase**: Phase {N} - {Phase Name}
+- **Setup Mode**: {Selected Mode}
 
 ## Completed Steps
 
 - [x] Phase 1: Prerequisites & Mode Selection
-- [x] Phase 2A: Verify Prerequisites
-- [x] Phase 3A: Trello API Credentials
-- [ ] Phase 4A: MCP Configuration ← CURRENT
-- [ ] Phase 5: Connection Test
-- [ ] Phase 6: Completion
+- [ ] Phase 2: {Next Phase} <- CURRENT
+- [ ] Phase 3: ...
 
 ## Collected Information
 
-- **Setup Mode**: Full Setup (Local MCP Server)
-- **Node.js Version**: v20.10.0
-- **API Key**: (stored in .mcp.json)
-- **Test Board**: My Test Board
-
-## Notes
-
-- Waiting for Claude Code reload to test MCP connection
-- Resume from Phase 5 after reload
+- **Setup Mode**: {value}
+- **Test Board**: {value}
+- **Config Location**: {value}
 ```
 
 ### Progress Tracking Rules
 
-1. **Create progress file** at the start of Phase 1
-2. **Update after each phase** completion
-3. **Store collected information** (non-sensitive) for resumption
-4. **Delete progress file** only after successful DOD verification
-5. **On session start**, check for existing progress file and resume
+1. Create progress file at Phase 1 start
+2. Update after each phase completion
+3. Store non-sensitive data only (never API keys/tokens)
+4. Delete only after successful DoD verification
+5. Check for existing progress on session start
 
 ## Workflow
 
 Follow these steps interactively, confirming each stage with the user before proceeding.
 
-### Phase 0: Check for Existing Progress
+### Phase 0: Check for Existing Installation & Progress
 
 **ALWAYS start here.** Before anything else:
+
+#### Step 1: Check for Existing Trello Configuration
+
+First, detect if Trello MCP is already set up in this project:
+
+```bash
+# Check CLAUDE.md for Trello configuration
+grep -A 10 "### Trello" CLAUDE.md 2>/dev/null
+
+# Check for MCP configuration
+grep -A 5 '"trello"' .mcp.json 2>/dev/null
+```
+
+**If Trello is already configured:**
+
+Display status and offer options:
+
+```
+Trello MCP is already configured in this project!
+
+Current Configuration:
+  MCP Server: @modelcontextprotocol/server-trello
+  Documented in: CLAUDE.md
+
+What would you like to do?
+1. Keep current setup (exit - you can use /trello-use for operations)
+2. Reconfigure (update .mcp.json and CLAUDE.md settings)
+3. Start fresh (run /trello-disable first, then set up again)
+```
+
+- Option 1 -> Exit setup mode, suggest using trello-use skill
+- Option 2 -> Skip to Phase 4A/3B (Configure MCP) with existing values
+- Option 3 -> Suggest running trello-disable first, then re-running setup
+
+**If Trello is partially configured (some components missing):**
+
+```
+Trello is partially configured:
+
+Found:
+  OK .mcp.json trello server entry
+  X Cannot connect to Trello (tools not available)
+
+Would you like to:
+1. Fix the current setup (resume from connection test)
+2. Start fresh (clear existing config and begin setup)
+```
+
+#### Step 2: Check for Progress File
 
 1. **Check for progress file**
 
    ```bash
-   cat setup-trello-progress.md 2>/dev/null
+   cat trello-setup-progress.md 2>/dev/null
    ```
 
 2. **If progress file exists:**
@@ -91,7 +132,7 @@ Follow these steps interactively, confirming each stage with the user before pro
    - Display status to user:
 
      ```
-     Found existing Trello MCP setup in progress!
+     Found existing Trello setup in progress!
 
      Current Phase: Phase 4A - MCP Configuration
      Setup Mode: Full Setup
@@ -105,19 +146,14 @@ Follow these steps interactively, confirming each stage with the user before pro
    - If resuming, skip to the indicated phase with collected information
    - If starting over, delete progress file and begin Phase 1
 
-3. **If no progress file:**
+3. **If no progress file and no existing configuration:**
    - Proceed to Phase 1
 
 ### Phase 1: Prerequisites & Mode Selection
 
 First, determine what kind of setup the user needs:
 
-1. **Check for existing MCP configuration**
-   - Look for `.mcp.json` or `mcp.json` in project root
-   - Check for `.claude/settings.json` or similar config files
-   - If Trello MCP already configured, ask user if they want to reconfigure
-
-2. **Ask the user about setup mode**:
+1. **Ask the user about setup mode**:
 
    "How would you like to set up Trello MCP?"
 
@@ -136,15 +172,15 @@ First, determine what kind of setup the user needs:
    - Ask: "Is there a team/infrastructure managing MCP servers for you?"
    - Ask: "Do you have connection details (URL, port) for an existing server?"
 
-3. **Based on selection, proceed to appropriate phase:**
-   - Option A → Continue to Phase 2A (Full Setup)
-   - Option B → Skip to Phase 2B (Connect Only)
+2. **Based on selection, proceed to appropriate phase:**
+   - Option A -> Continue to Phase 2A (Full Setup)
+   - Option B -> Skip to Phase 2B (Connect Only)
 
-4. **Create progress file**
-   Create `setup-trello-progress.md` with initial status:
+3. **Create progress file**
+   Create `trello-setup-progress.md` with initial status:
 
    ```markdown
-   # Trello MCP Setup Progress
+   # Trello Setup Progress
 
    ## Status
 
@@ -173,7 +209,12 @@ First, determine what kind of setup the user needs:
 ### Phase 2A: Verify Prerequisites
 
 1. **Verify Node.js/npm availability**
-   - Run `node --version` and `npm --version`
+
+   ```bash
+   node --version
+   npm --version
+   ```
+
    - If not installed, guide user to install Node.js first
    - Minimum required: Node.js 18+
 
@@ -183,7 +224,7 @@ First, determine what kind of setup the user needs:
 
 ### Phase 3A: Trello API Credentials
 
-If user needs to obtain API credentials, guide them through `trello-app-setup.md`.
+If user needs to obtain API credentials, guide them through the process.
 
 **Trello uses two credentials:**
 
@@ -192,17 +233,38 @@ If user needs to obtain API credentials, guide them through `trello-app-setup.md
 | **API Key**   | Identifies your application        | 32-character hex string  |
 | **API Token** | Authorizes access to user's boards | Long alphanumeric string |
 
-**Key information to collect from user:**
+**Guide user to get credentials:**
 
-- API Key (from Trello Developer portal)
-- API Token (generated with appropriate permissions)
-- Target board name for test card
+1. **Get API Key:**
+   - Go to [trello.com/power-ups/admin](https://trello.com/power-ups/admin)
+   - Log in with Trello account
+   - Click "New" to create a new Power-Up (or use existing)
+   - Fill in basic details:
+     - Name: `Claude MCP Integration`
+     - Workspace: Select your workspace
+   - After creation, find and copy the **API Key** (32 characters)
+
+   **Alternative:** Go to [trello.com/app-key](https://trello.com/app-key) for quick access
+
+2. **Generate API Token:**
+   - Construct authorization URL:
+     ```
+     https://trello.com/1/authorize?expiration=never&scope=read,write&response_type=token&name=Claude%20MCP&key=YOUR_API_KEY
+     ```
+   - Click "Allow" to authorize
+   - Copy the token displayed
+
+3. **Verify credentials work:**
+   ```bash
+   curl "https://api.trello.com/1/members/me?key=YOUR_API_KEY&token=YOUR_TOKEN"
+   ```
+   Expected: JSON with user information
 
 **Ask user to provide:**
 
 1. Trello API Key
 2. Trello API Token (with read/write permissions)
-3. Target board name or ID for test card
+3. Target board name for test card
 
 ### Phase 3.5A: Secrets Storage (Optional)
 
@@ -221,32 +283,13 @@ After collecting credentials, check if the project has a secrets backend configu
      secrets set trello/api_key <api_key>
      secrets set trello/api_token <api_token>
      ```
-   - This provides:
-     - Centralized secrets management
-     - Audit trail (if using Vault)
-     - Easy rotation
-     - Team sharing via existing key management
 
    **Option 2: No, only store in .mcp.json**
    - Credentials will only be in the MCP configuration file
-   - Less secure but simpler
 
 3. **If NO secrets backend is configured:**
-
-   Inform user: "No secrets backend (Vault/SOPS) is configured for this project. Credentials will be stored directly in .mcp.json."
-
-   Optionally offer: "Would you like to set up a secrets backend first? (Run `setup-vault` or `setup-sops-age`)"
-
-   If user declines, proceed with direct storage.
-
-4. **Update progress file**
-   Record secrets storage choice:
-   ```markdown
-   ## Collected Information
-
-   - **Secrets Backend**: [Vault / SOPS / None]
-   - **Credentials Stored In Backend**: [Yes / No]
-   ```
+   - Inform user credentials will be stored directly in .mcp.json
+   - Optionally offer to set up a secrets backend first
 
 ### Phase 4A: MCP Configuration (Local Server)
 
@@ -254,11 +297,10 @@ Once credentials are collected, configure the MCP to run locally:
 
 1. **Determine configuration location**
    Ask user: "Where should I add the Trello MCP configuration?"
-   - Project-level: `.mcp.json` in project root
+   - Project-level: `.mcp.json` in project root (recommended)
    - User-level: `~/.claude/settings.json`
 
 2. **Configure local MCP server** (using npx, no install needed)
-   The recommended approach uses `npx` which doesn't require installation:
 
    ```json
    {
@@ -278,15 +320,14 @@ Once credentials are collected, configure the MCP to run locally:
 3. **Write the configuration**
    - If `.mcp.json` exists, merge the trello config into existing `mcpServers`
    - If creating new file, create complete structure
-   - NEVER commit credentials to git - warn user about this
-   - **Note**: Even if credentials are stored in a secrets backend (Phase 3.5A), they must also be in .mcp.json for the MCP server to function. The secrets backend serves as the secure source of truth for rotation and audit purposes.
+   - NEVER commit credentials to git
 
 4. **Verify .gitignore**
    - Check if `.mcp.json` is in `.gitignore`
    - If not, offer to add it (credentials should not be committed)
 
 5. **Update progress file for reload**
-   Update `setup-trello-progress.md`:
+   Update `trello-setup-progress.md`:
 
    ```markdown
    ## Status
@@ -299,7 +340,7 @@ Once credentials are collected, configure the MCP to run locally:
    - [x] Phase 2A: Verify Prerequisites
    - [x] Phase 3A: Trello API Credentials
    - [x] Phase 4A: MCP Configuration
-   - [ ] Phase 5: Connection Test ← RESUME HERE AFTER RELOAD
+   - [ ] Phase 5: Connection Test <- RESUME HERE AFTER RELOAD
    - [ ] Phase 6: Completion
 
    ## Collected Information
@@ -312,15 +353,15 @@ Once credentials are collected, configure the MCP to run locally:
 6. **Instruct user to reload**
 
    ```
-   ✓ MCP configuration written to .mcp.json
+   OK MCP configuration written to .mcp.json
 
-   ⚠️ Claude Code needs to reload to activate the Trello MCP.
+   WARNING Claude Code needs to reload to activate the Trello MCP.
 
    Please restart Claude Code, then run this skill again.
    Progress has been saved - setup will resume from the connection test.
    ```
 
-→ After reload, resume at Phase 5: Connection Test
+-> After reload, resume at Phase 5: Connection Test
 
 ---
 
@@ -375,10 +416,6 @@ Ask the user for existing server information:
    - Authentication requirements (API key, token, etc.)
    - Any custom headers needed
 
-3. **Ask about authentication:**
-   - "Does the server require authentication?"
-   - "Do you have the credentials/tokens needed to connect?"
-
 ### Phase 3B: Configure Client Connection
 
 1. **Determine configuration location**
@@ -408,45 +445,11 @@ Ask the user for existing server information:
    - If creating new file, create complete structure
 
 4. **Verify .gitignore** (if config contains secrets)
-   - Check if `.mcp.json` is in `.gitignore`
-   - If auth tokens are in config, ensure file won't be committed
 
 5. **Update progress file for reload**
-   Update `setup-trello-progress.md`:
+   Update `trello-setup-progress.md` and instruct user to reload
 
-   ```markdown
-   ## Status
-
-   - **Current Phase**: Phase 5 - Connection Test (PENDING RELOAD)
-
-   ## Completed Steps
-
-   - [x] Phase 1: Prerequisites & Mode Selection
-   - [x] Phase 2B: Gather Connection Details
-   - [x] Phase 3B: Configure Client Connection
-   - [ ] Phase 5: Connection Test ← RESUME HERE AFTER RELOAD
-   - [ ] Phase 6: Completion
-
-   ## Collected Information
-
-   - **Setup Mode**: Connect Only
-   - **Server URL**: [url]
-   - **Test Board**: [board]
-   - **Config Location**: .mcp.json
-   ```
-
-6. **Instruct user to reload**
-
-   ```
-   ✓ MCP configuration written to .mcp.json
-
-   ⚠️ Claude Code needs to reload to activate the Trello MCP.
-
-   Please restart Claude Code, then run this skill again.
-   Progress has been saved - setup will resume from the connection test.
-   ```
-
-→ After reload, resume at Phase 5: Connection Test
+-> After reload, resume at Phase 5: Connection Test
 
 ---
 
@@ -466,7 +469,7 @@ This is the critical verification step (same for both paths).
    "I'll now attempt to create a test card in Trello to verify the MCP is working correctly."
 
 3. **Get test board from progress file or ask user**
-   - If resuming: read test board from `setup-trello-progress.md`
+   - If resuming: read test board from `trello-setup-progress.md`
    - If not stored: ask user for board name
    - Recommend using a test/sandbox board first
    - Ask which list to add the card to (or use first list)
@@ -482,11 +485,7 @@ This is the critical verification step (same for both paths).
    "Did you see the test card created in Trello? Please check board '[board-name]'"
 
 6. **Update progress file**
-   Mark Phase 5 as complete:
-   ```markdown
-   - [x] Phase 5: Connection Test
-   - [ ] Phase 6: Completion ← IN PROGRESS
-   ```
+   Mark Phase 5 as complete
 
 ### Phase 6: Completion
 
@@ -495,29 +494,26 @@ Once test card is confirmed:
 1. **Document in CLAUDE.md**
    - Check if `CLAUDE.md` exists in project root
    - If not, create it with basic project structure
-   - Add or update the "Integrations" or "MCP Servers" section:
+   - Add or update the "Task Management" or "MCP Servers" section:
 
    ```markdown
-   ## MCP Servers
+   ## Task Management
 
    ### Trello
 
    - **Status**: Configured
-   - **Config location**: `.mcp.json`
    - **Setup mode**: [Full Setup / Connect Only]
-   - **Capabilities**: List boards, create/update/delete cards, manage lists
+   - **Config location**: `.mcp.json`
+   - **Capabilities**: List boards, create/update/delete cards, manage lists, move cards
    - **Usage**: Available via MCP tools when Claude Code is running
    - **Security**: API credentials stored in `.mcp.json` (gitignored)
    - **Secrets backend**: [Vault / SOPS / None] - Credentials also stored at `trello/api_key` and `trello/api_token` if backend configured
    ```
 
-   - If CLAUDE.md already has MCP section, append Trello configuration
-   - Preserve existing content in the file
-
 2. **Summarize what was configured**
    - Configuration file location
    - Connected Trello account
-   - Available Trello MCP capabilities (boards, lists, cards, etc.)
+   - Available Trello MCP capabilities
 
 3. **Provide next steps**
    - How to use Trello MCP in future sessions
@@ -539,13 +535,13 @@ Once test card is confirmed:
 6. **Clean up progress file**
    After successful DOD verification:
    ```bash
-   rm setup-trello-progress.md
+   rm trello-setup-progress.md
    ```
    Inform user:
    ```
-   ✓ Trello MCP setup complete!
-   ✓ Progress file cleaned up
-   ✓ Configuration documented in CLAUDE.md
+   OK Trello MCP setup complete!
+   OK Progress file cleaned up
+   OK Configuration documented in CLAUDE.md
    ```
 
 ## Error Handling
@@ -580,48 +576,48 @@ Once test card is confirmed:
 
 - Check JSON syntax in config file
 - Verify Node.js is accessible from Claude Code's environment
-- Check for port conflicts if using stdio transport
+- Run `npx -y @modelcontextprotocol/server-trello` manually to test
 
 **Connection refused (Remote Server - Path B):**
 
 - Verify server URL is correct and server is running
 - Check firewall/network allows connection
 - Verify authentication credentials are correct
-- Try connecting from terminal: `curl <server-url>/health` (if HTTP)
-
-**Authentication failed (Path B):**
-
-- Verify API key or token is correct
-- Check if token has expired
-- Ensure token has required permissions on the server side
-- Contact server administrator for correct credentials
 
 **Rate limiting:**
 
-- Trello API has rate limits (300 requests per 10 seconds)
+- Trello API limits: 300 requests per 10 seconds per token
 - If hitting limits, wait and retry
 - Consider batching operations
 
-## Interactive Checkpoints
+### Error Table
 
-At each phase, confirm with user before proceeding:
+| Error                | Cause                    | Solution                               |
+| -------------------- | ------------------------ | -------------------------------------- |
+| `invalid key`        | API key malformed        | Verify 32-char key, no whitespace      |
+| `invalid token`      | Token expired/revoked    | Generate new token                     |
+| `unauthorized`       | Insufficient permissions | Regenerate token with read,write scope |
+| `board not found`    | Wrong board or no access | Verify board name and token access     |
+| `connection refused` | MCP server not running   | Check config, restart Claude Code      |
+
+## Interactive Checkpoints
 
 ### Mode Selection
 
-- [ ] "Which setup mode do you need: Full Setup (local server) or Connect Only (existing server)?"
+- [ ] "Which setup mode do you need: Full Setup (local MCP server) or Connect Only (existing server)?"
 
 ### Path A (Full Setup) Checkpoints
 
 - [ ] "Node.js verified. Do you have a Trello account?"
 - [ ] "Do you have API credentials, or should I guide you through getting them?"
 - [ ] "I have the API key and token. Ready to configure MCP?"
-- [ ] "Configuration written. Ready to test the connection?"
+- [ ] "Configuration written. Ready to restart Claude Code?"
 
 ### Path B (Connect Only) Checkpoints
 
 - [ ] "What type of connection does the existing server use (HTTP/SSE, WebSocket, Stdio)?"
 - [ ] "I have the connection details. Ready to configure MCP?"
-- [ ] "Configuration written. Ready to test the connection?"
+- [ ] "Configuration written. Ready to restart Claude Code?"
 
 ### Final Verification (Both Paths)
 
@@ -629,3 +625,8 @@ At each phase, confirm with user before proceeding:
 - [ ] "Would you like me to delete the test card?"
 
 **Definition of Done:** Only mark setup as complete when user confirms seeing the test card in Trello.
+
+## Related Skills
+
+- `/trello-use` - Perform Trello operations (create cards, move cards, etc.)
+- `/trello-disable` - Remove Trello configuration
