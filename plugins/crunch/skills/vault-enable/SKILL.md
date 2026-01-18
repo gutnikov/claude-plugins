@@ -1,9 +1,9 @@
 ---
-name: setup-vault
-description: Interactive setup wizard for HashiCorp Vault integration. Guides user through installing/connecting to Vault, configuring authentication, and verifying access by reading/writing a test secret.
+name: vault-enable
+description: Interactive setup wizard for HashiCorp Vault integration. Guides user through enabling Vault, configuring authentication, and verifying access by reading/writing a test secret.
 ---
 
-# Setup HashiCorp Vault
+# Enable HashiCorp Vault
 
 This skill guides users through the complete end-to-end process of setting up HashiCorp Vault for secrets management in their project.
 
@@ -28,9 +28,9 @@ This skill supports two setup modes:
 
 Since Vault setup may require session restarts (e.g., after environment changes), progress is tracked in a file.
 
-### Progress File: `setup-vault-progress.md`
+### Progress File: `vault-setup-progress.md`
 
-Location: Project root (`./setup-vault-progress.md`)
+Location: Project root (`./vault-setup-progress.md`)
 
 **Format:**
 
@@ -77,14 +77,76 @@ Location: Project root (`./setup-vault-progress.md`)
 
 Follow these steps interactively, confirming each stage with the user before proceeding.
 
-### Phase 0: Check for Existing Progress
+### Phase 0: Check for Existing Installation & Progress
 
 **ALWAYS start here.** Before anything else:
+
+#### Step 1: Check for Existing Vault Configuration
+
+First, detect if Vault is already set up in this project:
+
+```bash
+# Check CLAUDE.md for Vault configuration
+grep -A 5 "### HashiCorp Vault" CLAUDE.md 2>/dev/null
+
+# Check for environment variables
+echo "VAULT_ADDR: $VAULT_ADDR"
+echo "VAULT_TOKEN: ${VAULT_TOKEN:+set}"
+
+# Check .env file
+grep "^VAULT_" .env 2>/dev/null
+
+# Check if Vault is accessible
+vault status 2>/dev/null
+```
+
+**If Vault is already configured and accessible:**
+
+Display status and offer options:
+
+```
+Vault is already configured in this project!
+
+Current Configuration:
+  Address: http://127.0.0.1:8200
+  Status: Connected (unsealed)
+  Auth: Token authentication
+  Documented in: CLAUDE.md
+
+What would you like to do?
+1. Keep current setup (exit - you can use /vault-use for secrets operations)
+2. Reconfigure (update CLAUDE.md and .env settings)
+3. Start fresh (run /vault-disable first, then set up again)
+```
+
+- Option 1 → Exit setup mode, suggest using vault-use skill for secrets
+- Option 2 → Skip to Phase 4A/3B (Configure Project) with existing values
+- Option 3 → Suggest running vault-uninstall first, then re-running setup
+
+**If Vault is partially configured (some components missing):**
+
+```
+Vault is partially configured:
+
+Found:
+  ✓ VAULT_ADDR in .env
+  ✗ VAULT_TOKEN not set
+  ✗ Cannot connect to Vault server
+
+Would you like to:
+1. Fix the current setup (resume from connection configuration)
+2. Start fresh (clear existing config and begin setup)
+```
+
+- Option 1 → Resume from the appropriate phase based on what's missing
+- Option 2 → Clear existing config and start from Phase 1
+
+#### Step 2: Check for Progress File
 
 1. **Check for progress file**
 
    ```bash
-   cat setup-vault-progress.md 2>/dev/null
+   cat vault-setup-progress.md 2>/dev/null
    ```
 
 2. **If progress file exists:**
@@ -106,7 +168,7 @@ Follow these steps interactively, confirming each stage with the user before pro
    - If resuming, skip to the indicated phase with collected information
    - If starting over, delete progress file and begin Phase 1
 
-3. **If no progress file:**
+3. **If no progress file and no existing configuration:**
    - Proceed to Phase 1
 
 ### Phase 1: Prerequisites & Mode Selection
@@ -142,7 +204,7 @@ First, determine what kind of setup the user needs:
    - Option B → Skip to Phase 2B (Connect Only)
 
 4. **Create progress file**
-   Create `setup-vault-progress.md` with initial status:
+   Create `vault-setup-progress.md` with initial status:
 
    ```markdown
    # Vault Setup Progress
@@ -414,7 +476,7 @@ Once test is confirmed:
 1. **Document in CLAUDE.md**
    - Check if `CLAUDE.md` exists in project root
    - If not, create it with basic project structure
-   - Add or update the "Integrations" or "Secrets Management" section:
+   - Add or update the "Secrets Management" section:
 
    ```markdown
    ## Secrets Management
@@ -435,12 +497,67 @@ Once test is confirmed:
    - If CLAUDE.md already has secrets section, append Vault configuration
    - Preserve existing content in the file
 
-2. **Summarize what was configured**
+2. **Document installed MCP servers in CLAUDE.md**
+
+   Check for MCP configuration files and document all installed servers:
+
+   ```bash
+   # Check for MCP configuration
+   cat .mcp.json 2>/dev/null
+   cat .claude/mcp.json 2>/dev/null
+   ```
+
+   For each MCP server found, add to CLAUDE.md under `## MCP Servers`:
+
+   ```markdown
+   ## MCP Servers
+
+   ### [Server Name]
+
+   - **Status**: Configured
+   - **Package**: [npm package or command]
+   - **GitHub**: [repository URL]
+   - **Purpose**: [brief description]
+   ```
+
+   **Known MCP Server GitHub Repositories:**
+
+   | Server                                      | GitHub Repository                               |
+   | ------------------------------------------- | ----------------------------------------------- |
+   | `@modelcontextprotocol/server-filesystem`   | https://github.com/modelcontextprotocol/servers |
+   | `@modelcontextprotocol/server-github`       | https://github.com/modelcontextprotocol/servers |
+   | `@modelcontextprotocol/server-gitlab`       | https://github.com/modelcontextprotocol/servers |
+   | `@modelcontextprotocol/server-google-drive` | https://github.com/modelcontextprotocol/servers |
+   | `@modelcontextprotocol/server-postgres`     | https://github.com/modelcontextprotocol/servers |
+   | `@modelcontextprotocol/server-sqlite`       | https://github.com/modelcontextprotocol/servers |
+   | `@modelcontextprotocol/server-slack`        | https://github.com/modelcontextprotocol/servers |
+   | `@modelcontextprotocol/server-memory`       | https://github.com/modelcontextprotocol/servers |
+   | `@modelcontextprotocol/server-puppeteer`    | https://github.com/modelcontextprotocol/servers |
+   | `@modelcontextprotocol/server-brave-search` | https://github.com/modelcontextprotocol/servers |
+   | `@modelcontextprotocol/server-fetch`        | https://github.com/modelcontextprotocol/servers |
+   | `@21st-dev/magic-mcp`                       | https://github.com/21st-dev/magic-mcp           |
+   | `@anthropic/claude-code-mcp`                | https://github.com/anthropics/claude-code       |
+   | `mcp-server-kubernetes`                     | https://github.com/strowk/mcp-k8s-go            |
+   | `@trello/mcp-server`                        | https://github.com/trello/mcp-server            |
+
+   **Parsing MCP configuration:**
+
+   ```bash
+   # Extract server names from .mcp.json
+   cat .mcp.json | jq -r '.mcpServers | keys[]' 2>/dev/null
+   ```
+
+   For each server, extract:
+   - Server name (key in mcpServers)
+   - Command/package (from `command` or `args` fields)
+   - Match to known GitHub repositories
+
+3. **Summarize what was configured**
    - Vault address
    - Authentication method
    - Configuration location (env vars, .env, etc.)
 
-3. **Provide next steps**
+4. **Provide next steps**
    - Common Vault CLI commands:
      - `vault kv put` - Write secrets
      - `vault kv get` - Read secrets
@@ -449,95 +566,84 @@ Once test is confirmed:
    - How to use Vault in applications (SDKs)
    - Link to Vault documentation
 
-4. **Security reminders**
+5. **Security reminders**
    - Never commit Vault tokens to git
    - Rotate tokens periodically
    - Use short-lived tokens when possible
    - For production, use AppRole or identity-based auth
 
-5. **Cleanup suggestion**
+6. **Cleanup suggestion**
    - "Would you like me to delete the test secret, or keep it as reference?"
 
    ```bash
    vault kv delete secret/claude-test
    ```
 
-6. **Clean up progress file**
+7. **Clean up progress file**
    After successful DOD verification:
    ```bash
-   rm setup-vault-progress.md
+   rm vault-setup-progress.md
    ```
    Inform user:
    ```
    ✓ Vault setup complete!
    ✓ Progress file cleaned up
-   ✓ Configuration documented in CLAUDE.md
+   ✓ Vault configuration documented in CLAUDE.md
+   ✓ MCP servers documented in CLAUDE.md (if any found)
    ```
+
+---
 
 ## Error Handling
 
 ### Common Issues
 
 **"connection refused" error:**
-
 - Vault server not running
 - Wrong address/port
 - Firewall blocking connection
 
 **"permission denied" error:**
-
 - Token doesn't have access to path
 - Policy doesn't allow operation
 - Token expired
 
 **"seal status: sealed" error:**
-
 - Vault needs to be unsealed
 - In production, requires unseal keys
 - Dev server should auto-unseal
 
 **"x509: certificate signed by unknown authority":**
-
 - Custom CA certificate needed
 - Set `VAULT_CACERT` environment variable
 - Or use `VAULT_SKIP_VERIFY=true` (not recommended)
 
 **"token not found" or "missing client token":**
-
 - `VAULT_TOKEN` not set
 - Token file `~/.vault-token` not present
 - Need to authenticate first
 
 **KV v1 vs v2 path issues:**
-
 - KV v2 requires `/data/` in path for API
 - CLI handles this automatically with `kv` commands
 - Check secrets engine version: `vault secrets list`
 
 ## Interactive Checkpoints
 
-At each phase, confirm with user before proceeding:
-
 ### Mode Selection
-
 - [ ] "Which setup mode do you need: Full Setup (local dev) or Connect Only (existing server)?"
 
-### Path A (Full Setup) Checkpoints
-
+### Path A (Full Setup)
 - [ ] "Vault installed. Ready to start dev server?"
 - [ ] "Dev server running. I see the root token. Ready to configure?"
 - [ ] "Configuration saved. Ready to test?"
 
-### Path B (Connect Only) Checkpoints
-
+### Path B (Connect Only)
 - [ ] "What is the Vault server address?"
 - [ ] "Which authentication method do you use?"
 - [ ] "I have the credentials. Ready to configure?"
 - [ ] "Configuration saved. Ready to test?"
 
 ### Final Verification (Both Paths)
-
 - [ ] "Test secret written and read successfully. Setup complete?"
 - [ ] "Would you like me to delete the test secret?"
-
-**Definition of Done:** Only mark setup as complete when user confirms successful read/write of test secret.

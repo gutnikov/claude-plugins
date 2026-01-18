@@ -1,6 +1,6 @@
-# HashiCorp Vault Setup Guide
+# HashiCorp Vault Enable Guide
 
-Step-by-step instructions for installing and configuring HashiCorp Vault.
+Step-by-step instructions for enabling and configuring HashiCorp Vault.
 
 ## Overview
 
