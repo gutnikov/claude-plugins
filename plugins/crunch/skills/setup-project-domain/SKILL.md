@@ -17,13 +17,6 @@ The skill creation is complete when:
 4. Generated skill follows the setup-task-manager pattern exactly
 5. User verifies the generated skill
 
-## Reference Documents
-
-Before proceeding, understand these patterns:
-
-1. **Gold Standard**: `plugins/crunch/skills/setup-task-manager/SKILL.md`
-2. **Meta-skill Pattern**: `plugins/crunch/skills/create-tool-skills/SKILL.md`
-
 ## Domain Abstraction Model
 
 ### What Defines a "Project Domain"
@@ -92,13 +85,19 @@ These domains have known purposes, feature requirements, and popular vendors.
 
 | Domain | Key | Purpose | Required Features | Popular Vendors |
 |--------|-----|---------|-------------------|-----------------|
-| **Task Management** | `task-manager` | Track and manage work items | Tasks, Tags, Statuses, Dependencies | Jira, Linear, Trello, Asana, GitHub Issues |
-| **Secret Management** | `secret-manager` | Store and retrieve secrets | Get, Set, List, Delete | Vault, SOPS+age, AWS Secrets Manager, 1Password |
-| **Communication** | `communication` | Team messaging and notifications | Messages, Channels, Threads | Slack, Discord, MS Teams |
+| **Task Management** | `task-management` | Track and manage work items | Tasks, Tags, Statuses, Dependencies | Jira, Linear, Trello, Asana, GitHub Issues |
+| **Secrets** | `secrets` | Store and retrieve secrets securely | Get, Set, List, Delete | Vault, SOPS+age, AWS Secrets Manager, 1Password |
 | **CI/CD** | `ci-cd` | Continuous integration/deployment | Pipelines, Triggers, Logs, Artifacts | GitHub Actions, GitLab CI, CircleCI, Jenkins |
-| **Memory/Knowledge** | `memory` | Persistent memory and context | Store, Retrieve, Search | Memory MCP, Pinecone, Chroma |
-| **Monitoring** | `monitoring` | Observability and alerting | Metrics, Logs, Alerts | Datadog, Grafana, PagerDuty, Prometheus |
+| **Configuration** | `configuration` | Manage env variables per environment | Define, Switch, Validate, Sync | dotenv, direnv, Doppler, Infisical |
+| **Observability** | `observability` | Metrics, logs, traces, alerting | Metrics, Logs, Traces, Alerts | Datadog, Grafana, Prometheus, Honeycomb |
+| **Documentation** | `documentation` | Doc site generation and publishing | Generate, Publish, Version, Search | Docusaurus, GitBook, ReadTheDocs, Mintlify |
 | **Localization** | `localization` | Internationalization and translation | Extract, Translate, Sync, Manage keys | Lokalise, Crowdin, Phrase, i18next |
+| **Memory Management** | `memory-management` | Persistent AI context across sessions | Store, Retrieve, Search, Update | Memory MCP, Pinecone, Chroma, Weaviate |
+| **Deploy Environments** | `deploy-environments` | Manage dev/staging/prod environments | Config, Feature flags, Env switching | LaunchDarkly, ConfigCat, Vercel, Netlify |
+| **Problem Remediation** | `problem-remediation` | Runbook automation, self-healing | Detect, Execute, Verify, Rollback | Rundeck, Ansible, PagerDuty Runbooks, Shoreline |
+| **Tech Stack** | `tech-stack` | Auto-detect and configure project stack | Detect, Configure, Validate | Custom detection, Nx, Turborepo, mise |
+| **User Communication Bot** | `user-communication-bot` | Slack app/bot for project development | Send, Receive, React, Thread | Slack Bot, Discord Bot |
+| **Agents & Orchestration** | `agents-and-orchestration` | Configure Claude Code agents | Define, Connect, Coordinate | Claude Code agents, custom configs |
 | **Custom** | (user-defined) | (user-defined) | (user-defined) | (user-defined) |
 
 **Note:** Users select their existing vendor from the popular list (or specify "Other"). The skill then analyzes vendor compatibility with the domain requirements.
@@ -118,12 +117,51 @@ AskUserQuestion({
     header: "Domain",
     options: [
       { label: "Task Management", description: "Track and manage work items (tasks, bugs, features)" },
-      { label: "Secret Management", description: "Store and retrieve secrets securely" },
-      { label: "Communication", description: "Team messaging and notifications" },
+      { label: "Secrets", description: "Store and retrieve secrets securely" },
       { label: "CI/CD", description: "Continuous integration and deployment pipelines" },
-      { label: "Memory/Knowledge", description: "Persistent memory and context retrieval" },
-      { label: "Monitoring", description: "Observability, metrics, and alerting" },
-      { label: "Localization", description: "Internationalization and translation management" }
+      { label: "Configuration", description: "Manage env variables per environment" }
+    ],
+    multiSelect: false
+  }]
+})
+
+// If user needs more options, present second set:
+AskUserQuestion({
+  questions: [{
+    question: "More domain options:",
+    header: "Domain",
+    options: [
+      { label: "Observability", description: "Metrics, logs, traces, and alerting" },
+      { label: "Documentation", description: "Doc site generation and publishing" },
+      { label: "Localization", description: "Internationalization and translation" },
+      { label: "Memory Management", description: "Persistent AI context across sessions" }
+    ],
+    multiSelect: false
+  }]
+})
+
+// Additional domains:
+AskUserQuestion({
+  questions: [{
+    question: "Additional domains:",
+    header: "Domain",
+    options: [
+      { label: "Deploy Environments", description: "Manage dev/staging/prod environments" },
+      { label: "Problem Remediation", description: "Runbook automation and self-healing" },
+      { label: "Tech Stack", description: "Auto-detect and configure project stack" },
+      { label: "User Communication Bot", description: "Slack/Discord bot for development" }
+    ],
+    multiSelect: false
+  }]
+})
+
+// More domains:
+AskUserQuestion({
+  questions: [{
+    question: "More domains:",
+    header: "Domain",
+    options: [
+      { label: "Agents & Orchestration", description: "Configure Claude Code agents" }
     ],
     multiSelect: false
   }]
@@ -2441,13 +2479,3 @@ When generating a skill from scenarios, include the Domain Model section with:
 - [ ] (Custom only) "Vendor matrix complete. Confirm vendors?"
 - [ ] "Ready to generate skill at plugins/crunch/skills/setup-{domain_key}/?"
 - [ ] "Skill generated. Review the output?"
-
----
-
-## Related Skills
-
-- `/setup-task-manager` - Task management setup (example of generated skill)
-- `/create-tool-skills` - Create enable/use/disable skill sets
-- `/setup-mcp` - Generic MCP setup wizard
-- `/setup-vault` - Vault-specific setup
-- `/setup-slack-bot` - Slack-specific setup
