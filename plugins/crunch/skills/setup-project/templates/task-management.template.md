@@ -1,9 +1,6 @@
 ## Task Management
 
-**Backend**: {task_backend}
-**Integration**: {integration_type}
-
-This project uses the **Minimal Task System** — work is organized by the maturity of a thought, with every transition explicit.
+This project uses the **Task System** — work is organized by the maturity of a thought, with every transition explicit.
 
 ### Configuration
 
@@ -180,41 +177,123 @@ These rules must **never** be violated:
 
 ### Workflow Diagram
 
-```
-Input:New → Input:Reviewed → [Classify]
-                                ↓
-                    ┌───────────┴───────────┐
-                    ↓                       ↓
-              Create Intent           Create Issue
-                    ↓                       ↓
-            Intent:Draft            Issue:Reported
-                    ↓                       ↓
-            Intent:Refined          Issue:Confirmed
-                    ↓                       ↓
-            Intent:Approved          Issue:Planned
-                    ↓                       ↓
-            ┌───────┴───────┐              │
-            ↓               ↓              ↓
-      Create Work Item ←────────────────────
-            ↓
-    WorkItem:Backlog
-            ↓
-    WorkItem:InProgress ←──────────────────┐
-            ↓                              │
-    ┌───────┴───────┐                      │
-    ↓               ↓                      │
-WorkItem:Done   WorkItem:Blocked           │
-    │               ↓                      │
-    │         Create Blocker               │
-    │               ↓                      │
-    │         WorkItem:Backlog             │
-    │               ↓                      │
-    │         WorkItem:Done ───────────────┘
-    ↓
-[Completion Effects]
-    ├── Intent:Completed (if goal achieved)
-    ├── Issue:Resolved → Issue:Verified
-    └── Unblock dependent Work Items
+```mermaid
+flowchart TD
+
+  classDef bot fill:#ffe9a6,stroke:#f2b700,stroke-width:1px,color:#000;
+  classDef created fill:#ffedd5,stroke:#f97316,stroke-width:1px,color:#000;
+  classDef decision fill:#dbeafe,stroke:#1d4ed8,stroke-width:1px,color:#000;
+  classDef refine fill:#dcfce7,stroke:#16a34a,stroke-width:1px,color:#000;
+  classDef problem fill:#fee2e2,stroke:#ef4444,stroke-width:1px,color:#000;
+  classDef terminal fill:#e5e7eb,stroke:#6b7280,stroke-width:1px,color:#000;
+  classDef status fill:#f9fafb,stroke:#9ca3af,stroke-width:1px,color:#000;
+
+  %% INPUT
+  B0[User communication bot message]:::bot
+  I[Create Input]:::created
+  I_NEW[Input:New]:::status
+  C0[Input clear]:::decision
+  B1[Ask details via bot]:::bot
+  I_REVIEWED[Input:Reviewed]:::status
+  CL[Classify Input]:::decision
+
+  B0 --> I
+  I --> I_NEW
+  I_NEW --> C0
+  C0 -- No --> B1
+  B1 --> I
+  C0 -- Yes --> I_REVIEWED
+  I_REVIEWED --> CL
+
+  %% INTENT
+  INT[Create Intent]:::created
+  INT_DRAFT[Intent:Draft]:::status
+  INT_R[Refine Intent]:::refine
+  INT_REFINED[Intent:Refined]:::status
+  INT_A[Approve Intent]:::decision
+  INT_APPROVED[Intent:Approved]:::status
+  INT_D[Decompose to Work Items]:::refine
+  INT_COMPLETED[Intent:Completed]:::status
+
+  CL --> INT
+  INT --> INT_DRAFT
+  INT_DRAFT --> INT_R
+  INT_R --> INT_REFINED
+  INT_REFINED --> INT_A
+  INT_A --> INT_APPROVED
+  INT_APPROVED --> INT_D
+
+  %% ISSUE
+  ISS[Create Issue]:::created
+  ISS_REPORTED[Issue:Reported]:::status
+  ISS_C[Confirm or reproduce]:::problem
+  ISS_CONFIRMED[Issue:Confirmed]:::status
+  F0[Plan fix]:::decision
+  ISS_WONTFIX[Issue:WontFix]:::terminal
+  ISS_PLANNED[Issue:Planned]:::status
+  ISS_RESOLVED[Issue:Resolved]:::status
+  ISS_VERIFIED[Issue:Verified]:::status
+  WI_FROM_ISS[Create WorkItem]:::created
+
+  CL --> ISS
+  ISS --> ISS_REPORTED
+  ISS_REPORTED --> ISS_C
+  ISS_C --> ISS_CONFIRMED
+  ISS_CONFIRMED --> F0
+  F0 -- No --> ISS_WONTFIX
+  F0 -- Yes --> ISS_PLANNED
+  ISS_PLANNED --> WI_FROM_ISS
+
+  %% WORK ITEM
+  WI[Create WorkItem]:::created
+  WI_KIND[Classify Work Item type]:::decision
+  WI_EXP[Assign experts]:::refine
+  WI_ENR[Add implementation details]:::refine
+  WI_DOD[Define DoD tests checks]:::refine
+  B2[Confirm DoD via bot]:::bot
+  WI_BACKLOG[WorkItem:Backlog]:::status
+  WI_INPROG[WorkItem:InProgress]:::status
+  B_REVIEW[Ask for review]:::bot
+  WI_DONE[WorkItem:Done]:::terminal
+  WI_BLOCKED[WorkItem:Blocked]:::status
+  B3[Explain block via bot]:::bot
+  BLOCKER[Create WorkItem Blocker]:::created
+  BLOCKER_BACKLOG[WorkItem:Backlog]:::status
+
+  INT_D --> WI
+  WI_FROM_ISS --> WI
+
+  WI --> WI_KIND
+  WI_KIND --> WI_EXP
+  WI_EXP --> WI_ENR
+  WI_ENR --> WI_DOD
+
+  WI_DOD --> B2
+  B2 --> WI_DOD
+
+  WI_DOD --> WI_BACKLOG
+  WI_BACKLOG --> WI_INPROG
+
+  %% REVIEW AS COMMUNICATION
+  WI_INPROG --> B_REVIEW
+  B_REVIEW --> WI_DONE
+  B_REVIEW --> WI_INPROG
+
+  %% BLOCKED
+  WI_INPROG --> WI_BLOCKED
+  WI_BLOCKED --> B3
+
+  WI_BLOCKED --> BLOCKER
+  BLOCKER --> BLOCKER_BACKLOG
+  BLOCKER_BACKLOG --> WI_KIND
+
+  %% EFFECT ON INTENT AND ISSUE WHEN WORK ITEM IS DONE
+  WI_DONE -- for linked Intent when goal achieved --> INT_COMPLETED
+  WI_DONE -- for linked Issue --> ISS_RESOLVED
+  ISS_RESOLVED --> ISS_VERIFIED
+
+  %% UNBLOCKING EFFECT WHEN BLOCKER IS DONE
+  WI_DONE -- for blocked WorkItem --> WI_INPROG
 ```
 
 ---
