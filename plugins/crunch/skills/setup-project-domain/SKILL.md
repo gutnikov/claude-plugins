@@ -37,6 +37,52 @@ Before proceeding, understand these patterns:
 | **CLAUDE.md Section** | Section header | `## Task Management` |
 | **MCP Key Pattern** | Keys in .mcp.json | `jira`, `asana`, `linear` |
 
+### Integration Methods
+
+Each vendor has an `integration_method` that determines setup workflow:
+
+| Method | Config Location | Setup Approach | Test Method |
+|--------|-----------------|----------------|-------------|
+| `mcp-official` | `.mcp.json` | OAuth flow via mcp-remote | MCP tool call |
+| `mcp-community` | `.mcp.json` | npm package + env vars | MCP tool call |
+| `file-based` | Config files (e.g., `.sops.yaml`) | File creation + env vars | CLI command |
+| `cli` | Env vars / config files | Install CLI + configure | CLI command |
+| `api` | Env vars | Collect API credentials | API call |
+
+### Vendor Definition Schema
+
+Each vendor definition includes:
+
+```yaml
+vendors:
+  - name: "Vendor Name"           # Display name
+    key: "vendor-key"             # Lowercase identifier
+    integration_method: "mcp-community"  # Primary integration method
+    alternative_method: "cli"     # Optional fallback method
+    features: [...]               # Supported features
+    official_mcp: "url or null"   # Official MCP URL if available
+    community_mcp: "pkg or null"  # Community npm package if available
+    config_files:                 # For file-based integrations
+      - path: ".config.yaml"
+        description: "Configuration file"
+        template: |
+          # Template content
+    cli_tools:                    # For CLI integrations
+      - name: "toolname"
+        install: "brew install toolname"
+        check: "toolname --version"
+    env_vars:                     # Environment variables
+      - name: "ENV_VAR"
+        description: "Description"
+        default: "optional default"
+    setup_steps:                  # For non-MCP workflows
+      - "Step 1 description"
+      - "Step 2 description"
+    auth: [...]                   # Auth methods
+    test_op: "command or tool"    # Test operation
+    notes: "Brief description"
+```
+
 ---
 
 ## Pre-Defined Domains
@@ -579,9 +625,20 @@ claude_section: "## Secrets Management"
 vendors:
   - name: "HashiCorp Vault"
     key: "vault"
+    integration_method: "mcp-community"
+    alternative_method: "cli"          # Fallback to CLI if MCP not preferred
     features: [Get, Set, List, Delete, Versioning, Audit]
     official_mcp: null
     community_mcp: "vault-mcp"
+    cli_tools:
+      - name: "vault"
+        install: "brew install vault"
+        check: "vault --version"
+    env_vars:
+      - name: "VAULT_ADDR"
+        description: "Vault server address"
+      - name: "VAULT_TOKEN"
+        description: "Vault authentication token"
     auth: ["Token", "AppRole", "OIDC"]
     test_op: "vault kv list secret/"
     notes: "Enterprise-grade, self-hosted or HCP"
@@ -593,23 +650,58 @@ vendors:
 
   - name: "SOPS + age"
     key: "sops-age"
+    integration_method: "file-based"    # NOT MCP - uses config files and CLI
     features: [Get, Set, List, Delete]
     official_mcp: null
-    community_mcp: "sops-mcp"
+    community_mcp: null                 # CORRECTED - no such MCP exists
+    config_files:
+      - path: ".sops.yaml"
+        description: "SOPS encryption configuration"
+        template: |
+          creation_rules:
+            - path_regex: .*\.enc\.(yaml|json)$
+              age: '{public_key}'
+      - path: "~/.config/sops/age/keys.txt"
+        description: "age private key file"
+    cli_tools:
+      - name: "sops"
+        install: "brew install sops"
+        check: "sops --version"
+      - name: "age"
+        install: "brew install age"
+        check: "age --version"
+    env_vars:
+      - name: "SOPS_AGE_KEY_FILE"
+        description: "Path to age private key file"
+        default: "~/.config/sops/age/keys.txt"
+    setup_steps:
+      - "Generate age keys: age-keygen -o ~/.config/sops/age/keys.txt"
+      - "Copy public key from output (starts with 'age1...')"
+      - "Create .sops.yaml with public key"
+      - "Set SOPS_AGE_KEY_FILE environment variable"
+      - "Test: sops -e test.yaml > test.enc.yaml && sops -d test.enc.yaml"
     auth: ["age keys"]
-    test_op: "sops -d secrets.enc.yaml"
-    notes: "File-based, git-friendly"
+    test_op: "sops -d test.enc.yaml"
+    notes: "File-based, git-friendly, no external services"
     credential_update:
-      api_token:
-        env_vars: ["SOPS_AGE_KEY_FILE"]
-        regenerate_url: "N/A (local key file)"
-        instructions: "Update path to age key file or regenerate keys with age-keygen"
+      file_based:
+        config_files: [".sops.yaml", "~/.config/sops/age/keys.txt"]
+        regenerate_instructions: "Regenerate keys with age-keygen and update .sops.yaml"
+        instructions: "Update SOPS_AGE_KEY_FILE path or regenerate keys with age-keygen"
 
   - name: "AWS Secrets Manager"
     key: "aws-secrets"
+    integration_method: "mcp-community"
     features: [Get, Set, List, Delete, Versioning, Rotation]
     official_mcp: null
     community_mcp: "aws-mcp"
+    env_vars:
+      - name: "AWS_ACCESS_KEY_ID"
+        description: "AWS access key ID"
+      - name: "AWS_SECRET_ACCESS_KEY"
+        description: "AWS secret access key"
+      - name: "AWS_REGION"
+        description: "AWS region"
     auth: ["IAM", "Access Keys"]
     test_op: "aws secretsmanager list-secrets"
     notes: "AWS native, automatic rotation"
@@ -621,6 +713,7 @@ vendors:
 
   - name: "1Password"
     key: "1password"
+    integration_method: "mcp-official"
     features: [Get, Set, List, Delete]
     official_mcp: "https://mcp.1password.com/sse"
     community_mcp: null
@@ -1370,9 +1463,9 @@ This skill guides users through the complete end-to-end process of setting up {d
 The setup is complete when:
 
 1. {Domain name} vendor is selected
-2. MCP is configured (official OAuth or community with API token)
+2. Integration is configured (MCP, CLI, or file-based depending on vendor)
 3. User successfully executes a test operation
-4. CLAUDE.md is updated with "{Domain Name}" section documenting capabilities
+4. CLAUDE.md is updated with "{Domain Name}" section documenting capabilities and integration method
 
 ## Domain Model (if generated from scenarios)
 
@@ -1415,9 +1508,31 @@ Only vendors that support **all** of the following features are included:
 
 {excluded_vendors_table}
 
-## MCP Options by Vendor
+## Integration Options by Vendor
 
-{mcp_options_table}
+{integration_options_table}
+
+## Integration Methods
+
+This domain supports multiple integration approaches:
+
+### MCP Integration
+{If any vendors have MCP}
+Vendors with MCP integration get tools directly available in Claude.
+- Configuration: `.mcp.json`
+- Benefits: Seamless tool access, auto-refresh
+
+### File-Based Integration
+{If any vendors use file-based}
+Vendors using file-based integration store config in project files.
+- Configuration: {list config files}
+- Benefits: Git-friendly, works offline, full control
+
+### CLI Integration
+{If any vendors use CLI}
+Vendors using CLI integration work through command-line tools.
+- Requirements: {list CLI tools}
+- Benefits: Native tooling, scripting support
 
 ## Progress Tracking
 
@@ -1442,15 +1557,15 @@ Location: Project root (`./{domain_key}-setup-progress.md`)
 
 ## Completed Steps
 
-- [x] Phase 0: Check Existing
+- [x] Phase 0: State Detection
 - [x] Phase 1: Vendor Selection
 - [x] Phase 1.5: Scenario Collection (custom only)
 - [x] Phase 1.6: Model Extraction (custom only)
-- [ ] Phase 2: Domain Configuration <- CURRENT
+- [ ] Phase 2: Integration Selection <- CURRENT
 - [ ] Phase 2.5: Vendor Suggestion (custom only)
-- [ ] Phase 3: Check Existing Skill
-- [ ] Phase 4: Generate Setup Skill
-- [ ] Phase 5: Verification
+- [ ] Phase 3: Integration Setup
+- [ ] Phase 4: Connection Test
+- [ ] Phase 5: Documentation
 
 ## Management History
 
@@ -1520,8 +1635,11 @@ Tracks management operations performed on configured setup.
 ## Collected Information
 
 - **Vendor**: {value}
-- **MCP Type**: {Official / Community}
-- **MCP Package/URL**: {value}
+- **Integration Method**: {mcp-official / mcp-community / file-based / cli / api}
+- **MCP Type**: {Official / Community / N/A}
+- **MCP Package/URL**: {value or "N/A"}
+- **Config Files**: {list of config file paths or "N/A"}
+- **CLI Tools**: {list of CLI tools or "N/A"}
 - **Test Operation**: {value}
 - **Config Location**: {value}
 
@@ -1624,7 +1742,8 @@ When {domain_name} is already configured, display comprehensive management optio
 
 Current Configuration:
   Vendor: {detected vendor}
-  MCP: {package or URL}
+  Integration: {MCP (Official) | MCP (Community) | CLI | File-based}
+  Config: {.mcp.json | env vars | config files}
   Status: {Connected | Disconnected | Error}
   Last tested: {timestamp from progress file or "never"}
 
@@ -1694,7 +1813,7 @@ Select new vendor:
 
 ### Mode B: Update Credentials (Option 3)
 
-**Use case:** API token expired, OAuth needs refresh, or user got new credentials.
+**Use case:** API token expired, OAuth needs refresh, keys need regeneration, or user got new credentials.
 
 #### Workflow Display
 
@@ -1703,10 +1822,10 @@ Update Credentials
 ------------------
 
 Current vendor: {vendor}
-MCP type: {Official OAuth | Community (API Token)}
+Integration type: {MCP (OAuth) | MCP (API Token) | CLI | File-based}
 \`\`\`
 
-**For OAuth MCPs:**
+**For MCP OAuth integrations:**
 
 \`\`\`
 To re-authenticate:
@@ -1718,7 +1837,7 @@ Proceed with OAuth refresh? (yes/no)
 >
 \`\`\`
 
-**For API Token MCPs:**
+**For MCP API Token integrations:**
 
 \`\`\`
 Current environment variables:
@@ -1734,19 +1853,62 @@ Which credential to update?
 >
 \`\`\`
 
+**For CLI integrations:**
+
+\`\`\`
+Current environment variables:
+  {ENV_VAR1}: {configured | not set}
+  {ENV_VAR2}: {configured | not set}
+
+Which credential to update?
+1. {ENV_VAR1} - {description}
+2. {ENV_VAR2} - {description}
+3. All credentials
+4. Cancel
+
+>
+\`\`\`
+
+**For File-based integrations:**
+
+\`\`\`
+Current configuration files:
+  {config_file1}: {exists | missing}
+  {config_file2}: {exists | missing}
+
+Current environment variables:
+  {ENV_VAR}: {configured | not set}
+
+What would you like to update?
+1. Regenerate keys
+2. Update configuration files
+3. Update environment variables
+4. Cancel
+
+>
+\`\`\`
+
 #### Steps
 
-1. Detect current MCP type (OAuth vs API token)
-2. For OAuth: Update config to trigger re-auth on reload
-3. For API tokens: Collect new values, update .mcp.json env section
-4. Instruct reload:
+1. Detect current integration type
+2. **For MCP OAuth:** Update config to trigger re-auth on reload
+3. **For MCP API tokens:** Collect new values, update .mcp.json env section
+4. **For CLI:** Collect new credentials, guide user to update shell profile
+5. **For File-based:**
+   - If regenerating keys: Run key generation command (e.g., `age-keygen`)
+   - If updating config: Guide through config file updates
+   - If updating env vars: Guide to update shell profile
+6. Instruct action:
    \`\`\`
+   {For MCP:}
    Credentials updated in .mcp.json
-
    Please restart Claude Code to apply changes.
-   After restart, run this skill again to verify the connection.
+
+   {For CLI/File-based:}
+   Credentials updated.
+   Please restart your terminal or run: source ~/.{shell}rc
    \`\`\`
-5. After reload: Run connection test to verify
+7. Run connection test to verify
 
 ---
 
@@ -1755,6 +1917,8 @@ Which credential to update?
 **Use case:** Quick health check without changing anything.
 
 #### Workflow Display
+
+**For MCP integrations:**
 
 \`\`\`
 Connection Test
@@ -1780,6 +1944,69 @@ Would you like to run diagnostics? (yes/no)
 >
 \`\`\`
 
+**For CLI integrations:**
+
+\`\`\`
+Connection Test
+---------------
+
+Testing {vendor} CLI connection...
+
+Step 1: Checking CLI tool installed... {✓ | ✗}
+        {tool_name} --version: {version or "not found"}
+Step 2: Checking environment variables... {✓ | ✗}
+        {ENV_VAR}: {configured | not set}
+Step 3: Running test operation... {✓ | ✗}
+        {test_op}
+Step 4: Verifying response... {✓ | ✗}
+
+{If all pass}
+✓ Connection healthy!
+  Last test: {timestamp}
+
+{If any fail}
+✗ Connection issue detected
+
+Problem: {description}
+Suggested fix: {action}
+
+Would you like to run diagnostics? (yes/no)
+>
+\`\`\`
+
+**For File-based integrations:**
+
+\`\`\`
+Connection Test
+---------------
+
+Testing {vendor} file-based integration...
+
+Step 1: Checking CLI tools installed...
+        {tool1}: {✓ installed | ✗ not found}
+        {tool2}: {✓ installed | ✗ not found}
+Step 2: Checking configuration files...
+        {config_file1}: {✓ exists | ✗ missing}
+        {config_file2}: {✓ exists | ✗ missing}
+Step 3: Checking environment variables...
+        {ENV_VAR}: {✓ configured | ✗ not set}
+Step 4: Running test operation... {✓ | ✗}
+        {test_op}
+
+{If all pass}
+✓ Integration healthy!
+  Last test: {timestamp}
+
+{If any fail}
+✗ Integration issue detected
+
+Problem: {description}
+Suggested fix: {action}
+
+Would you like to run diagnostics? (yes/no)
+>
+\`\`\`
+
 #### Test Operations by Vendor
 
 {test_operations_table}
@@ -1792,9 +2019,11 @@ Would you like to run diagnostics? (yes/no)
 
 #### Diagnostic Checklist Display
 
+**For MCP integrations:**
+
 \`\`\`
-Diagnostics: {Domain Name}
-==========================
+Diagnostics: {Domain Name} (MCP)
+================================
 
 Running diagnostics...
 
@@ -1824,7 +2053,83 @@ Would you like to:
 >
 \`\`\`
 
+**For CLI integrations:**
+
+\`\`\`
+Diagnostics: {Domain Name} (CLI)
+================================
+
+Running diagnostics...
+
+CLI TOOLS
+  [✓] {tool1} installed ({version})
+  [✗] {tool2} not found
+      Install with: {install_command}
+
+ENVIRONMENT
+  [✓] {ENV_VAR1} is set
+  [✗] {ENV_VAR2} not set
+      Expected: {description}
+
+CONNECTIVITY
+  [✗] Test operation failed
+      Error: "connection refused"
+
+RECOMMENDATIONS
+  1. Install missing CLI tools
+  2. Set required environment variables
+  3. Check network connectivity
+
+Would you like to:
+1. Update credentials now
+2. View full configuration
+3. Exit
+>
+\`\`\`
+
+**For File-based integrations:**
+
+\`\`\`
+Diagnostics: {Domain Name} (File-based)
+=======================================
+
+Running diagnostics...
+
+CLI TOOLS
+  [✓] {tool1} installed ({version})
+  [✓] {tool2} installed ({version})
+
+CONFIGURATION FILES
+  [✓] {config_file1} exists
+  [✗] {config_file2} missing
+      Create with: {creation_instructions}
+
+FILE CONTENT VALIDATION
+  [✓] {config_file1} syntax valid
+  [?] {config_file1} public key configured (cannot verify)
+
+ENVIRONMENT
+  [✓] {ENV_VAR} is set
+
+KEY FILES
+  [✗] Private key file not found at {key_path}
+      Generate with: {key_generation_command}
+
+RECOMMENDATIONS
+  1. Create missing configuration files
+  2. Generate required keys
+  3. Set environment variables pointing to key files
+
+Would you like to:
+1. Run setup steps again
+2. View full configuration
+3. Exit
+>
+\`\`\`
+
 #### Diagnostic Checks
+
+**For MCP integrations:**
 
 | Check | Method | Pass Condition |
 |-------|--------|----------------|
@@ -1835,15 +2140,46 @@ Would you like to:
 | MCP loaded | Check available tools | Vendor tools present |
 | Test operation | Execute test | Returns valid data |
 
+**For CLI integrations:**
+
+| Check | Method | Pass Condition |
+|-------|--------|----------------|
+| CLI tool installed | Run `{tool} --version` | Command succeeds |
+| Env vars set | Check shell environment | Variables have values |
+| Test operation | Execute CLI command | Returns valid data |
+
+**For File-based integrations:**
+
+| Check | Method | Pass Condition |
+|-------|--------|----------------|
+| CLI tools installed | Run `{tool} --version` | Commands succeed |
+| Config files exist | File read | Files present |
+| Config syntax valid | Parse attempt | No errors |
+| Key files exist | File read | Files present at expected paths |
+| Env vars set | Check shell environment | Variables have values |
+| Test operation | Execute test command | Returns valid data |
+
 #### Common Diagnostic Scenarios
 
-**Scenario: 401 Unauthorized**
+**Scenario: 401 Unauthorized (MCP)**
 - Likely cause: API token expired or invalid
 - Fix: Regenerate token, run Update credentials
 
 **Scenario: MCP not loaded**
 - Likely cause: .mcp.json syntax error or missing dependency
 - Fix: Validate JSON, check npx availability
+
+**Scenario: CLI tool not found**
+- Likely cause: Tool not installed or not in PATH
+- Fix: Install tool with package manager, verify PATH
+
+**Scenario: Config file missing (File-based)**
+- Likely cause: Setup incomplete or file deleted
+- Fix: Re-run setup steps to create config file
+
+**Scenario: Key file not found (File-based)**
+- Likely cause: Keys not generated or env var pointing to wrong path
+- Fix: Generate keys or correct SOPS_AGE_KEY_FILE path
 
 **Scenario: Connection timeout**
 - Likely cause: Network issue or service down
@@ -1857,9 +2193,13 @@ Would you like to:
 
 #### Display Format
 
+**For MCP integrations:**
+
 \`\`\`
 Configuration View: {Domain Name}
 =================================
+
+Integration Type: MCP ({official | community})
 
 .mcp.json entry:
 \`\`\`json
@@ -1879,11 +2219,82 @@ CLAUDE.md section:
 ## {Domain Name}
 
 Backend: {vendor}
+Integration: MCP
 ...
 \`\`\`
 
 Files:
   - .mcp.json: {path}
+  - CLAUDE.md: {path}
+  - Progress file: {exists | not found}
+
+Press Enter to continue...
+\`\`\`
+
+**For CLI integrations:**
+
+\`\`\`
+Configuration View: {Domain Name}
+=================================
+
+Integration Type: CLI
+
+CLI Tools:
+  - {tool1}: {version}
+  - {tool2}: {version}
+
+Environment Variables:
+  - {ENV_VAR1}: ****{last4} (configured)
+  - {ENV_VAR2}: ****{last4} (configured)
+
+CLAUDE.md section:
+\`\`\`markdown
+## {Domain Name}
+
+Backend: {vendor}
+Integration: CLI
+...
+\`\`\`
+
+Files:
+  - CLAUDE.md: {path}
+  - Progress file: {exists | not found}
+
+Press Enter to continue...
+\`\`\`
+
+**For File-based integrations:**
+
+\`\`\`
+Configuration View: {Domain Name}
+=================================
+
+Integration Type: File-based
+
+Configuration Files:
+  - {config_file1}: {path} ({exists | missing})
+  - {config_file2}: {path} ({exists | missing})
+
+CLI Tools:
+  - {tool1}: {version}
+  - {tool2}: {version}
+
+Environment Variables:
+  - {ENV_VAR}: {value or "not set"}
+
+CLAUDE.md section:
+\`\`\`markdown
+## {Domain Name}
+
+Backend: {vendor}
+Integration: File-based
+Config: {config_file1}
+...
+\`\`\`
+
+Files:
+  - {config_file1}: {path}
+  - {config_file2}: {path}
   - CLAUDE.md: {path}
   - Progress file: {exists | not found}
 
@@ -1900,6 +2311,8 @@ Press Enter to continue...
 
 #### Workflow Display
 
+**For MCP integrations:**
+
 \`\`\`
 Reset Configuration
 -------------------
@@ -1915,14 +2328,69 @@ Type "RESET" to confirm, or "cancel" to abort:
 >
 \`\`\`
 
+**For CLI integrations:**
+
+\`\`\`
+Reset Configuration
+-------------------
+
+This will remove:
+  [x] {Domain Name} section from CLAUDE.md
+  [ ] Progress file (if exists)
+
+NOTE: Environment variables in your shell profile will NOT be removed automatically.
+      You may want to remove these manually:
+        - {ENV_VAR1}
+        - {ENV_VAR2}
+
+WARNING: This cannot be undone.
+
+Type "RESET" to confirm, or "cancel" to abort:
+>
+\`\`\`
+
+**For File-based integrations:**
+
+\`\`\`
+Reset Configuration
+-------------------
+
+This will remove:
+  [x] {config_file1} (project config)
+  [x] {Domain Name} section from CLAUDE.md
+  [ ] Progress file (if exists)
+
+This will NOT remove (for safety):
+  [ ] {key_file} (private keys - remove manually if needed)
+  [ ] {ENV_VAR} from shell profile
+
+WARNING: This cannot be undone.
+
+Type "RESET" to confirm, or "cancel" to abort:
+>
+\`\`\`
+
 #### Steps
 
-1. Show what will be removed
+1. Show what will be removed (varies by integration type)
 2. Require explicit confirmation (user must type "RESET")
 3. If confirmed:
+   **For MCP:**
    a. Remove MCP entry from .mcp.json
    b. Remove section from CLAUDE.md
    c. Delete progress file if exists
+
+   **For CLI:**
+   a. Remove section from CLAUDE.md
+   b. Delete progress file if exists
+   c. Show reminder about env vars to remove manually
+
+   **For File-based:**
+   a. Remove project config files (e.g., .sops.yaml)
+   b. Remove section from CLAUDE.md
+   c. Delete progress file if exists
+   d. Show reminder about key files and env vars (don't auto-delete for safety)
+
 4. Offer to run fresh setup:
    \`\`\`
    Configuration removed.
@@ -1973,23 +2441,64 @@ Present qualified vendors with feature highlights:
 
 ---
 
-### Phase 2: MCP Selection
+### Phase 2: Integration Selection
 
-Based on selected vendor, present MCP options:
+Based on selected vendor's available integration methods:
 
-{mcp_selection_by_vendor}
+#### For Vendors with Multiple Integration Methods
 
-**Update progress file with MCP selection**
+\`\`\`
+How would you like to integrate {vendor}?
 
-**DOD:** User selects an MCP type
+  1. MCP Integration (Recommended)
+     - Tools available directly in Claude
+     - Auto-refresh, seamless experience
+
+  2. CLI/File-based Integration
+     - Uses native tools and config files
+     - More control, works offline
+
+Select option (1-2):
+\`\`\`
+
+#### For Vendors with Single Integration Method
+
+Skip this phase - proceed directly with the vendor's integration method.
+
+#### Integration Method Selection by Vendor
+
+{integration_selection_by_vendor}
+
+**Update progress file with integration method selection**
+
+**DOD:** User selects an integration method (or auto-selected for single-method vendors)
 
 ---
 
-### Phase 3: MCP Setup
+### Phase 3: Integration Setup
 
-Setup varies based on MCP type (Official OAuth vs Community Local).
+Setup varies based on selected integration method.
 
-#### For Official Remote MCPs (OAuth-based)
+\`\`\`
+                  Integration Method
+┌─────────────────────────────────────────────────────────┐
+│                                                         │
+└───────────┬─────────────┬─────────────┬────────────────┘
+            │             │             │
+    ┌───────▼───────┐ ┌───▼───┐ ┌───────▼───────┐
+    │ MCP (Official │ │  CLI  │ │  File-Based   │
+    │ or Community) │ │       │ │               │
+    └───────┬───────┘ └───┬───┘ └───────┬───────┘
+            │             │             │
+            ▼             ▼             ▼
+     Configure        Install &     Create config
+     .mcp.json       configure CLI   files & set
+                                    env vars
+\`\`\`
+
+#### Branch A: MCP Setup (mcp-official, mcp-community)
+
+##### For Official Remote MCPs (OAuth-based)
 
 1. **Configure `.mcp.json` with remote URL:**
 
@@ -1999,11 +2508,11 @@ Setup varies based on MCP type (Official OAuth vs Community Local).
 
 3. **After reload, OAuth flow will trigger automatically**
 
-#### For Community Local MCPs (API Token-based)
+##### For Community Local MCPs (API Token-based)
 
 {community_mcp_setup_guides}
 
-#### Verify .gitignore
+##### Verify .gitignore
 
 \`\`\`bash
 grep -q "^\.mcp\.json$" .gitignore 2>/dev/null
@@ -2011,11 +2520,7 @@ grep -q "^\.mcp\.json$" .gitignore 2>/dev/null
 
 - If `.mcp.json` is not in `.gitignore`, offer to add it
 
-#### Update Progress File for Reload
-
-Update to indicate pending reload and resume point.
-
-#### Instruct User to Reload
+##### Instruct User to Reload
 
 \`\`\`
 MCP configuration written to .mcp.json
@@ -2026,29 +2531,173 @@ Please restart Claude Code, then run this skill again.
 Progress has been saved - setup will resume from the connection test.
 \`\`\`
 
-**DOD:** MCP configured, user instructed to reload
+#### Branch B: CLI Setup (cli)
+
+\`\`\`
+CLI Integration Setup
+---------------------
+
+{vendor} uses CLI tools for integration.
+
+Step 1: Verify CLI tools installed
+
+  Checking for: {cli_tools}
+
+  {tool_name}: {✓ installed | ✗ not found}
+
+  {If not found}
+  Install with: {install_command}
+
+Step 2: Configure authentication
+
+  {Collect credentials based on vendor.auth}
+
+Step 3: Set environment variables
+
+  {List required env_vars}
+
+  Add to your shell profile (~/.bashrc, ~/.zshrc):
+  export {ENV_VAR}="{value}"
+
+Step 4: Verify installation
+
+  Running: {test_op}
+\`\`\`
+
+#### Branch C: File-Based Setup (file-based)
+
+\`\`\`
+File-Based Integration Setup
+----------------------------
+
+{vendor} uses configuration files for integration.
+
+Step 1: Verify CLI tools installed
+
+  Checking for: {cli_tools}
+
+  {tool_name}: {✓ installed | ✗ not found}
+
+  {If not found}
+  Install with: {install_command}
+
+Step 2: Create configuration files
+
+  File: {config_file.path}
+  Purpose: {config_file.description}
+
+  {Generate appropriate config content from template}
+
+Step 3: Generate/configure keys (if applicable)
+
+  {For SOPS+age: run age-keygen}
+  {For other file-based: appropriate key setup}
+
+Step 4: Set environment variables
+
+  {List required env_vars}
+
+Step 5: Verify installation
+
+  Running: {test_op}
+\`\`\`
+
+#### Update Progress File
+
+Update to indicate pending verification and resume point.
+
+**DOD:** Integration configured (MCP written to .mcp.json, CLI tools installed, or config files created)
 
 ---
 
 ### Phase 4: Connection Test
 
-After Claude Code reload, verify MCP is working.
+After setup, verify integration is working.
 
-#### Step 1: Verify MCP is Loaded
+#### For MCP integrations (after Claude Code reload):
+
+##### Step 1: Verify MCP is Loaded
 
 - Check that vendor MCP tools are now available
 - If not available, troubleshoot configuration
 
-#### Step 2: Run Test Operation
+##### Step 2: Run Test Operation
 
 {test_operations_table}
 
-#### Step 3: Confirm with User
+##### Step 3: Confirm with User
 
 \`\`\`
 Test successful! I was able to {describe what was retrieved}.
 
 Did you see the expected data? Please confirm.
+\`\`\`
+
+#### For CLI integrations:
+
+##### Step 1: Verify CLI Tool
+
+\`\`\`bash
+{tool} --version
+\`\`\`
+
+- If not found, guide user to install
+
+##### Step 2: Verify Environment Variables
+
+\`\`\`bash
+echo ${ENV_VAR}
+\`\`\`
+
+- If not set, guide user to configure
+
+##### Step 3: Run Test Operation
+
+\`\`\`bash
+{test_op}  # e.g., "vault kv list secret/"
+\`\`\`
+
+##### Step 4: Confirm with User
+
+\`\`\`
+Test successful! CLI tool is working.
+
+Did you see the expected output? Please confirm.
+\`\`\`
+
+#### For File-based integrations:
+
+##### Step 1: Verify CLI Tools
+
+\`\`\`bash
+{tool1} --version
+{tool2} --version
+\`\`\`
+
+##### Step 2: Verify Configuration Files
+
+\`\`\`bash
+cat {config_file}
+\`\`\`
+
+##### Step 3: Verify Keys/Credentials
+
+\`\`\`bash
+ls -la {key_file_path}
+\`\`\`
+
+##### Step 4: Run Test Operation
+
+\`\`\`bash
+{test_op}  # e.g., "sops -d test.enc.yaml"
+\`\`\`
+
+##### Step 5: Confirm with User
+
+\`\`\`
+Test successful! File-based integration is working.
+
+Did you see the expected output? Please confirm.
 \`\`\`
 
 **DOD:** Test operation succeeds, user confirms
@@ -2076,13 +2725,51 @@ rm {domain_key}-setup-progress.md
 
 #### Step 4: Summarize Completion
 
+**For MCP integrations:**
+
 \`\`\`
 {Vendor} {domain_name} setup complete!
 
 Configuration Summary:
   - Vendor: {vendor}
-  - MCP: {package or "Official OAuth"}
+  - Integration: MCP ({official | community})
   - Config file: .mcp.json
+  - Documented in: CLAUDE.md
+
+Available Features:
+{feature_bullet_list}
+
+Progress file cleaned up.
+\`\`\`
+
+**For CLI integrations:**
+
+\`\`\`
+{Vendor} {domain_name} setup complete!
+
+Configuration Summary:
+  - Vendor: {vendor}
+  - Integration: CLI
+  - CLI tools: {tool_list}
+  - Environment variables: {env_var_list}
+  - Documented in: CLAUDE.md
+
+Available Features:
+{feature_bullet_list}
+
+Progress file cleaned up.
+\`\`\`
+
+**For File-based integrations:**
+
+\`\`\`
+{Vendor} {domain_name} setup complete!
+
+Configuration Summary:
+  - Vendor: {vendor}
+  - Integration: File-based
+  - Config files: {config_file_list}
+  - CLI tools: {tool_list}
   - Documented in: CLAUDE.md
 
 Available Features:
@@ -2136,17 +2823,20 @@ Progress file cleaned up.
 ### Phase 1 Checkpoints
 - [ ] "Which vendor would you like to use?"
 
-### Phase 2 Checkpoints
-- [ ] "Official MCP (OAuth) or community option (API Token)?"
+### Phase 2 Checkpoints (Integration Selection)
+- [ ] "How would you like to integrate? (MCP / CLI / File-based)"
+- [ ] (MCP only) "Official MCP (OAuth) or community option (API Token)?"
 
-### Phase 3 Checkpoints
-- [ ] "Credentials collected. Ready to configure?"
-- [ ] "Configuration written. Ready to restart Claude Code?"
+### Phase 3 Checkpoints (Integration Setup)
+- [ ] "Credentials/config collected. Ready to configure?"
+- [ ] (MCP) "Configuration written. Ready to restart Claude Code?"
+- [ ] (CLI) "Environment variables set. Ready to test?"
+- [ ] (File-based) "Config files created. Ready to test?"
 
-### Phase 4 Checkpoints
+### Phase 4 Checkpoints (Connection Test)
 - [ ] "Test successful! Did you see the expected data?"
 
-### Phase 5 Checkpoints
+### Phase 5 Checkpoints (Documentation)
 - [ ] "Setup complete! Documented in CLAUDE.md."
 
 **Definition of Done:** Only mark setup as complete when user confirms the test operation succeeded.
@@ -2182,12 +2872,16 @@ For excluded vendors table:
 | {Vendor2} | {reason} |
 ```
 
-For MCP options table:
+For integration options table:
 
 ```markdown
-| Vendor | Official MCP | Community MCP | Recommended | Auth Type |
-|--------|--------------|---------------|-------------|-----------|
-| **{Vendor1}** | {url or "None"} | {package or "None"} | {recommendation} | {auth_types} |
+| Vendor | Integration | Method Details | Auth Type |
+|--------|-------------|----------------|-----------|
+| **{Vendor1}** | MCP | Official: {url} | {auth_types} |
+| **{Vendor2}** | MCP | Community: {package} | {auth_types} |
+| **{Vendor3}** | File-based | Config: {config_files} | {auth_types} |
+| **{Vendor4}** | CLI | Tools: {cli_tools} | {auth_types} |
+| **{Vendor5}** | MCP / CLI | Primary: MCP, Alt: CLI | {auth_types} |
 ```
 
 ### Vendor Selection Display Generation
