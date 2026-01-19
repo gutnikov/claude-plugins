@@ -191,6 +191,22 @@ ls locales/ i18n/ translations/ 2>/dev/null
 
 ---
 
+## Template File
+
+This skill includes a template file for initializing new CLAUDE.md files:
+
+**Template Location**: `plugins/crunch/skills/setup-project/CLAUDE.template.md`
+
+The template includes:
+- All 14 domain sections (7 required, 7 optional) with placeholder content
+- HTML comments indicating how to configure each domain
+- MCP Servers section for tracking integrations
+- Project Notes section for custom documentation
+
+When CLAUDE.md doesn't exist, offer to create it from the template.
+
+---
+
 ## Workflow
 
 ### Phase 0: Auto-Detection
@@ -203,7 +219,39 @@ ls locales/ i18n/ translations/ 2>/dev/null
 cat CLAUDE.md 2>/dev/null
 ```
 
-If CLAUDE.md doesn't exist, note that all domains are unconfigured.
+**If CLAUDE.md doesn't exist**, offer to create it from template:
+
+```typescript
+AskUserQuestion({
+  questions: [{
+    question: "No CLAUDE.md found. Would you like to create one?",
+    header: "Initialize",
+    options: [
+      { label: "Create from template (Recommended)", description: "Create CLAUDE.md with all domain sections ready to configure" },
+      { label: "Create minimal", description: "Create empty CLAUDE.md, add sections as needed" },
+      { label: "Skip", description: "Continue without CLAUDE.md" }
+    ],
+    multiSelect: false
+  }]
+})
+```
+
+**If "Create from template" selected:**
+
+```bash
+# Copy template to project root
+cp plugins/crunch/skills/setup-project/CLAUDE.template.md CLAUDE.md
+```
+
+**If "Create minimal" selected:**
+
+```bash
+cat > CLAUDE.md << 'EOF'
+# Project Configuration
+
+This file documents the project setup for Claude Code.
+EOF
+```
 
 #### Step 2: Read .mcp.json
 
@@ -1518,12 +1566,18 @@ return <h1>{t('welcome.title')}</h1>;
 ### Recovery Actions
 
 **If CLAUDE.md doesn't exist:**
+
+Option 1 - Use the full template (recommended):
+```bash
+cp plugins/crunch/skills/setup-project/CLAUDE.template.md CLAUDE.md
+```
+
+Option 2 - Create minimal file:
 ```bash
 cat > CLAUDE.md << 'EOF'
 # Project Configuration
 
 This file documents the project setup for Claude Code.
-
 EOF
 ```
 
