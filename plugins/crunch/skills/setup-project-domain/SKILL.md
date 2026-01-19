@@ -88,6 +88,7 @@ These domains have known purposes, feature requirements, and popular vendors.
 | **Task Management** | `task-management` | Track and manage work items | Tasks, Tags, Statuses, Dependencies | Jira, Linear, Trello, Asana, GitHub Issues |
 | **Secrets** | `secrets` | Store and retrieve secrets securely | Get, Set, List, Delete | Vault, SOPS+age, AWS Secrets Manager, 1Password |
 | **CI/CD** | `ci-cd` | Continuous integration/deployment | Pipelines, Triggers, Logs, Artifacts | GitHub Actions, GitLab CI, CircleCI, Jenkins |
+| **Pipelines** | `pipelines` | Define project pipelines (local, CI, deploy) | Detect, Define, Document, Validate | Depends on tech-stack + CI + environments |
 | **Configuration** | `configuration` | Manage env variables per environment | Define, Switch, Validate, Sync | dotenv, direnv, Doppler, Infisical |
 | **Observability** | `observability` | Metrics, logs, traces, alerting | Metrics, Logs, Traces, Alerts | Datadog, Grafana, Prometheus, Honeycomb |
 | **Documentation** | `documentation` | Doc site generation and publishing | Generate, Publish, Version, Search | Docusaurus, GitBook, ReadTheDocs, Mintlify |
@@ -119,7 +120,7 @@ AskUserQuestion({
       { label: "Task Management", description: "Track and manage work items (tasks, bugs, features)" },
       { label: "Secrets", description: "Store and retrieve secrets securely" },
       { label: "CI/CD", description: "Continuous integration and deployment pipelines" },
-      { label: "Configuration", description: "Manage env variables per environment" }
+      { label: "Pipelines", description: "Define project pipelines (local, CI, deploy)" }
     ],
     multiSelect: false
   }]
@@ -131,10 +132,10 @@ AskUserQuestion({
     question: "More domain options:",
     header: "Domain",
     options: [
+      { label: "Configuration", description: "Manage env variables per environment" },
       { label: "Observability", description: "Metrics, logs, traces, and alerting" },
       { label: "Documentation", description: "Doc site generation and publishing" },
-      { label: "Localization", description: "Internationalization and translation" },
-      { label: "Memory Management", description: "Persistent AI context across sessions" }
+      { label: "Localization", description: "Internationalization and translation" }
     ],
     multiSelect: false
   }]
@@ -146,10 +147,10 @@ AskUserQuestion({
     question: "Additional domains:",
     header: "Domain",
     options: [
+      { label: "Memory Management", description: "Persistent AI context across sessions" },
       { label: "Deploy Environments", description: "Manage dev/staging/prod environments" },
       { label: "Problem Remediation", description: "Runbook automation and self-healing" },
-      { label: "Tech Stack", description: "Auto-detect and configure project stack" },
-      { label: "User Communication Bot", description: "Slack/Discord bot for development" }
+      { label: "Tech Stack", description: "Auto-detect and configure project stack" }
     ],
     multiSelect: false
   }]
@@ -161,6 +162,7 @@ AskUserQuestion({
     question: "More domains:",
     header: "Domain",
     options: [
+      { label: "User Communication Bot", description: "Slack/Discord bot for development" },
       { label: "Agents & Orchestration", description: "Configure Claude Code agents" }
     ],
     multiSelect: false
