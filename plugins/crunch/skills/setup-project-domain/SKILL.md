@@ -33,6 +33,7 @@ Before proceeding, understand these patterns:
 | **Domain Name** | Human-readable name | "Task Management" |
 | **Domain Key** | Lowercase identifier | `task-manager` |
 | **Purpose** | What the domain accomplishes | "Track and manage work items" |
+| **Domain Explanation** | Educational content for users | "Why this domain matters..." |
 | **Required Features** | Features vendors MUST have | Tasks, Tags, Statuses, Dependencies |
 | **CLAUDE.md Section** | Section header | `## Task Management` |
 | **MCP Key Pattern** | Keys in .mcp.json | `jira`, `asana`, `linear` |
@@ -97,7 +98,7 @@ These domains have pre-researched vendor matrices ready for immediate use:
 | **CI/CD** | `ci-cd` | Continuous integration/deployment | Pipelines, Triggers, Logs, Artifacts | GitHub Actions, GitLab CI, CircleCI |
 | **Memory/Knowledge** | `memory` | Persistent memory and context | Store, Retrieve, Search | Memory MCP, Pinecone, Chroma |
 | **Monitoring** | `monitoring` | Observability and alerting | Metrics, Logs, Alerts | Datadog, Grafana, PagerDuty |
-| **Code Quality** | `code-quality` | Static analysis and security | Lint, Analyze, Security Scan | SonarQube, CodeClimate, Snyk |
+| **Localization** | `localization` | Internationalization and translation | Extract, Translate, Sync, Manage keys | Lokalise, Crowdin, Phrase, i18next |
 | **Custom** | (user-defined) | (user-defined) | (user-defined) | (user-defined) |
 
 ---
@@ -135,9 +136,9 @@ Which project domain would you like to create a setup skill for?
                           Features: Metrics, Logs, Alerts
                           Vendors: Datadog, Grafana, PagerDuty
 
-  7. Code Quality        - Static analysis and security
-                          Features: Lint, Format, Analyze
-                          Vendors: SonarQube, CodeClimate, Snyk
+  7. Localization        - Internationalization and translation
+                          Features: Extract, Translate, Sync, Manage keys
+                          Vendors: Lokalise, Crowdin, Phrase, i18next
 
   8. Custom Domain       - Define your own domain
                           (Will ask for features and vendors)
@@ -609,12 +610,191 @@ Would you like to:
 
 ## Pre-Defined Domain Configurations
 
+### Task Management
+
+```yaml
+domain_name: "Task Management"
+domain_key: "task-manager"
+purpose: "Track and manage work items, bugs, features, and team tasks"
+explanation: |
+  ## Why Task Management Integration?
+
+  Task management tools (Jira, Trello, Linear) track what needs to be done.
+  With this integration, Claude can create tasks, update status, and help
+  you stay organized without switching between tools.
+
+  ### The Problem
+
+  ┌─────────────────────────────────────────────────────────┐
+  │  Working Without Integration                            │
+  │                                                         │
+  │  "Claude, I found a bug in the login flow"              │
+  │                                                         │
+  │  Then you have to:                                      │
+  │  1. Open Jira/Trello in browser                         │
+  │  2. Create new ticket manually                          │
+  │  3. Copy details from conversation                      │
+  │  4. Assign, set priority, add labels...                 │
+  │  5. Come back to coding                                 │
+  │                                                         │
+  │  Easy to forget, inconsistent tracking                  │
+  └─────────────────────────────────────────────────────────┘
+
+  ### The Solution
+
+  ┌─────────────────────────────────────────────────────────┐
+  │  "Claude, create a high-priority bug ticket for the     │
+  │   login issue we just discussed"                        │
+  │                                                         │
+  │  Claude: "Created PROJ-123: Login flow bug              │
+  │           Priority: High, Assigned to: You"             │
+  └─────────────────────────────────────────────────────────┘
+
+  ### When You Need This
+
+  - You want Claude to create/update tasks during work
+  - You need to check task status without context-switching
+  - You want Claude to understand project priorities
+  - You need automated task creation from code reviews
+required_features:
+  - Create tasks
+  - Update tasks
+  - List/search tasks
+  - Manage labels/tags
+  - Set status/priority
+claude_section: "## Task Management"
+
+vendors:
+  - name: "Jira"
+    key: "jira"
+    integration_method: "mcp-community"
+    features: [Create, Update, List, Search, Labels, Status, Priority, Comments, Attachments]
+    official_mcp: null
+    community_mcp: "@modelcontextprotocol/server-atlassian"
+    auth: ["API Token", "OAuth"]
+    test_op: "search_issues"
+    notes: "Enterprise-grade, complex workflows, JQL search"
+    credential_update:
+      api_token:
+        env_vars: ["ATLASSIAN_API_TOKEN", "ATLASSIAN_EMAIL", "ATLASSIAN_DOMAIN"]
+        regenerate_url: "https://id.atlassian.com/manage-profile/security/api-tokens"
+        instructions: "Generate new API token in Atlassian Account Settings"
+
+  - name: "Linear"
+    key: "linear"
+    integration_method: "mcp-community"
+    features: [Create, Update, List, Search, Labels, Status, Priority, Comments]
+    official_mcp: null
+    community_mcp: "linear-mcp"
+    auth: ["API Key"]
+    test_op: "list_issues"
+    notes: "Modern, fast, developer-focused"
+    credential_update:
+      api_token:
+        env_vars: ["LINEAR_API_KEY"]
+        regenerate_url: "https://linear.app/settings/api"
+        instructions: "Generate new API key in Linear Settings > API"
+
+  - name: "Trello"
+    key: "trello"
+    integration_method: "mcp-community"
+    features: [Create, Update, List, Labels, Move, Comments, Checklists]
+    official_mcp: null
+    community_mcp: "trello-mcp"
+    auth: ["API Key", "Token"]
+    test_op: "list_boards"
+    notes: "Simple, visual, quick setup"
+    credential_update:
+      api_token:
+        env_vars: ["TRELLO_API_KEY", "TRELLO_TOKEN"]
+        regenerate_url: "https://trello.com/app-key"
+        instructions: "Get API key and generate token at Trello Developer page"
+
+  - name: "Asana"
+    key: "asana"
+    integration_method: "mcp-community"
+    features: [Create, Update, List, Search, Tags, Status, Subtasks, Comments]
+    official_mcp: null
+    community_mcp: "asana-mcp"
+    auth: ["API Token", "OAuth"]
+    test_op: "list_projects"
+    notes: "Clean interface, good for project management"
+    credential_update:
+      api_token:
+        env_vars: ["ASANA_ACCESS_TOKEN"]
+        regenerate_url: "https://app.asana.com/0/developer-console"
+        instructions: "Generate new Personal Access Token in Asana Developer Console"
+
+  - name: "ClickUp"
+    key: "clickup"
+    integration_method: "mcp-community"
+    features: [Create, Update, List, Search, Tags, Status, Priority, Time Tracking]
+    official_mcp: null
+    community_mcp: "clickup-mcp"
+    auth: ["API Token"]
+    test_op: "list_spaces"
+    notes: "Feature-rich, generous free tier"
+    credential_update:
+      api_token:
+        env_vars: ["CLICKUP_API_TOKEN"]
+        regenerate_url: "https://app.clickup.com/settings/apps"
+        instructions: "Generate new API token in ClickUp Settings > Apps"
+
+excluded:
+  - name: "Todoist"
+    reason: "Personal task manager, limited team features"
+  - name: "Apple Reminders"
+    reason: "No API access, personal only"
+```
+
 ### Secret Management
 
 ```yaml
 domain_name: "Secret Management"
 domain_key: "secret-manager"
 purpose: "Securely store, retrieve, and manage secrets and credentials"
+explanation: |
+  ## Why Secret Management?
+
+  Many parts of your app need sensitive values - database passwords, API keys,
+  encryption secrets. If these get committed to your repo in plain text, anyone
+  with access to your code can steal them.
+
+  ### The Problem
+
+  ┌─────────────────────────────────────────────────────────┐
+  │  Your Code Repository                                   │
+  │                                                         │
+  │  config.js                                              │
+  │  ┌─────────────────────────────────────┐                │
+  │  │ DB_PASSWORD = "super_secret_123"    │ ← EXPOSED!     │
+  │  │ API_KEY = "sk-abc123..."            │ ← EXPOSED!     │
+  │  └─────────────────────────────────────┘                │
+  │                                                         │
+  │  Anyone who can see your repo can steal these values    │
+  │  (hackers, leaked backups, accidental public repos)     │
+  └─────────────────────────────────────────────────────────┘
+
+  ### The Solution
+
+  A secrets manager keeps sensitive values separate from your code:
+
+  ┌──────────────┐      ┌──────────────────┐
+  │  Your Code   │      │ Secrets Manager  │
+  │              │      │                  │
+  │  DB_PASSWORD │─────▶│ ************     │ Encrypted &
+  │  = get(...)  │      │ (stored safely)  │ access-controlled
+  └──────────────┘      └──────────────────┘
+
+  Your code only contains references, not actual secrets.
+
+  ### When You Need This
+
+  - Your project has database credentials, API keys, or tokens
+  - Multiple team members need access to the same secrets
+  - You want to rotate credentials without changing code
+  - You need audit logs of who accessed what secrets
+  - Your deployment pipeline needs secure credential injection
 required_features:
   - Get secrets
   - Set secrets
@@ -742,6 +922,46 @@ excluded:
 domain_name: "Communication"
 domain_key: "communication"
 purpose: "Team messaging, notifications, and collaboration"
+explanation: |
+  ## Why Communication Integration?
+
+  Claude can send messages, post updates, and notify your team automatically.
+  Instead of manually copying information between tools, Claude becomes part of
+  your team's communication flow.
+
+  ### The Problem
+
+  ┌─────────────────────────────────────────────────────────┐
+  │  Manual Notification Flow                               │
+  │                                                         │
+  │  Claude: "Build completed successfully"                 │
+  │     │                                                   │
+  │     └──▶ You copy this message                          │
+  │             │                                           │
+  │             └──▶ Paste into Slack                       │
+  │                     │                                   │
+  │                     └──▶ Team finally sees it           │
+  │                                                         │
+  │  Tedious, easy to forget, delays information flow       │
+  └─────────────────────────────────────────────────────────┘
+
+  ### The Solution
+
+  ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
+  │   Claude    │─────▶│    Slack    │─────▶│    Team     │
+  │             │      │             │      │             │
+  │ "Notify the │      │ #deploys:   │      │ Gets update │
+  │  team..."   │      │ Build done! │      │ instantly   │
+  └─────────────┘      └─────────────┘      └─────────────┘
+
+  Claude posts directly - no manual steps needed.
+
+  ### When You Need This
+
+  - You want Claude to post deployment notifications
+  - You need automated alerts when tasks complete
+  - You want to discuss code changes in team channels
+  - You need Claude to read channel history for context
 required_features:
   - Send messages
   - List channels
@@ -805,6 +1025,45 @@ excluded:
 domain_name: "CI/CD"
 domain_key: "ci-cd"
 purpose: "Continuous integration and deployment pipelines"
+explanation: |
+  ## Why CI/CD Integration?
+
+  CI/CD (Continuous Integration/Continuous Deployment) automates building,
+  testing, and deploying your code. With this integration, Claude can trigger
+  builds, check pipeline status, and help debug failures.
+
+  ### The Problem
+
+  ┌─────────────────────────────────────────────────────────┐
+  │  Manual Pipeline Interaction                            │
+  │                                                         │
+  │  1. Switch to GitHub/GitLab UI                          │
+  │  2. Navigate to Actions/Pipelines                       │
+  │  3. Find the failing build                              │
+  │  4. Click through to see logs                           │
+  │  5. Copy error messages                                 │
+  │  6. Come back to Claude to ask about them               │
+  │                                                         │
+  │  Context-switching slows you down                       │
+  └─────────────────────────────────────────────────────────┘
+
+  ### The Solution
+
+  ┌─────────────────────────────────────────────────────────┐
+  │  "Claude, why did the last build fail?"                 │
+  │                                                         │
+  │  Claude checks pipeline ──▶ Gets logs ──▶ Explains:     │
+  │                                                         │
+  │  "The build failed because test_auth.py has a          │
+  │   missing import. Here's the fix..."                    │
+  └─────────────────────────────────────────────────────────┘
+
+  ### When You Need This
+
+  - You want to check build status without leaving your editor
+  - You need Claude to help debug failing pipelines
+  - You want to trigger builds or deployments via conversation
+  - You need to review build artifacts and logs
 required_features:
   - List pipelines/workflows
   - Trigger builds
@@ -880,6 +1139,44 @@ excluded:
 domain_name: "Memory & Knowledge"
 domain_key: "memory"
 purpose: "Persistent memory, context, and knowledge retrieval"
+explanation: |
+  ## Why Memory Integration?
+
+  By default, Claude forgets everything when you start a new session. A memory
+  integration lets Claude remember important facts about your project,
+  preferences, and decisions across conversations.
+
+  ### The Problem
+
+  ┌─────────────────────────────────────────────────────────┐
+  │  Session 1:                                             │
+  │  "We use PostgreSQL, deploy to AWS, prefer TypeScript"  │
+  │                                                         │
+  │  Session 2 (new day):                                   │
+  │  "What database do we use?"                             │
+  │  Claude: "I don't have that information..."             │
+  │                                                         │
+  │  You have to re-explain context every session           │
+  └─────────────────────────────────────────────────────────┘
+
+  ### The Solution
+
+  ┌─────────────────────────────────────────────────────────┐
+  │  Claude stores facts ──▶ Memory System ──▶ Recalls later│
+  │                                                         │
+  │  "Remember: We use PostgreSQL on AWS"                   │
+  │           ↓                                             │
+  │  [Stored in memory]                                     │
+  │           ↓                                             │
+  │  Next session: Claude already knows your stack          │
+  └─────────────────────────────────────────────────────────┘
+
+  ### When You Need This
+
+  - You want Claude to remember project conventions
+  - You need persistent context across sessions
+  - You want Claude to recall past decisions and why
+  - You have complex project knowledge to maintain
 required_features:
   - Store entities/facts
   - Retrieve by query
@@ -958,6 +1255,27 @@ excluded:
 domain_name: "Monitoring"
 domain_key: "monitoring"
 purpose: "Observability, metrics, logs, and alerting"
+explanation: |
+  ## Why Monitoring Integration?
+
+  Monitoring tools track your application's health - errors, performance,
+  uptime. With this integration, Claude can check metrics, investigate
+  alerts, and help diagnose production issues.
+
+  ### The Solution
+
+  Instead of switching to Datadog/Grafana dashboards, ask Claude directly:
+
+  "Claude, are there any errors in production right now?"
+  "What's the API latency over the last hour?"
+  "Why did we get paged at 3am?"
+
+  ### When You Need This
+
+  - You want to check system health during development
+  - You need Claude to help investigate incidents
+  - You want alerts and metrics in your workflow
+  - You need to correlate code changes with metrics
 required_features:
   - Query metrics
   - Search logs
@@ -1026,78 +1344,135 @@ excluded:
     reason: "No querying, no alerting"
 ```
 
-### Code Quality
+### Localization
 
 ```yaml
-domain_name: "Code Quality"
-domain_key: "code-quality"
-purpose: "Static analysis, linting, and security scanning"
+domain_name: "Localization"
+domain_key: "localization"
+purpose: "Manage internationalization, translation, and localized content"
+explanation: |
+  ## Why Localization Integration?
+
+  If your app supports multiple languages, you need a system to manage
+  translation strings, keep them in sync, and coordinate with translators.
+  This integration lets Claude help manage your i18n workflow.
+
+  ### The Problem
+
+  ┌─────────────────────────────────────────────────────────┐
+  │  Manual Localization Workflow                           │
+  │                                                         │
+  │  1. Add new string in code: t('welcome_message')        │
+  │  2. Add key to en.json manually                         │
+  │  3. Remember to add to fr.json, de.json, es.json...     │
+  │  4. Send files to translators via email                 │
+  │  5. Merge translations back, handle conflicts           │
+  │  6. Discover missing keys in production                 │
+  │                                                         │
+  │  Error-prone, hard to track, translation drift          │
+  └─────────────────────────────────────────────────────────┘
+
+  ### The Solution
+
+  ┌─────────────────────────────────────────────────────────┐
+  │  "Claude, add a new string 'welcome_message' with       │
+  │   English text 'Welcome back!' and request translation" │
+  │                                                         │
+  │  Claude:                                                │
+  │  - Added to en.json ✓                                   │
+  │  - Created translation task in Lokalise ✓               │
+  │  - Translators notified ✓                               │
+  └─────────────────────────────────────────────────────────┘
+
+  ### When You Need This
+
+  - Your app supports multiple languages
+  - You want to track missing translations
+  - You need to sync translation files with a TMS
+  - You want Claude to help extract hardcoded strings
+  - You need to coordinate with translation teams
 required_features:
-  - Analyze code
-  - Report issues
-  - Track quality metrics
-claude_section: "## Code Quality"
+  - List translation keys
+  - Add/update keys
+  - Sync with source files
+  - Track translation status
+  - Export translations
+claude_section: "## Localization"
 
 vendors:
-  - name: "SonarQube"
-    key: "sonarqube"
-    features: [Analysis, Issues, Metrics, Quality Gates]
+  - name: "Lokalise"
+    key: "lokalise"
+    integration_method: "mcp-community"
+    features: [Keys, Upload, Download, Tasks, Comments, Screenshots]
     official_mcp: null
-    community_mcp: "sonarqube-mcp"
-    auth: ["Token"]
-    test_op: "list_projects"
-    notes: "Comprehensive code quality"
-    credential_update:
-      api_token:
-        env_vars: ["SONARQUBE_URL", "SONARQUBE_TOKEN"]
-        regenerate_url: "SonarQube instance > My Account > Security > Tokens"
-        instructions: "Generate new user token in SonarQube user security settings"
-
-  - name: "CodeClimate"
-    key: "codeclimate"
-    features: [Analysis, Issues, Metrics, Trends]
-    official_mcp: null
-    community_mcp: "codeclimate-mcp"
-    auth: ["API Token"]
-    test_op: "list_repos"
-    notes: "Quality and maintainability"
-    credential_update:
-      api_token:
-        env_vars: ["CODECLIMATE_API_TOKEN"]
-        regenerate_url: "https://codeclimate.com/profile/tokens"
-        instructions: "Generate new Personal Access Token in CodeClimate profile"
-
-  - name: "Snyk"
-    key: "snyk"
-    features: [Security Scan, Vulnerabilities, Dependencies]
-    official_mcp: null
-    community_mcp: "snyk-mcp"
+    community_mcp: "lokalise-mcp"
     auth: ["API Token"]
     test_op: "list_projects"
-    notes: "Security-focused scanning"
+    notes: "Developer-friendly, good CI/CD integration"
     credential_update:
       api_token:
-        env_vars: ["SNYK_TOKEN"]
-        regenerate_url: "https://app.snyk.io/account"
-        instructions: "Generate new API token in Snyk Account Settings"
+        env_vars: ["LOKALISE_API_TOKEN", "LOKALISE_PROJECT_ID"]
+        regenerate_url: "https://app.lokalise.com/profile#apitokens"
+        instructions: "Generate new API token in Lokalise Profile Settings"
 
-  - name: "Semgrep"
-    key: "semgrep"
-    features: [Analysis, Security, Custom Rules]
+  - name: "Crowdin"
+    key: "crowdin"
+    integration_method: "mcp-community"
+    features: [Keys, Upload, Download, Tasks, Glossary, TM]
     official_mcp: null
-    community_mcp: "semgrep-mcp"
-    auth: ["API Token", "None (OSS)"]
-    test_op: "list_rules"
-    notes: "Fast, customizable analysis"
+    community_mcp: "crowdin-mcp"
+    auth: ["API Token"]
+    test_op: "list_projects"
+    notes: "Popular, strong community translation features"
     credential_update:
       api_token:
-        env_vars: ["SEMGREP_APP_TOKEN"]
-        regenerate_url: "https://semgrep.dev/orgs/-/settings/tokens"
-        instructions: "Generate new token in Semgrep App Organization Settings (or use without token for OSS)"
+        env_vars: ["CROWDIN_API_TOKEN", "CROWDIN_PROJECT_ID"]
+        regenerate_url: "https://crowdin.com/settings#api-key"
+        instructions: "Generate new API token in Crowdin Account Settings"
+
+  - name: "Phrase"
+    key: "phrase"
+    integration_method: "mcp-community"
+    features: [Keys, Upload, Download, Jobs, Glossary, TM]
+    official_mcp: null
+    community_mcp: "phrase-mcp"
+    auth: ["API Token"]
+    test_op: "list_projects"
+    notes: "Enterprise translation management"
+    credential_update:
+      api_token:
+        env_vars: ["PHRASE_ACCESS_TOKEN", "PHRASE_PROJECT_ID"]
+        regenerate_url: "https://app.phrase.com/settings/oauth_access_tokens"
+        instructions: "Generate new Access Token in Phrase Settings"
+
+  - name: "i18next"
+    key: "i18next"
+    integration_method: "file-based"
+    features: [Keys, Namespaces, Plurals, Context]
+    official_mcp: null
+    community_mcp: null
+    config_files:
+      - path: "i18next.config.js"
+        description: "i18next configuration"
+      - path: "locales/"
+        description: "Translation files directory"
+    cli_tools:
+      - name: "i18next-parser"
+        install: "npm install -g i18next-parser"
+        check: "i18next --version"
+    setup_steps:
+      - "Install i18next-parser: npm install -g i18next-parser"
+      - "Create i18next-parser.config.js in project root"
+      - "Run extraction: i18next 'src/**/*.{js,jsx,ts,tsx}'"
+    auth: []
+    test_op: "i18next 'src/**/*.{js,jsx}' --dry-run"
+    notes: "File-based, works with any i18next setup"
 
 excluded:
-  - name: "ESLint/Prettier alone"
-    reason: "No centralized tracking, no quality metrics"
+  - name: "Google Translate API alone"
+    reason: "Translation only, no key management or sync"
+  - name: "DeepL API alone"
+    reason: "Translation only, no project management"
 ```
 
 ---
@@ -1558,6 +1933,7 @@ Location: Project root (`./{domain_key}-setup-progress.md`)
 ## Completed Steps
 
 - [x] Phase 0: State Detection
+- [x] Phase 0.5: Domain Explanation
 - [x] Phase 1: Vendor Selection
 - [x] Phase 1.5: Scenario Collection (custom only)
 - [x] Phase 1.6: Model Extraction (custom only)
@@ -2429,6 +2805,24 @@ Would you like to:
 
 ---
 
+### Phase 0.5: Domain Explanation
+
+Display domain explanation to help user understand why this setup matters.
+
+\`\`\`
+{domain_explanation}
+
+Ready to set up {domain_name}?
+
+Press Enter to continue, or type "skip" to go directly to vendor selection.
+\`\`\`
+
+**Note:** This phase is informational. User can skip if already familiar with the domain.
+
+**DOD:** User acknowledges or skips explanation
+
+---
+
 ### Phase 1: Vendor Selection
 
 Present qualified vendors with feature highlights:
@@ -2819,6 +3213,9 @@ Progress file cleaned up.
 
 ### Phase 0 Checkpoints
 - [ ] "Found existing setup. Keep/add/reconfigure?"
+
+### Phase 0.5 Checkpoints
+- [ ] "Ready to continue with setup?"
 
 ### Phase 1 Checkpoints
 - [ ] "Which vendor would you like to use?"
