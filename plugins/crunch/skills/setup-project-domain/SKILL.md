@@ -900,6 +900,31 @@ The setup is complete when:
 3. User successfully executes a test operation
 4. CLAUDE.md is updated with "{Domain Name}" section documenting capabilities and integration method
 
+## Domain Template
+
+This skill uses a template file to generate the CLAUDE.md section for {domain_name}.
+
+**Template Location**: `plugins/crunch/skills/setup-project/templates/{domain_key}.template.md`
+
+### Template Usage
+
+When updating CLAUDE.md in Phase 5:
+
+1. Read the template from `plugins/crunch/skills/setup-project/templates/{domain_key}.template.md`
+2. Replace all `{placeholder}` variables with values collected during setup
+3. If CLAUDE.md exists, find and replace the existing `## {Domain Section}` or append
+4. If CLAUDE.md doesn't exist, create it and add the filled template
+
+### Creating Domain Templates
+
+If no template exists for this domain, create one at the template location following this pattern:
+
+1. Start with `## {Domain Section Header}`
+2. Include configuration table with `{placeholder}` variables
+3. Add operations/commands section
+4. Add usage examples section
+5. Add any domain-specific notes
+
 ## Domain Model (if generated from scenarios)
 
 This section is included when the skill was generated from usage scenarios.
@@ -2170,24 +2195,43 @@ Did you see the expected output? Please confirm.
 
 ### Phase 5: Documentation
 
-Update CLAUDE.md with "{Domain Name}" section.
+Update CLAUDE.md with "{Domain Name}" section using the domain template.
 
 #### Step 1: Check if CLAUDE.md Exists
 
 - If not, create it with basic structure
-- If exists, add/update "{Domain Name}" section
+- If exists, prepare to add/update "{Domain Name}" section
 
-#### Step 2: Generate Documentation
+#### Step 2: Read Domain Template
+
+\`\`\`bash
+cat plugins/crunch/skills/setup-project/templates/{domain_key}.template.md
+\`\`\`
+
+#### Step 3: Fill Template Placeholders
+
+Replace all `{placeholder}` variables with values collected during setup:
+
+- `{secrets_backend}` → actual backend name (e.g., "SOPS + age")
+- `{integration_type}` → integration method (e.g., "File-based")
+- `{config_file}` → actual config path (e.g., ".sops.yaml")
+- etc.
+
+#### Step 4: Update CLAUDE.md
+
+**If section exists:** Replace the existing `## {Domain Section}` with filled template
+
+**If section doesn't exist:** Append the filled template to CLAUDE.md
 
 {claude_md_template}
 
-#### Step 3: Cleanup Progress File
+#### Step 5: Cleanup Progress File
 
 \`\`\`bash
 rm {domain_key}-setup-progress.md
 \`\`\`
 
-#### Step 4: Summarize Completion
+#### Step 6: Summarize Completion
 
 **For MCP integrations:**
 

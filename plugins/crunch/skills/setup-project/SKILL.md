@@ -191,19 +191,48 @@ ls locales/ i18n/ translations/ 2>/dev/null
 
 ---
 
-## Template File
+## Domain Templates
 
-This skill includes a template file for initializing new CLAUDE.md files:
+This skill includes individual template files for each domain. When configuring a domain, use the corresponding template to generate the CLAUDE.md section.
 
-**Template Location**: `plugins/crunch/skills/setup-project/CLAUDE.template.md`
+**Templates Location**: `plugins/crunch/skills/setup-project/templates/`
 
-The template includes:
-- All 14 domain sections (7 required, 7 optional) with placeholder content
-- HTML comments indicating how to configure each domain
-- MCP Servers section for tracking integrations
-- Project Notes section for custom documentation
+### Available Templates
 
-When CLAUDE.md doesn't exist, offer to create it from the template.
+| Domain | Template File |
+|--------|---------------|
+| Tech Stack | `tech-stack.template.md` |
+| Configuration | `configuration.template.md` |
+| Secrets | `secrets.template.md` |
+| Pipelines | `pipelines.template.md` |
+| Environments | `deploy-environments.template.md` |
+| Task Management | `task-management.template.md` |
+| Agents & Orchestration | `agents-and-orchestration.template.md` |
+| Memory Management | `memory-management.template.md` |
+| User Communication Bot | `user-communication-bot.template.md` |
+| CI/CD | `ci-cd.template.md` |
+| Observability | `observability.template.md` |
+| Problem Remediation | `problem-remediation.template.md` |
+| Documentation | `documentation.template.md` |
+| Localization | `localization.template.md` |
+
+### Template Usage
+
+When setting up a domain:
+
+1. Read the domain template from `templates/{domain-key}.template.md`
+2. Collect values for all `{placeholder}` variables during setup
+3. Replace placeholders with actual values
+4. Append or update the section in CLAUDE.md
+
+**Example:**
+```bash
+# Read template
+cat plugins/crunch/skills/setup-project/templates/secrets.template.md
+
+# After collecting values, the placeholders like {secrets_backend}, {integration_type}, etc.
+# are replaced with actual values (e.g., "SOPS + age", "File-based")
+```
 
 ---
 
@@ -219,7 +248,7 @@ When CLAUDE.md doesn't exist, offer to create it from the template.
 cat CLAUDE.md 2>/dev/null
 ```
 
-**If CLAUDE.md doesn't exist**, offer to create it from template:
+**If CLAUDE.md doesn't exist**, offer to create it:
 
 ```typescript
 AskUserQuestion({
@@ -227,8 +256,7 @@ AskUserQuestion({
     question: "No CLAUDE.md found. Would you like to create one?",
     header: "Initialize",
     options: [
-      { label: "Create from template (Recommended)", description: "Create CLAUDE.md with all domain sections ready to configure" },
-      { label: "Create minimal", description: "Create empty CLAUDE.md, add sections as needed" },
+      { label: "Yes, create CLAUDE.md (Recommended)", description: "Create CLAUDE.md to document project configuration" },
       { label: "Skip", description: "Continue without CLAUDE.md" }
     ],
     multiSelect: false
@@ -236,20 +264,15 @@ AskUserQuestion({
 })
 ```
 
-**If "Create from template" selected:**
-
-```bash
-# Copy template to project root
-cp plugins/crunch/skills/setup-project/CLAUDE.template.md CLAUDE.md
-```
-
-**If "Create minimal" selected:**
+**If "Yes" selected:**
 
 ```bash
 cat > CLAUDE.md << 'EOF'
 # Project Configuration
 
 This file documents the project setup for Claude Code.
+
+<!-- Domain sections are added as they are configured via /setup-project -->
 EOF
 ```
 
@@ -1567,18 +1590,24 @@ return <h1>{t('welcome.title')}</h1>;
 
 **If CLAUDE.md doesn't exist:**
 
-Option 1 - Use the full template (recommended):
-```bash
-cp plugins/crunch/skills/setup-project/CLAUDE.template.md CLAUDE.md
-```
-
-Option 2 - Create minimal file:
 ```bash
 cat > CLAUDE.md << 'EOF'
 # Project Configuration
 
 This file documents the project setup for Claude Code.
+
+<!-- Domain sections are added as they are configured via /setup-project -->
 EOF
+```
+
+**If a domain section is missing:**
+
+Use the domain template to generate the section:
+```bash
+# Read template for the domain
+cat plugins/crunch/skills/setup-project/templates/{domain-key}.template.md
+
+# Replace placeholders with values and append to CLAUDE.md
 ```
 
 **If .mcp.json is invalid:**
