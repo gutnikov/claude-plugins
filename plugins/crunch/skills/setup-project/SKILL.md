@@ -22,29 +22,29 @@ The setup is complete when:
 
 Essential domains for a well-configured project:
 
-| Domain | Key | Purpose | Detection |
-|--------|-----|---------|-----------|
-| **Tech Stack** | `tech-stack` | Auto-detect and configure project stack | `## Tech Stack` in CLAUDE.md |
-| **Configuration** | `configuration` | Manage env variables per environment | `## Configuration` in CLAUDE.md |
-| **Secrets** | `secrets` | Store and retrieve secrets securely | `## Secrets` in CLAUDE.md or secrets MCP in .mcp.json |
-| **Pipelines** | `pipelines` | Define project pipelines (local, CI, deploy) | `## Pipelines` in CLAUDE.md |
-| **Environments** | `deploy-environments` | Manage dev/staging/prod environments | `## Environments` in CLAUDE.md |
-| **Task Management** | `task-management` | Track and manage work items | `## Task Management` in CLAUDE.md or task MCP |
-| **Agents & Orchestration** | `agents-and-orchestration` | Configure Claude Code agents | `## Agents` in CLAUDE.md |
+| Domain                     | Key                       | Purpose                                     | Detection                                          |
+|----------------------------|---------------------------|---------------------------------------------|----------------------------------------------------|
+| **Tech Stack**             | `tech-stack`              | Auto-detect and configure project stack     | `## Tech Stack` in CLAUDE.md                       |
+| **Configuration**          | `configuration`           | Manage env variables per environment        | `## Configuration` in CLAUDE.md                    |
+| **Secrets**                | `secrets`                 | Store and retrieve secrets securely         | `## Secrets` in CLAUDE.md or secrets MCP in .mcp.json |
+| **Pipelines**              | `pipelines`               | Define project pipelines (local, CI, deploy)| `## Pipelines` in CLAUDE.md                        |
+| **Environments**           | `deploy-environments`     | Manage dev/staging/prod environments        | `## Environments` in CLAUDE.md                     |
+| **Task Management**        | `task-management`         | Track and manage work items                 | `## Task Management` in CLAUDE.md or task MCP      |
+| **Agents & Orchestration** | `agents-and-orchestration`| Configure Claude Code agents                | `## Agents` in CLAUDE.md                           |
 
 ### Optional Domains (7)
 
 Enhance your project with additional capabilities:
 
-| Domain | Key | Purpose | Detection |
-|--------|-----|---------|-----------|
-| **Memory Management** | `memory-management` | Persistent AI context across sessions | `## Memory` in CLAUDE.md or memory MCP |
-| **User Communication Bot** | `user-communication-bot` | Slack app/bot for project development | `## Communication` in CLAUDE.md or slack MCP |
-| **CI/CD** | `ci-cd` | Continuous integration and deployment | `## CI/CD` in CLAUDE.md |
-| **Observability** | `observability` | Metrics, logs, traces, and alerting | `## Observability` in CLAUDE.md |
-| **Problem Remediation** | `problem-remediation` | Runbook automation and self-healing | `## Problem Remediation` in CLAUDE.md |
-| **Documentation** | `documentation` | Doc site generation and publishing | `## Documentation` in CLAUDE.md |
-| **Localization** | `localization` | Internationalization and translation | `## Localization` in CLAUDE.md |
+| Domain                     | Key                      | Purpose                               | Detection                                     |
+|----------------------------|--------------------------|---------------------------------------|-----------------------------------------------|
+| **Memory Management**      | `memory-management`      | Persistent AI context across sessions | `## Memory` in CLAUDE.md or memory MCP        |
+| **User Communication Bot** | `user-communication-bot` | Slack app/bot for project development | `## Communication` in CLAUDE.md or slack MCP  |
+| **CI/CD**                  | `ci-cd`                  | Continuous integration and deployment | `## CI/CD` in CLAUDE.md                       |
+| **Observability**          | `observability`          | Metrics, logs, traces, and alerting   | `## Observability` in CLAUDE.md               |
+| **Problem Remediation**    | `problem-remediation`    | Runbook automation and self-healing   | `## Problem Remediation` in CLAUDE.md         |
+| **Documentation**          | `documentation`          | Doc site generation and publishing    | `## Documentation` in CLAUDE.md               |
+| **Localization**           | `localization`           | Internationalization and translation  | `## Localization` in CLAUDE.md                |
 
 ---
 
@@ -199,22 +199,22 @@ This skill includes individual template files for each domain. When configuring 
 
 ### Available Templates
 
-| Domain | Template File |
-|--------|---------------|
-| Tech Stack | `tech-stack.template.md` |
-| Configuration | `configuration.template.md` |
-| Secrets | `secrets.template.md` |
-| Pipelines | `pipelines.template.md` |
-| Environments | `deploy-environments.template.md` |
-| Task Management | `task-management.template.md` |
+| Domain                 | Template File                          |
+|------------------------|----------------------------------------|
+| Tech Stack             | `tech-stack.template.md`               |
+| Configuration          | `configuration.template.md`            |
+| Secrets                | `secrets.template.md`                  |
+| Pipelines              | `pipelines.template.md`                |
+| Environments           | `deploy-environments.template.md`      |
+| Task Management        | `task-management.template.md`          |
 | Agents & Orchestration | `agents-and-orchestration.template.md` |
-| Memory Management | `memory-management.template.md` |
-| User Communication Bot | `user-communication-bot.template.md` |
-| CI/CD | `ci-cd.template.md` |
-| Observability | `observability.template.md` |
-| Problem Remediation | `problem-remediation.template.md` |
-| Documentation | `documentation.template.md` |
-| Localization | `localization.template.md` |
+| Memory Management      | `memory-management.template.md`        |
+| User Communication Bot | `user-communication-bot.template.md`   |
+| CI/CD                  | `ci-cd.template.md`                    |
+| Observability          | `observability.template.md`            |
+| Problem Remediation    | `problem-remediation.template.md`      |
+| Documentation          | `documentation.template.md`            |
+| Localization           | `localization.template.md`             |
 
 ### Template Usage
 
@@ -288,11 +288,11 @@ Extract configured MCP servers for domain detection.
 
 For each domain, determine status:
 
-| Status | Meaning | Visual |
-|--------|---------|--------|
-| `configured` | Domain section exists and appears complete | `[x]` |
-| `partial` | Some indicators present but incomplete | `[~]` |
-| `not configured` | No indicators found | `[ ]` |
+| Status           | Meaning                                   | Visual |
+|------------------|-------------------------------------------|--------|
+| `configured`     | Domain section exists and appears complete| `[x]`  |
+| `partial`        | Some indicators present but incomplete    | `[~]`  |
+| `not configured` | No indicators found                       | `[ ]`  |
 
 #### Step 4: Extract Configuration Details
 
@@ -544,12 +544,12 @@ Add to CLAUDE.md:
 Manage environment variables and configuration across environments.
 
 #### Popular Options
-| Tool | Description | Best For |
-|------|-------------|----------|
-| **dotenv** | Simple .env files | Small projects |
-| **direnv** | Directory-specific env | Multiple projects |
-| **Doppler** | Cloud config management | Teams, production |
-| **Infisical** | Open-source secrets/config | Self-hosted needs |
+| Tool          | Description               | Best For          |
+|---------------|---------------------------|-------------------|
+| **dotenv**    | Simple .env files         | Small projects    |
+| **direnv**    | Directory-specific env    | Multiple projects |
+| **Doppler**   | Cloud config management   | Teams, production |
+| **Infisical** | Open-source secrets/config| Self-hosted needs |
 
 #### Setup Flow
 
@@ -636,12 +636,12 @@ cp .env.example .env
 Securely store and retrieve sensitive credentials.
 
 #### Popular Options
-| Tool | Integration | Description | Best For |
-|------|-------------|-------------|----------|
-| **HashiCorp Vault** | MCP / CLI | Enterprise secrets management | Large teams, compliance |
-| **SOPS + age** | File-based | Git-encrypted secrets | GitOps workflows |
-| **1Password** | MCP | Password manager integration | Small teams |
-| **AWS Secrets Manager** | CLI | AWS-native secrets | AWS projects |
+| Tool                    | Integration | Description                  | Best For                 |
+|-------------------------|-------------|------------------------------|--------------------------|
+| **HashiCorp Vault**     | MCP / CLI   | Enterprise secrets management| Large teams, compliance  |
+| **SOPS + age**          | File-based  | Git-encrypted secrets        | GitOps workflows         |
+| **1Password**           | MCP         | Password manager integration | Small teams              |
+| **AWS Secrets Manager** | CLI         | AWS-native secrets           | AWS projects             |
 
 #### Setup Flow
 
@@ -751,11 +751,11 @@ sops secrets/prod.enc.yaml
 Define and document project pipelines for common operations.
 
 #### Standard Pipelines
-| Pipeline | Description | Common Commands |
-|----------|-------------|-----------------|
-| **local** | Local development | install, dev, test, lint |
-| **ci** | Continuous integration | lint, test, build |
-| **deploy** | Deployment | build, deploy, verify |
+| Pipeline   | Description              | Common Commands          |
+|------------|--------------------------|--------------------------|
+| **local**  | Local development        | install, dev, test, lint |
+| **ci**     | Continuous integration   | lint, test, build        |
+| **deploy** | Deployment               | build, deploy, verify    |
 
 #### Setup Flow
 
@@ -840,11 +840,11 @@ Deployment pipeline:
 Manage configuration and behavior across dev/staging/prod environments.
 
 #### Standard Environments
-| Environment | Purpose | URL Pattern |
-|-------------|---------|-------------|
-| **development** | Local development | localhost:3000 |
-| **staging** | Pre-production testing | staging.example.com |
-| **production** | Live application | example.com |
+| Environment     | Purpose                | URL Pattern         |
+|-----------------|------------------------|---------------------|
+| **development** | Local development      | localhost:3000      |
+| **staging**     | Pre-production testing | staging.example.com |
+| **production**  | Live application       | example.com         |
 
 #### Setup Flow
 
@@ -917,12 +917,12 @@ npm run dev
 Track and manage work items, bugs, and features.
 
 #### Popular Options
-| Tool | Integration | Description | Best For |
-|------|-------------|-------------|----------|
-| **Jira** | MCP (Official) | Enterprise issue tracking | Large teams |
-| **Linear** | MCP (Official) | Modern issue tracking | Fast-moving teams |
-| **Trello** | MCP (Community) | Visual kanban boards | Simple workflows |
-| **GitHub Issues** | MCP | GitHub-native issues | Open source |
+| Tool              | Integration     | Description               | Best For          |
+|-------------------|-----------------|---------------------------|-------------------|
+| **Jira**          | MCP (Official)  | Enterprise issue tracking | Large teams       |
+| **Linear**        | MCP (Official)  | Modern issue tracking     | Fast-moving teams |
+| **Trello**        | MCP (Community) | Visual kanban boards      | Simple workflows  |
+| **GitHub Issues** | MCP             | GitHub-native issues      | Open source       |
 
 #### Setup Flow
 
@@ -1000,12 +1000,12 @@ Add to CLAUDE.md:
 Configure Claude Code agents for specialized tasks.
 
 #### Agent Types
-| Agent | Purpose | Trigger |
-|-------|---------|---------|
-| **code-review** | Review PRs and code changes | On PR creation |
-| **test-runner** | Run and analyze tests | After code changes |
-| **deploy** | Handle deployments | On release |
-| **monitor** | Monitor for issues | Continuous |
+| Agent           | Purpose                   | Trigger            |
+|-----------------|---------------------------|--------------------|
+| **code-review** | Review PRs and code changes| On PR creation     |
+| **test-runner** | Run and analyze tests     | After code changes |
+| **deploy**      | Handle deployments        | On release         |
+| **monitor**     | Monitor for issues        | Continuous         |
 
 #### Setup Flow
 
@@ -1072,11 +1072,11 @@ Agents are configured via Claude Code hooks and workflows.
 Persist AI context and learnings across sessions.
 
 #### Popular Options
-| Tool | Integration | Description | Best For |
-|------|-------------|-------------|----------|
-| **Memory MCP** | MCP (Official) | Simple key-value memory | Basic persistence |
-| **Pinecone** | API | Vector database | Semantic search |
-| **Chroma** | Local | Embedded vector DB | Local development |
+| Tool           | Integration    | Description           | Best For          |
+|----------------|----------------|-----------------------|-------------------|
+| **Memory MCP** | MCP (Official) | Simple key-value memory| Basic persistence |
+| **Pinecone**   | API            | Vector database       | Semantic search   |
+| **Chroma**     | Local          | Embedded vector DB    | Local development |
 
 #### Setup Flow
 
@@ -1143,9 +1143,9 @@ Memories are automatically used to maintain context across sessions.
 Enable Claude to communicate via Slack or Discord.
 
 #### Popular Options
-| Platform | Integration | Description |
-|----------|-------------|-------------|
-| **Slack** | MCP (Official) | Team communication |
+| Platform    | Integration     | Description             |
+|-------------|-----------------|-------------------------|
+| **Slack**   | MCP (Official)  | Team communication      |
 | **Discord** | MCP (Community) | Community communication |
 
 #### Setup Flow
@@ -1219,12 +1219,12 @@ Add to CLAUDE.md:
 Automate testing, building, and deployment.
 
 #### Popular Options
-| Platform | Description | Best For |
-|----------|-------------|----------|
-| **GitHub Actions** | GitHub-native CI/CD | GitHub repos |
-| **GitLab CI** | GitLab-native CI/CD | GitLab repos |
-| **CircleCI** | Cloud CI/CD platform | Complex pipelines |
-| **Jenkins** | Self-hosted CI/CD | Enterprise, on-prem |
+| Platform           | Description          | Best For          |
+|--------------------|----------------------|-------------------|
+| **GitHub Actions** | GitHub-native CI/CD  | GitHub repos      |
+| **GitLab CI**      | GitLab-native CI/CD  | GitLab repos      |
+| **CircleCI**       | Cloud CI/CD platform | Complex pipelines |
+| **Jenkins**        | Self-hosted CI/CD    | Enterprise, on-prem|
 
 #### Setup Flow
 
@@ -1279,12 +1279,12 @@ Add to CLAUDE.md:
 Monitor application health with metrics, logs, and traces.
 
 #### Popular Options
-| Platform | Description | Best For |
-|----------|-------------|----------|
-| **Datadog** | Full-stack observability | Enterprise |
-| **Grafana** | Open-source dashboards | Self-hosted |
-| **Prometheus** | Metrics collection | Kubernetes |
-| **Honeycomb** | Distributed tracing | Complex systems |
+| Platform       | Description              | Best For        |
+|----------------|--------------------------|-----------------|
+| **Datadog**    | Full-stack observability | Enterprise      |
+| **Grafana**    | Open-source dashboards   | Self-hosted     |
+| **Prometheus** | Metrics collection       | Kubernetes      |
+| **Honeycomb**  | Distributed tracing      | Complex systems |
 
 #### Setup Flow
 
@@ -1344,11 +1344,11 @@ Add to CLAUDE.md:
 Automate runbook execution and self-healing.
 
 #### Components
-| Component | Purpose |
-|-----------|---------|
-| **Runbooks** | Documented procedures |
-| **Automation** | Executable remediation |
-| **Verification** | Post-fix validation |
+| Component        | Purpose                |
+|------------------|------------------------|
+| **Runbooks**     | Documented procedures  |
+| **Automation**   | Executable remediation |
+| **Verification** | Post-fix validation    |
 
 #### Setup Flow
 
@@ -1424,12 +1424,12 @@ Runbooks marked as auto-remediate can be executed automatically:
 Generate and publish project documentation.
 
 #### Popular Options
-| Platform | Description | Best For |
-|----------|-------------|----------|
-| **Docusaurus** | React-based docs | Modern docs sites |
-| **MkDocs** | Python-based docs | Simple docs |
-| **GitBook** | Cloud-hosted docs | Team collaboration |
-| **Mintlify** | API documentation | Developer APIs |
+| Platform       | Description       | Best For           |
+|----------------|-------------------|--------------------|
+| **Docusaurus** | React-based docs  | Modern docs sites  |
+| **MkDocs**     | Python-based docs | Simple docs        |
+| **GitBook**    | Cloud-hosted docs | Team collaboration |
+| **Mintlify**   | API documentation | Developer APIs     |
 
 #### Setup Flow
 
@@ -1497,12 +1497,12 @@ docs/
 Support multiple languages in the application.
 
 #### Popular Options
-| Platform | Description | Best For |
-|----------|-------------|----------|
-| **Lokalise** | Cloud translation management | Teams with translators |
-| **Crowdin** | Community translation | Open source |
-| **i18next** | JS i18n framework | Frontend apps |
-| **Phrase** | Enterprise TMS | Large scale |
+| Platform     | Description                  | Best For             |
+|--------------|------------------------------|----------------------|
+| **Lokalise** | Cloud translation management | Teams with translators|
+| **Crowdin**  | Community translation        | Open source          |
+| **i18next**  | JS i18n framework            | Frontend apps        |
+| **Phrase**   | Enterprise TMS               | Large scale          |
 
 #### Setup Flow
 
@@ -1578,13 +1578,13 @@ return <h1>{t('welcome.title')}</h1>;
 
 ### Common Issues
 
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| CLAUDE.md not found | New project | Create CLAUDE.md with initial structure |
-| .mcp.json parse error | Invalid JSON | Validate and fix JSON syntax |
-| MCP not loading | Config error | Check .mcp.json, restart Claude Code |
-| Domain detection false positive | Partial config | Verify actual configuration |
-| Domain detection false negative | Non-standard setup | Add manual CLAUDE.md section |
+| Issue                           | Cause              | Solution                               |
+|---------------------------------|--------------------|----------------------------------------|
+| CLAUDE.md not found             | New project        | Create CLAUDE.md with initial structure|
+| .mcp.json parse error           | Invalid JSON       | Validate and fix JSON syntax           |
+| MCP not loading                 | Config error       | Check .mcp.json, restart Claude Code   |
+| Domain detection false positive | Partial config     | Verify actual configuration            |
+| Domain detection false negative | Non-standard setup | Add manual CLAUDE.md section           |
 
 ### Recovery Actions
 

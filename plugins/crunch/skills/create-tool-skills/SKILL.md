@@ -340,7 +340,7 @@ The setup is complete when:
 ## Setup Modes
 
 | Mode             | Description                                    | Use When                           |
-| ---------------- | ---------------------------------------------- | ---------------------------------- |
+|------------------|------------------------------------------------|------------------------------------|
 | **Full Setup**   | Install {tool} + run locally                   | Starting fresh, local development  |
 | **Connect Only** | Configure client to connect to existing {tool} | Production instance, shared server |
 
@@ -449,7 +449,7 @@ Location: Project root (`./{tool}-setup-progress.md`)
 ### Error Table
 
 | Error                | Cause               | Solution                      |
-| -------------------- | ------------------- | ----------------------------- |
+|----------------------|---------------------|-------------------------------|
 | `connection refused` | Service not running | Start {tool} or check address |
 | `auth failed`        | Invalid credentials | Check credentials, regenerate |
 
@@ -650,7 +650,7 @@ Suggestions:
 ### Error Table
 
 | Error                | Cause               | Solution                      |
-| -------------------- | ------------------- | ----------------------------- |
+|----------------------|---------------------|-------------------------------|
 | `connection refused` | Service not running | Start {tool} or check address |
 | `not found`          | Resource missing    | Verify path/identifier        |
 | `permission denied`  | Auth issue          | Check credentials             |
@@ -722,7 +722,7 @@ Location: Project root
 ## Disable Tiers
 
 | Tier | Name         | What It Removes                                | Use When              |
-| ---- | ------------ | ---------------------------------------------- | --------------------- |
+|------|--------------|------------------------------------------------|-----------------------|
 | 1    | Config Only  | CLAUDE.md section, .env entries                | Switching backends    |
 | 2    | Full Project | Above + progress files                         | Clean project removal |
 | 3    | Complete     | Above + binary, token files, running processes | Full system cleanup   |

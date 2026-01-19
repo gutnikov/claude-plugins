@@ -21,27 +21,27 @@ The skill creation is complete when:
 
 ### What Defines a "Project Domain"
 
-| Component | Description | Example (Task Mgmt) |
-|-----------|-------------|---------------------|
-| **Domain Name** | Human-readable name | "Task Management" |
-| **Domain Key** | Lowercase identifier | `task-manager` |
-| **Purpose** | What the domain accomplishes | "Track and manage work items" |
-| **Domain Explanation** | Educational content for users | "Why this domain matters..." |
-| **Required Features** | Features vendors MUST have | Tasks, Tags, Statuses, Dependencies |
-| **CLAUDE.md Section** | Section header | `## Task Management` |
-| **MCP Key Pattern** | Keys in .mcp.json | `jira`, `asana`, `linear` |
+| Component               | Description                    | Example (Task Mgmt)                        |
+|-------------------------|--------------------------------|--------------------------------------------|
+| **Domain Name**         | Human-readable name            | "Task Management"                          |
+| **Domain Key**          | Lowercase identifier           | `task-manager`                             |
+| **Purpose**             | What the domain accomplishes   | "Track and manage work items"              |
+| **Domain Explanation**  | Educational content for users  | "Why this domain matters..."               |
+| **Required Features**   | Features vendors MUST have     | Tasks, Tags, Statuses, Dependencies        |
+| **CLAUDE.md Section**   | Section header                 | `## Task Management`                       |
+| **MCP Key Pattern**     | Keys in .mcp.json              | `jira`, `asana`, `linear`                  |
 
 ### Integration Methods
 
 Each vendor has an `integration_method` that determines setup workflow:
 
-| Method | Config Location | Setup Approach | Test Method |
-|--------|-----------------|----------------|-------------|
-| `mcp-official` | `.mcp.json` | OAuth flow via mcp-remote | MCP tool call |
-| `mcp-community` | `.mcp.json` | npm package + env vars | MCP tool call |
-| `file-based` | Config files (e.g., `.sops.yaml`) | File creation + env vars | CLI command |
-| `cli` | Env vars / config files | Install CLI + configure | CLI command |
-| `api` | Env vars | Collect API credentials | API call |
+| Method          | Config Location                   | Setup Approach              | Test Method   |
+|-----------------|-----------------------------------|-----------------------------|---------------|
+| `mcp-official`  | `.mcp.json`                       | OAuth flow via mcp-remote   | MCP tool call |
+| `mcp-community` | `.mcp.json`                       | npm package + env vars      | MCP tool call |
+| `file-based`    | Config files (e.g., `.sops.yaml`) | File creation + env vars    | CLI command   |
+| `cli`           | Env vars / config files           | Install CLI + configure     | CLI command   |
+| `api`           | Env vars                          | Collect API credentials     | API call      |
 
 ### Vendor Definition Schema
 
@@ -83,23 +83,23 @@ vendors:
 
 These domains have known purposes, feature requirements, and popular vendors.
 
-| Domain | Key | Purpose | Required Features | Popular Vendors |
-|--------|-----|---------|-------------------|-----------------|
-| **Task Management** | `task-management` | Track and manage work items | Tasks, Tags, Statuses, Dependencies | Jira, Linear, Trello, Asana, GitHub Issues |
-| **Secrets** | `secrets` | Store and retrieve secrets securely | Get, Set, List, Delete | Vault, SOPS+age, AWS Secrets Manager, 1Password |
-| **CI/CD** | `ci-cd` | Continuous integration/deployment | Pipelines, Triggers, Logs, Artifacts | GitHub Actions, GitLab CI, CircleCI, Jenkins |
-| **Pipelines** | `pipelines` | Define project pipelines (local, CI, deploy) | Detect, Define, Document, Validate | Depends on tech-stack + CI + environments |
-| **Configuration** | `configuration` | Manage env variables per environment | Define, Switch, Validate, Sync | dotenv, direnv, Doppler, Infisical |
-| **Observability** | `observability` | Metrics, logs, traces, alerting | Metrics, Logs, Traces, Alerts | Datadog, Grafana, Prometheus, Honeycomb |
-| **Documentation** | `documentation` | Doc site generation and publishing | Generate, Publish, Version, Search | Docusaurus, GitBook, ReadTheDocs, Mintlify |
-| **Localization** | `localization` | Internationalization and translation | Extract, Translate, Sync, Manage keys | Lokalise, Crowdin, Phrase, i18next |
-| **Memory Management** | `memory-management` | Persistent AI context across sessions | Store, Retrieve, Search, Update | Memory MCP, Pinecone, Chroma, Weaviate |
-| **Deploy Environments** | `deploy-environments` | Manage dev/staging/prod environments | Config, Feature flags, Env switching | LaunchDarkly, ConfigCat, Vercel, Netlify |
-| **Problem Remediation** | `problem-remediation` | Runbook automation, self-healing | Detect, Execute, Verify, Rollback | Rundeck, Ansible, PagerDuty Runbooks, Shoreline |
-| **Tech Stack** | `tech-stack` | Auto-detect and configure project stack | Detect, Configure, Validate | Custom detection, Nx, Turborepo, mise |
-| **User Communication Bot** | `user-communication-bot` | Slack app/bot for project development | Send, Receive, React, Thread | Slack Bot, Discord Bot |
-| **Agents & Orchestration** | `agents-and-orchestration` | Configure Claude Code agents | Define, Connect, Coordinate | Claude Code agents, custom configs |
-| **Custom** | (user-defined) | (user-defined) | (user-defined) | (user-defined) |
+| Domain                       | Key                          | Purpose                                    | Required Features                    | Popular Vendors                               |
+|------------------------------|------------------------------|--------------------------------------------|--------------------------------------|-----------------------------------------------|
+| **Task Management**          | `task-management`            | Track and manage work items                | Tasks, Tags, Statuses, Dependencies  | Jira, Linear, Trello, Asana, GitHub Issues    |
+| **Secrets**                  | `secrets`                    | Store and retrieve secrets securely        | Get, Set, List, Delete               | Vault, SOPS+age, AWS Secrets Manager, 1Password |
+| **CI/CD**                    | `ci-cd`                      | Continuous integration/deployment          | Pipelines, Triggers, Logs, Artifacts | GitHub Actions, GitLab CI, CircleCI, Jenkins  |
+| **Pipelines**                | `pipelines`                  | Define project pipelines (local, CI, deploy) | Detect, Define, Document, Validate   | Depends on tech-stack + CI + environments     |
+| **Configuration**            | `configuration`              | Manage env variables per environment       | Define, Switch, Validate, Sync       | dotenv, direnv, Doppler, Infisical            |
+| **Observability**            | `observability`              | Metrics, logs, traces, alerting            | Metrics, Logs, Traces, Alerts        | Datadog, Grafana, Prometheus, Honeycomb       |
+| **Documentation**            | `documentation`              | Doc site generation and publishing         | Generate, Publish, Version, Search   | Docusaurus, GitBook, ReadTheDocs, Mintlify    |
+| **Localization**             | `localization`               | Internationalization and translation       | Extract, Translate, Sync, Manage keys | Lokalise, Crowdin, Phrase, i18next            |
+| **Memory Management**        | `memory-management`          | Persistent AI context across sessions      | Store, Retrieve, Search, Update      | Memory MCP, Pinecone, Chroma, Weaviate        |
+| **Deploy Environments**      | `deploy-environments`        | Manage dev/staging/prod environments       | Config, Feature flags, Env switching | LaunchDarkly, ConfigCat, Vercel, Netlify      |
+| **Problem Remediation**      | `problem-remediation`        | Runbook automation, self-healing           | Detect, Execute, Verify, Rollback    | Rundeck, Ansible, PagerDuty Runbooks, Shoreline |
+| **Tech Stack**               | `tech-stack`                 | Auto-detect and configure project stack    | Detect, Configure, Validate          | Custom detection, Nx, Turborepo, mise         |
+| **User Communication Bot**   | `user-communication-bot`     | Slack app/bot for project development      | Send, Receive, React, Thread         | Slack Bot, Discord Bot                        |
+| **Agents & Orchestration**   | `agents-and-orchestration`   | Configure Claude Code agents               | Define, Connect, Coordinate          | Claude Code agents, custom configs            |
+| **Custom**                   | (user-defined)               | (user-defined)                             | (user-defined)                       | (user-defined)                                |
 
 **Note:** Users select their existing vendor from the popular list (or specify "Other"). The skill then analyzes vendor compatibility with the domain requirements.
 
@@ -309,18 +309,18 @@ Domain Model Review
 Based on your {N} scenarios:
 
 ENTITIES ({count})
-| Entity   | Description      | Attributes                    |
-|----------|------------------|-------------------------------|
-| ticket   | Support ticket   | priority, status, assignee    |
-| agent    | Support agent    | name, email, team             |
-| customer | Customer record  | name, email                   |
+| Entity   | Description      | Attributes                 |
+|----------|------------------|----------------------------|
+| ticket   | Support ticket   | priority, status, assignee |
+| agent    | Support agent    | name, email, team          |
+| customer | Customer record  | name, email                |
 
 OPERATIONS ({count})
-| Operation  | Applies To      | Description                   |
-|------------|-----------------|-------------------------------|
-| create     | ticket, agent   | Create new items              |
-| assign     | ticket          | Assign to owner               |
-| transition | ticket          | Change status                 |
+| Operation  | Applies To    | Description      |
+|------------|---------------|------------------|
+| create     | ticket, agent | Create new items |
+| assign     | ticket        | Assign to owner  |
+| transition | ticket        | Change status    |
 
 ATTRIBUTES ({count})
 | Attribute | Entity | Type              |
@@ -460,11 +460,11 @@ Based on your scenarios, I've prepared these defaults:
 
 **Auto-population from Extracted Model:**
 
-| Field | Source |
-|-------|--------|
-| `domain_name` | Inferred from primary entity (e.g., "ticket" → "Ticket Management") |
-| `purpose` | Generated from entities and operations |
-| `required_features` | Directly from extracted operations |
+| Field               | Source                                                              |
+|---------------------|---------------------------------------------------------------------|
+| `domain_name`       | Inferred from primary entity (e.g., "ticket" → "Ticket Management") |
+| `purpose`           | Generated from entities and operations                              |
+| `required_features` | Directly from extracted operations                                  |
 
 **Auto-generate from user input:**
 
@@ -542,11 +542,11 @@ If scenarios were collected in Phase 1.5, suggest vendors based on extracted mod
 
 Score vendors by matching extracted model against known vendor capabilities:
 
-| Category | Weight | Scoring |
-|----------|--------|---------|
-| **Entity Support** | 40% | % of extracted entities that vendor can model |
-| **Operation Support** | 40% | % of extracted operations that vendor API supports |
-| **Attribute Support** | 20% | % of extracted attributes vendor can store |
+| Category              | Weight | Scoring                                             |
+|-----------------------|--------|-----------------------------------------------------|
+| **Entity Support**    | 40%    | % of extracted entities that vendor can model       |
+| **Operation Support** | 40%    | % of extracted operations that vendor API supports  |
+| **Attribute Support** | 20%    | % of extracted attributes vendor can store          |
 
 **Match Levels:**
 - **Full**: Vendor has native support (entity/operation/attribute exists)
@@ -666,23 +666,23 @@ mkdir -p plugins/crunch/skills/setup-{domain_key}
 
 Use the **Template Structure** (below) with these substitutions:
 
-| Placeholder | Value |
-|-------------|-------|
-| `{domain_name}` | Domain name (e.g., "Secret Management") |
-| `{domain_key}` | Domain key (e.g., "secret-manager") |
-| `{purpose}` | Domain purpose |
-| `{feature_list}` | Comma-separated features |
-| `{feature_summary}` | Brief feature summary for description |
-| `{vendor_list}` | Comma-separated vendor names |
-| `{qualified_vendors_table}` | Markdown table of qualified vendors |
-| `{excluded_vendors_table}` | Markdown table of excluded vendors |
-| `{mcp_options_table}` | Markdown table of MCP options |
-| `{progress_file_format}` | Progress file template |
-| `{phase_N_content}` | Content for each workflow phase |
-| `{vendor_credentials_guide}` | Vendor-specific credential instructions |
-| `{error_table}` | Error handling table |
-| `{checkpoints}` | Interactive checkpoints |
-| `{related_skills}` | Related skill links |
+| Placeholder                  | Value                                       |
+|------------------------------|---------------------------------------------|
+| `{domain_name}`              | Domain name (e.g., "Secret Management")     |
+| `{domain_key}`               | Domain key (e.g., "secret-manager")         |
+| `{purpose}`                  | Domain purpose                              |
+| `{feature_list}`             | Comma-separated features                    |
+| `{feature_summary}`          | Brief feature summary for description       |
+| `{vendor_list}`              | Comma-separated vendor names                |
+| `{qualified_vendors_table}`  | Markdown table of qualified vendors         |
+| `{excluded_vendors_table}`   | Markdown table of excluded vendors          |
+| `{mcp_options_table}`        | Markdown table of MCP options               |
+| `{progress_file_format}`     | Progress file template                      |
+| `{phase_N_content}`          | Content for each workflow phase             |
+| `{vendor_credentials_guide}` | Vendor-specific credential instructions     |
+| `{error_table}`              | Error handling table                        |
+| `{checkpoints}`              | Interactive checkpoints                     |
+| `{related_skills}`           | Related skill links                         |
 
 #### Step 3: Write File
 
@@ -1030,20 +1030,20 @@ Location: Project root (`./{domain_key}-setup-progress.md`)
 
 Tracks management operations performed on configured setup.
 
-| Timestamp | Operation | Details | Result |
-|-----------|-----------|---------|--------|
-| {datetime} | Test Connection | {vendor} | {Success / Failed: error} |
-| {datetime} | Update Credentials | {env_vars updated} | {Success / Failed} |
-| {datetime} | Change Vendor | {old_vendor} → {new_vendor} | {Success / Failed} |
-| {datetime} | Diagnostics | {issues_found} | {recommendations} |
-| {datetime} | Reset | {vendor removed} | Success |
+| Timestamp  | Operation          | Details                    | Result                    |
+|------------|--------------------|----------------------------|---------------------------|
+| {datetime} | Test Connection    | {vendor}                   | {Success / Failed: error} |
+| {datetime} | Update Credentials | {env_vars updated}         | {Success / Failed}        |
+| {datetime} | Change Vendor      | {old_vendor} → {new_vendor} | {Success / Failed}        |
+| {datetime} | Diagnostics        | {issues_found}             | {recommendations}         |
+| {datetime} | Reset              | {vendor removed}           | Success                   |
 
 ## Connection Tests
 
-| Timestamp | Vendor | Test Operation | Result | Error |
-|-----------|--------|----------------|--------|-------|
-| {datetime} | {vendor} | {test_op} | ✓ Pass | - |
-| {datetime} | {vendor} | {test_op} | ✗ Fail | {error_message} |
+| Timestamp  | Vendor   | Test Operation | Result | Error           |
+|------------|----------|----------------|--------|-----------------|
+| {datetime} | {vendor} | {test_op}      | ✓ Pass | -               |
+| {datetime} | {vendor} | {test_op}      | ✗ Fail | {error_message} |
 
 ## Last Known State
 
@@ -1062,29 +1062,29 @@ Tracks management operations performed on configured setup.
 ## Extracted Domain Model (Custom Domain)
 
 ### Entities
-| Entity   | Description      | Source Scenario |
-|----------|------------------|-----------------|
-| ticket   | Support ticket   | 1               |
-| agent    | Support agent    | 1               |
+| Entity | Description    | Source Scenario |
+|--------|----------------|-----------------|
+| ticket | Support ticket | 1               |
+| agent  | Support agent  | 1               |
 
 ### Operations
-| Operation  | Applies To | Source Scenario |
-|------------|------------|-----------------|
-| create     | ticket     | 1               |
-| assign     | ticket     | 1               |
+| Operation | Applies To | Source Scenario |
+|-----------|------------|-----------------|
+| create    | ticket     | 1               |
+| assign    | ticket     | 1               |
 
 ### Attributes
-| Attribute | Entity | Type   | Source Scenario |
-|-----------|--------|--------|-----------------|
-| priority  | ticket | enum   | 1               |
-| assignee  | ticket | ref    | 1               |
+| Attribute | Entity | Type | Source Scenario |
+|-----------|--------|------|-----------------|
+| priority  | ticket | enum | 1               |
+| assignee  | ticket | ref  | 1               |
 
 ## Vendor Analysis (Custom Domain with Scenarios)
 
 ### Suggested Vendors
-| Vendor | Match % | Gaps |
-|--------|---------|------|
-| Jira   | 95%     | customer (use custom field) |
+| Vendor | Match % | Gaps                         |
+|--------|---------|------------------------------|
+| Jira   | 95%     | customer (use custom field)  |
 | Linear | 82%     | customer (no native support) |
 
 ### Selected Vendor
@@ -1591,33 +1591,33 @@ Would you like to:
 
 **For MCP integrations:**
 
-| Check | Method | Pass Condition |
-|-------|--------|----------------|
-| .mcp.json exists | File read | File present |
-| Vendor entry present | JSON parse | Key exists |
-| JSON valid | Parse attempt | No errors |
-| Env vars defined | Check .mcp.json env section | Variables have values |
-| MCP loaded | Check available tools | Vendor tools present |
-| Test operation | Execute test | Returns valid data |
+| Check                | Method                       | Pass Condition        |
+|----------------------|------------------------------|-----------------------|
+| .mcp.json exists     | File read                    | File present          |
+| Vendor entry present | JSON parse                   | Key exists            |
+| JSON valid           | Parse attempt                | No errors             |
+| Env vars defined     | Check .mcp.json env section  | Variables have values |
+| MCP loaded           | Check available tools        | Vendor tools present  |
+| Test operation       | Execute test                 | Returns valid data    |
 
 **For CLI integrations:**
 
-| Check | Method | Pass Condition |
-|-------|--------|----------------|
-| CLI tool installed | Run `{tool} --version` | Command succeeds |
-| Env vars set | Check shell environment | Variables have values |
-| Test operation | Execute CLI command | Returns valid data |
+| Check              | Method                  | Pass Condition        |
+|--------------------|-------------------------|-----------------------|
+| CLI tool installed | Run `{tool} --version`  | Command succeeds      |
+| Env vars set       | Check shell environment | Variables have values |
+| Test operation     | Execute CLI command     | Returns valid data    |
 
 **For File-based integrations:**
 
-| Check | Method | Pass Condition |
-|-------|--------|----------------|
-| CLI tools installed | Run `{tool} --version` | Commands succeed |
-| Config files exist | File read | Files present |
-| Config syntax valid | Parse attempt | No errors |
-| Key files exist | File read | Files present at expected paths |
-| Env vars set | Check shell environment | Variables have values |
-| Test operation | Execute test command | Returns valid data |
+| Check               | Method                  | Pass Condition               |
+|---------------------|-------------------------|------------------------------|
+| CLI tools installed | Run `{tool} --version`  | Commands succeed             |
+| Config files exist  | File read               | Files present                |
+| Config syntax valid | Parse attempt           | No errors                    |
+| Key files exist     | File read               | Files present at expected paths |
+| Env vars set        | Check shell environment | Variables have values        |
+| Test operation      | Execute test command    | Returns valid data           |
 
 #### Common Diagnostic Scenarios
 
@@ -2368,31 +2368,31 @@ Progress file cleaned up.
 For qualified vendors table:
 
 ```markdown
-| Vendor | {Feature1} | {Feature2} | {Feature3} | Notes |
-|--------|------------|------------|------------|-------|
-| **{Vendor1}** | {support} | {support} | {support} | {notes} |
-| **{Vendor2}** | {support} | {support} | {support} | {notes} |
+| Vendor        | {Feature1} | {Feature2} | {Feature3} | Notes   |
+|---------------|------------|------------|------------|---------|
+| **{Vendor1}** | {support}  | {support}  | {support}  | {notes} |
+| **{Vendor2}** | {support}  | {support}  | {support}  | {notes} |
 ```
 
 For excluded vendors table:
 
 ```markdown
-| Vendor | Why Excluded |
-|--------|--------------|
-| {Vendor1} | {reason} |
-| {Vendor2} | {reason} |
+| Vendor    | Why Excluded |
+|-----------|--------------|
+| {Vendor1} | {reason}     |
+| {Vendor2} | {reason}     |
 ```
 
 For integration options table:
 
 ```markdown
-| Vendor | Integration | Method Details | Auth Type |
-|--------|-------------|----------------|-----------|
-| **{Vendor1}** | MCP | Official: {url} | {auth_types} |
-| **{Vendor2}** | MCP | Community: {package} | {auth_types} |
-| **{Vendor3}** | File-based | Config: {config_files} | {auth_types} |
-| **{Vendor4}** | CLI | Tools: {cli_tools} | {auth_types} |
-| **{Vendor5}** | MCP / CLI | Primary: MCP, Alt: CLI | {auth_types} |
+| Vendor        | Integration | Method Details         | Auth Type    |
+|---------------|-------------|------------------------|--------------|
+| **{Vendor1}** | MCP         | Official: {url}        | {auth_types} |
+| **{Vendor2}** | MCP         | Community: {package}   | {auth_types} |
+| **{Vendor3}** | File-based  | Config: {config_files} | {auth_types} |
+| **{Vendor4}** | CLI         | Tools: {cli_tools}     | {auth_types} |
+| **{Vendor5}** | MCP / CLI   | Primary: MCP, Alt: CLI | {auth_types} |
 ```
 
 ### Vendor Selection Display Generation
@@ -2454,10 +2454,10 @@ When generating a skill from scenarios, include the Domain Model section with:
 
 **Entity Table:**
 ```markdown
-| Entity | Description | Vendor Mapping |
-|--------|-------------|----------------|
-| ticket | Support ticket | Jira → Issue |
-| agent  | Support agent  | Jira → User  |
+| Entity | Description    | Vendor Mapping |
+|--------|----------------|----------------|
+| ticket | Support ticket | Jira → Issue   |
+| agent  | Support agent  | Jira → User    |
 ```
 
 - List all extracted entities
