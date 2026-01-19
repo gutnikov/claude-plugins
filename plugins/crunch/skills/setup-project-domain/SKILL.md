@@ -88,18 +88,20 @@ vendors:
 
 ## Pre-Defined Domains
 
-These domains have pre-researched vendor matrices ready for immediate use:
+These domains have known purposes, feature requirements, and popular vendors.
 
-| Domain | Key | Purpose | Required Features | Vendors |
-|--------|-----|---------|-------------------|---------|
-| **Task Management** | `task-manager` | Track and manage work items | Tasks, Tags, Statuses, Dependencies | Jira, Asana, Linear, Monday, ClickUp |
+| Domain | Key | Purpose | Required Features | Popular Vendors |
+|--------|-----|---------|-------------------|-----------------|
+| **Task Management** | `task-manager` | Track and manage work items | Tasks, Tags, Statuses, Dependencies | Jira, Linear, Trello, Asana, GitHub Issues |
 | **Secret Management** | `secret-manager` | Store and retrieve secrets | Get, Set, List, Delete | Vault, SOPS+age, AWS Secrets Manager, 1Password |
 | **Communication** | `communication` | Team messaging and notifications | Messages, Channels, Threads | Slack, Discord, MS Teams |
-| **CI/CD** | `ci-cd` | Continuous integration/deployment | Pipelines, Triggers, Logs, Artifacts | GitHub Actions, GitLab CI, CircleCI |
+| **CI/CD** | `ci-cd` | Continuous integration/deployment | Pipelines, Triggers, Logs, Artifacts | GitHub Actions, GitLab CI, CircleCI, Jenkins |
 | **Memory/Knowledge** | `memory` | Persistent memory and context | Store, Retrieve, Search | Memory MCP, Pinecone, Chroma |
-| **Monitoring** | `monitoring` | Observability and alerting | Metrics, Logs, Alerts | Datadog, Grafana, PagerDuty |
+| **Monitoring** | `monitoring` | Observability and alerting | Metrics, Logs, Alerts | Datadog, Grafana, PagerDuty, Prometheus |
 | **Localization** | `localization` | Internationalization and translation | Extract, Translate, Sync, Manage keys | Lokalise, Crowdin, Phrase, i18next |
 | **Custom** | (user-defined) | (user-defined) | (user-defined) | (user-defined) |
+
+**Note:** Users select their existing vendor from the popular list (or specify "Other"). The skill then analyzes vendor compatibility with the domain requirements.
 
 ---
 
@@ -107,48 +109,32 @@ These domains have pre-researched vendor matrices ready for immediate use:
 
 ### Phase 1: Domain Selection
 
-Present domain options to the user:
+Use the AskUserQuestion tool to present domain options with an interactive selector:
 
-```
-Which project domain would you like to create a setup skill for?
-
-  1. Task Management     - Track and manage work items
-                          Features: Tasks, Tags, Statuses, Dependencies
-                          Vendors: Jira, Asana, Linear, Monday.com, ClickUp
-
-  2. Secret Management   - Securely store and retrieve secrets
-                          Features: Get, Set, List, Delete, Versioning
-                          Vendors: Vault, SOPS+age, AWS Secrets Manager, 1Password
-
-  3. Communication       - Team messaging and notifications
-                          Features: Messages, Channels, Threads, Reactions
-                          Vendors: Slack, Discord, MS Teams
-
-  4. CI/CD               - Continuous integration and deployment
-                          Features: Pipelines, Triggers, Logs, Artifacts
-                          Vendors: GitHub Actions, GitLab CI, CircleCI
-
-  5. Memory/Knowledge    - Persistent memory and context
-                          Features: Store, Retrieve, Search
-                          Vendors: Memory MCP, Pinecone, Chroma
-
-  6. Monitoring          - Observability and alerting
-                          Features: Metrics, Logs, Alerts
-                          Vendors: Datadog, Grafana, PagerDuty
-
-  7. Localization        - Internationalization and translation
-                          Features: Extract, Translate, Sync, Manage keys
-                          Vendors: Lokalise, Crowdin, Phrase, i18next
-
-  8. Custom Domain       - Define your own domain
-                          (Will ask for features and vendors)
-
-Select domain (1-8):
+```typescript
+AskUserQuestion({
+  questions: [{
+    question: "Which project domain would you like to create a setup skill for?",
+    header: "Domain",
+    options: [
+      { label: "Task Management", description: "Track and manage work items (tasks, bugs, features)" },
+      { label: "Secret Management", description: "Store and retrieve secrets securely" },
+      { label: "Communication", description: "Team messaging and notifications" },
+      { label: "CI/CD", description: "Continuous integration and deployment pipelines" },
+      { label: "Memory/Knowledge", description: "Persistent memory and context retrieval" },
+      { label: "Monitoring", description: "Observability, metrics, and alerting" },
+      { label: "Localization", description: "Internationalization and translation management" }
+    ],
+    multiSelect: false
+  }]
+})
 ```
 
-**If pre-defined domain selected:** Skip to Phase 3 (use pre-defined configuration)
+**Note:** User can select "Other" to define a custom domain.
 
-**If custom domain selected:** Continue to Phase 1.5 (Scenario Collection)
+**If pre-defined domain selected:** Continue to Phase 1.7 (Vendor Selection)
+
+**If custom domain selected (Other):** Continue to Phase 1.5 (Scenario Collection)
 
 **DOD:** Domain selected
 
@@ -312,6 +298,98 @@ Does this model represent your domain?
 ```
 
 **DOD:** Domain model extracted and confirmed
+
+---
+
+### Phase 1.7: Vendor Selection
+
+**Applies to:** Both pre-defined and custom domains. For pre-defined domains, this is the next step after Phase 1. For custom domains, this follows Phase 1.6.
+
+Present popular vendors for the selected domain and let the user choose which one they use.
+
+#### Step 1: Present Vendor Options
+
+Use AskUserQuestion with the domain's popular vendors:
+
+```typescript
+AskUserQuestion({
+  questions: [{
+    question: "Which {domain_name} vendor do you use?",
+    header: "Vendor",
+    options: [
+      // Populated from domain's popular_vendors list
+      { label: "{Vendor1}", description: "{brief description}" },
+      { label: "{Vendor2}", description: "{brief description}" },
+      { label: "{Vendor3}", description: "{brief description}" },
+      { label: "{Vendor4}", description: "{brief description}" }
+    ],
+    multiSelect: false
+  }]
+})
+```
+
+**Note:** User can select "Other" to specify a vendor not in the list.
+
+**If user selects "Other":** Ask for vendor name via text input.
+
+**DOD:** Vendor selected
+
+---
+
+### Phase 1.8: Vendor Compatibility Analysis
+
+After vendor selection, analyze how well the vendor matches the domain's requirements.
+
+#### Step 1: Map Vendor Capabilities
+
+Using the Entity and Operation Mapping Aliases (see Vendor Capability Registry), determine:
+
+1. **Entity Coverage** - Which domain entities the vendor supports
+2. **Operation Coverage** - Which domain operations the vendor supports
+3. **Gaps** - What's missing or requires workarounds
+
+#### Step 2: Display Compatibility Report
+
+```
+Vendor Compatibility Analysis: {Vendor} for {Domain Name}
+=========================================================
+
+Entity Mapping:
+  {domain_entity_1} → {vendor_entity} [Full Support]
+  {domain_entity_2} → {vendor_entity} [Full Support]
+  {domain_entity_3} → (custom field)  [Workaround Required]
+  {domain_entity_4} → (not supported) [Gap]
+
+Operation Mapping:
+  {operation_1} → {vendor_api_method} [Full Support]
+  {operation_2} → {vendor_api_method} [Full Support]
+  {operation_3} → (manual process)    [Workaround Required]
+
+Overall Compatibility: {X}% ({Y} of {Z} capabilities supported)
+
+Gaps & Workarounds:
+  - {entity/operation}: {description of workaround or limitation}
+
+Recommendation: {Proceed / Consider alternatives / Not recommended}
+```
+
+#### Step 3: Confirm or Change Vendor
+
+```typescript
+AskUserQuestion({
+  questions: [{
+    question: "How would you like to proceed?",
+    header: "Continue",
+    options: [
+      { label: "Continue with {Vendor}", description: "Generate skill with noted limitations" },
+      { label: "Choose different vendor", description: "Go back to vendor selection" }
+    ],
+    multiSelect: false
+  }]
+})
+```
+
+**DOD:** User confirms vendor choice after seeing compatibility analysis
 
 ---
 
@@ -579,7 +657,7 @@ plugins/crunch/skills/setup-{domain_key}/SKILL.md
 
 ### Phase 5: Verification
 
-Display result and verification options:
+Display result summary:
 
 ```
 Setup skill generated!
@@ -595,11 +673,23 @@ To test the generated skill:
 2. Select a vendor
 3. Complete the setup flow
 4. Verify CLAUDE.md is updated
+```
 
-Would you like to:
-1. Review the generated skill
-2. Generate another domain skill
-3. Done
+Then use AskUserQuestion to present options:
+
+```typescript
+AskUserQuestion({
+  questions: [{
+    question: "What would you like to do next?",
+    header: "Next Step",
+    options: [
+      { label: "Review the generated skill", description: "View the SKILL.md content" },
+      { label: "Generate another domain skill", description: "Create a skill for a different domain" },
+      { label: "Done", description: "Exit the skill generator" }
+    ],
+    multiSelect: false
+  }]
+})
 ```
 
 **If user selects "Review":** Read and display the generated SKILL.md
@@ -610,12 +700,48 @@ Would you like to:
 
 ## Pre-Defined Domain Configurations
 
-### Task Management
+### Example: Task Management (Reference Only)
+
+This example shows the domain configuration structure that gets generated:
 
 ```yaml
 domain_name: "Task Management"
 domain_key: "task-manager"
 purpose: "Track and manage work items, bugs, features, and team tasks"
+claude_section: "## Task Management"
+
+# Popular vendors for user selection
+popular_vendors:
+  - Jira
+  - Linear
+  - Trello
+  - Asana
+  - GitHub Issues
+
+# Required capabilities for compatibility analysis
+required_entities:
+  - task        # Primary work item
+  - user        # Team member / assignee
+  - project     # Container for tasks
+  - tag         # Categorization labels
+  - status      # Workflow state
+
+required_operations:
+  - create      # Create new tasks
+  - read        # View task details
+  - update      # Modify tasks
+  - list        # List/search tasks
+  - assign      # Assign to users
+  - transition  # Change status
+
+required_attributes:
+  - title       # Task name
+  - description # Task details
+  - priority    # Urgency level
+  - status      # Current state
+  - assignee    # Assigned user
+  - tags        # Labels/categories
+
 explanation: |
   ## Why Task Management Integration?
 
@@ -623,1167 +749,59 @@ explanation: |
   With this integration, Claude can create tasks, update status, and help
   you stay organized without switching between tools.
 
-  ### The Problem
-
-  ┌─────────────────────────────────────────────────────────┐
-  │  Working Without Integration                            │
-  │                                                         │
-  │  "Claude, I found a bug in the login flow"              │
-  │                                                         │
-  │  Then you have to:                                      │
-  │  1. Open Jira/Trello in browser                         │
-  │  2. Create new ticket manually                          │
-  │  3. Copy details from conversation                      │
-  │  4. Assign, set priority, add labels...                 │
-  │  5. Come back to coding                                 │
-  │                                                         │
-  │  Easy to forget, inconsistent tracking                  │
-  └─────────────────────────────────────────────────────────┘
-
   ### The Solution
 
-  ┌─────────────────────────────────────────────────────────┐
-  │  "Claude, create a high-priority bug ticket for the     │
-  │   login issue we just discussed"                        │
-  │                                                         │
-  │  Claude: "Created PROJ-123: Login flow bug              │
-  │           Priority: High, Assigned to: You"             │
-  └─────────────────────────────────────────────────────────┘
+  "Claude, create a high-priority bug ticket for the login issue"
 
-  ### When You Need This
-
-  - You want Claude to create/update tasks during work
-  - You need to check task status without context-switching
-  - You want Claude to understand project priorities
-  - You need automated task creation from code reviews
-required_features:
-  - Create tasks
-  - Update tasks
-  - List/search tasks
-  - Manage labels/tags
-  - Set status/priority
-claude_section: "## Task Management"
-
-vendors:
-  - name: "Jira"
-    key: "jira"
-    integration_method: "mcp-community"
-    features: [Create, Update, List, Search, Labels, Status, Priority, Comments, Attachments]
-    official_mcp: null
-    community_mcp: "@modelcontextprotocol/server-atlassian"
-    auth: ["API Token", "OAuth"]
-    test_op: "search_issues"
-    notes: "Enterprise-grade, complex workflows, JQL search"
-    credential_update:
-      api_token:
-        env_vars: ["ATLASSIAN_API_TOKEN", "ATLASSIAN_EMAIL", "ATLASSIAN_DOMAIN"]
-        regenerate_url: "https://id.atlassian.com/manage-profile/security/api-tokens"
-        instructions: "Generate new API token in Atlassian Account Settings"
-
-  - name: "Linear"
-    key: "linear"
-    integration_method: "mcp-community"
-    features: [Create, Update, List, Search, Labels, Status, Priority, Comments]
-    official_mcp: null
-    community_mcp: "linear-mcp"
-    auth: ["API Key"]
-    test_op: "list_issues"
-    notes: "Modern, fast, developer-focused"
-    credential_update:
-      api_token:
-        env_vars: ["LINEAR_API_KEY"]
-        regenerate_url: "https://linear.app/settings/api"
-        instructions: "Generate new API key in Linear Settings > API"
-
-  - name: "Trello"
-    key: "trello"
-    integration_method: "mcp-community"
-    features: [Create, Update, List, Labels, Move, Comments, Checklists]
-    official_mcp: null
-    community_mcp: "trello-mcp"
-    auth: ["API Key", "Token"]
-    test_op: "list_boards"
-    notes: "Simple, visual, quick setup"
-    credential_update:
-      api_token:
-        env_vars: ["TRELLO_API_KEY", "TRELLO_TOKEN"]
-        regenerate_url: "https://trello.com/app-key"
-        instructions: "Get API key and generate token at Trello Developer page"
-
-  - name: "Asana"
-    key: "asana"
-    integration_method: "mcp-community"
-    features: [Create, Update, List, Search, Tags, Status, Subtasks, Comments]
-    official_mcp: null
-    community_mcp: "asana-mcp"
-    auth: ["API Token", "OAuth"]
-    test_op: "list_projects"
-    notes: "Clean interface, good for project management"
-    credential_update:
-      api_token:
-        env_vars: ["ASANA_ACCESS_TOKEN"]
-        regenerate_url: "https://app.asana.com/0/developer-console"
-        instructions: "Generate new Personal Access Token in Asana Developer Console"
-
-  - name: "ClickUp"
-    key: "clickup"
-    integration_method: "mcp-community"
-    features: [Create, Update, List, Search, Tags, Status, Priority, Time Tracking]
-    official_mcp: null
-    community_mcp: "clickup-mcp"
-    auth: ["API Token"]
-    test_op: "list_spaces"
-    notes: "Feature-rich, generous free tier"
-    credential_update:
-      api_token:
-        env_vars: ["CLICKUP_API_TOKEN"]
-        regenerate_url: "https://app.clickup.com/settings/apps"
-        instructions: "Generate new API token in ClickUp Settings > Apps"
-
-excluded:
-  - name: "Todoist"
-    reason: "Personal task manager, limited team features"
-  - name: "Apple Reminders"
-    reason: "No API access, personal only"
+  Claude: "Created PROJ-123: Login flow bug
+           Priority: High, Assigned to: You"
 ```
 
-### Secret Management
+### Compatibility Analysis Example
 
-```yaml
-domain_name: "Secret Management"
-domain_key: "secret-manager"
-purpose: "Securely store, retrieve, and manage secrets and credentials"
-explanation: |
-  ## Why Secret Management?
+When user selects "Trello" for Task Management:
 
-  Many parts of your app need sensitive values - database passwords, API keys,
-  encryption secrets. If these get committed to your repo in plain text, anyone
-  with access to your code can steal them.
-
-  ### The Problem
-
-  ┌─────────────────────────────────────────────────────────┐
-  │  Your Code Repository                                   │
-  │                                                         │
-  │  config.js                                              │
-  │  ┌─────────────────────────────────────┐                │
-  │  │ DB_PASSWORD = "super_secret_123"    │ ← EXPOSED!     │
-  │  │ API_KEY = "sk-abc123..."            │ ← EXPOSED!     │
-  │  └─────────────────────────────────────┘                │
-  │                                                         │
-  │  Anyone who can see your repo can steal these values    │
-  │  (hackers, leaked backups, accidental public repos)     │
-  └─────────────────────────────────────────────────────────┘
-
-  ### The Solution
-
-  A secrets manager keeps sensitive values separate from your code:
-
-  ┌──────────────┐      ┌──────────────────┐
-  │  Your Code   │      │ Secrets Manager  │
-  │              │      │                  │
-  │  DB_PASSWORD │─────▶│ ************     │ Encrypted &
-  │  = get(...)  │      │ (stored safely)  │ access-controlled
-  └──────────────┘      └──────────────────┘
-
-  Your code only contains references, not actual secrets.
-
-  ### When You Need This
-
-  - Your project has database credentials, API keys, or tokens
-  - Multiple team members need access to the same secrets
-  - You want to rotate credentials without changing code
-  - You need audit logs of who accessed what secrets
-  - Your deployment pipeline needs secure credential injection
-required_features:
-  - Get secrets
-  - Set secrets
-  - List secrets
-  - Delete secrets
-claude_section: "## Secrets Management"
-
-vendors:
-  - name: "HashiCorp Vault"
-    key: "vault"
-    integration_method: "mcp-community"
-    alternative_method: "cli"          # Fallback to CLI if MCP not preferred
-    features: [Get, Set, List, Delete, Versioning, Audit]
-    official_mcp: null
-    community_mcp: "vault-mcp"
-    cli_tools:
-      - name: "vault"
-        install: "brew install vault"
-        check: "vault --version"
-    env_vars:
-      - name: "VAULT_ADDR"
-        description: "Vault server address"
-      - name: "VAULT_TOKEN"
-        description: "Vault authentication token"
-    auth: ["Token", "AppRole", "OIDC"]
-    test_op: "vault kv list secret/"
-    notes: "Enterprise-grade, self-hosted or HCP"
-    credential_update:
-      api_token:
-        env_vars: ["VAULT_TOKEN", "VAULT_ADDR"]
-        regenerate_url: "Vault UI or CLI: vault token create"
-        instructions: "Generate new token via Vault CLI or UI, update VAULT_TOKEN"
-
-  - name: "SOPS + age"
-    key: "sops-age"
-    integration_method: "file-based"    # NOT MCP - uses config files and CLI
-    features: [Get, Set, List, Delete]
-    official_mcp: null
-    community_mcp: null                 # CORRECTED - no such MCP exists
-    config_files:
-      - path: ".sops.yaml"
-        description: "SOPS encryption configuration"
-        template: |
-          creation_rules:
-            - path_regex: .*\.enc\.(yaml|json)$
-              age: '{public_key}'
-      - path: "~/.config/sops/age/keys.txt"
-        description: "age private key file"
-    cli_tools:
-      - name: "sops"
-        install: "brew install sops"
-        check: "sops --version"
-      - name: "age"
-        install: "brew install age"
-        check: "age --version"
-    env_vars:
-      - name: "SOPS_AGE_KEY_FILE"
-        description: "Path to age private key file"
-        default: "~/.config/sops/age/keys.txt"
-    setup_steps:
-      - "Generate age keys: age-keygen -o ~/.config/sops/age/keys.txt"
-      - "Copy public key from output (starts with 'age1...')"
-      - "Create .sops.yaml with public key"
-      - "Set SOPS_AGE_KEY_FILE environment variable"
-      - "Test: sops -e test.yaml > test.enc.yaml && sops -d test.enc.yaml"
-    auth: ["age keys"]
-    test_op: "sops -d test.enc.yaml"
-    notes: "File-based, git-friendly, no external services"
-    credential_update:
-      file_based:
-        config_files: [".sops.yaml", "~/.config/sops/age/keys.txt"]
-        regenerate_instructions: "Regenerate keys with age-keygen and update .sops.yaml"
-        instructions: "Update SOPS_AGE_KEY_FILE path or regenerate keys with age-keygen"
-
-  - name: "AWS Secrets Manager"
-    key: "aws-secrets"
-    integration_method: "mcp-community"
-    features: [Get, Set, List, Delete, Versioning, Rotation]
-    official_mcp: null
-    community_mcp: "aws-mcp"
-    env_vars:
-      - name: "AWS_ACCESS_KEY_ID"
-        description: "AWS access key ID"
-      - name: "AWS_SECRET_ACCESS_KEY"
-        description: "AWS secret access key"
-      - name: "AWS_REGION"
-        description: "AWS region"
-    auth: ["IAM", "Access Keys"]
-    test_op: "aws secretsmanager list-secrets"
-    notes: "AWS native, automatic rotation"
-    credential_update:
-      api_token:
-        env_vars: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION"]
-        regenerate_url: "https://console.aws.amazon.com/iam/home#/security_credentials"
-        instructions: "Generate new access keys in AWS IAM console"
-
-  - name: "1Password"
-    key: "1password"
-    integration_method: "mcp-official"
-    features: [Get, Set, List, Delete]
-    official_mcp: "https://mcp.1password.com/sse"
-    community_mcp: null
-    auth: ["OAuth", "Service Account"]
-    test_op: "list vaults"
-    notes: "Team password manager"
-    credential_update:
-      oauth:
-        method: "force_reauth"
-        instructions: "Remove cached OAuth token and restart Claude Code to re-authenticate"
-      service_account:
-        env_vars: ["OP_SERVICE_ACCOUNT_TOKEN"]
-        regenerate_url: "https://my.1password.com/integrations/directory"
-        instructions: "Create new service account token in 1Password admin console"
-
-excluded:
-  - name: ".env files"
-    reason: "No versioning, no access control, plaintext"
-  - name: "Git-crypt"
-    reason: "Limited operations, complex key management"
 ```
-
-### Communication
-
-```yaml
-domain_name: "Communication"
-domain_key: "communication"
-purpose: "Team messaging, notifications, and collaboration"
-explanation: |
-  ## Why Communication Integration?
-
-  Claude can send messages, post updates, and notify your team automatically.
-  Instead of manually copying information between tools, Claude becomes part of
-  your team's communication flow.
-
-  ### The Problem
-
-  ┌─────────────────────────────────────────────────────────┐
-  │  Manual Notification Flow                               │
-  │                                                         │
-  │  Claude: "Build completed successfully"                 │
-  │     │                                                   │
-  │     └──▶ You copy this message                          │
-  │             │                                           │
-  │             └──▶ Paste into Slack                       │
-  │                     │                                   │
-  │                     └──▶ Team finally sees it           │
-  │                                                         │
-  │  Tedious, easy to forget, delays information flow       │
-  └─────────────────────────────────────────────────────────┘
-
-  ### The Solution
-
-  ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
-  │   Claude    │─────▶│    Slack    │─────▶│    Team     │
-  │             │      │             │      │             │
-  │ "Notify the │      │ #deploys:   │      │ Gets update │
-  │  team..."   │      │ Build done! │      │ instantly   │
-  └─────────────┘      └─────────────┘      └─────────────┘
-
-  Claude posts directly - no manual steps needed.
-
-  ### When You Need This
-
-  - You want Claude to post deployment notifications
-  - You need automated alerts when tasks complete
-  - You want to discuss code changes in team channels
-  - You need Claude to read channel history for context
-required_features:
-  - Send messages
-  - List channels
-  - Thread replies
-claude_section: "## Communication"
-
-vendors:
-  - name: "Slack"
-    key: "slack"
-    features: [Messages, Channels, Threads, Reactions, Files]
-    official_mcp: null
-    community_mcp: "@modelcontextprotocol/server-slack"
-    auth: ["Bot Token", "OAuth"]
-    test_op: "list_channels"
-    notes: "Most popular enterprise messaging"
-    credential_update:
-      api_token:
-        env_vars: ["SLACK_BOT_TOKEN", "SLACK_TEAM_ID"]
-        regenerate_url: "https://api.slack.com/apps"
-        instructions: "Regenerate Bot User OAuth Token in Slack App settings"
-
-  - name: "Discord"
-    key: "discord"
-    features: [Messages, Channels, Threads, Reactions]
-    official_mcp: null
-    community_mcp: "discord-mcp"
-    auth: ["Bot Token"]
-    test_op: "list_guilds"
-    notes: "Gaming/community focused"
-    credential_update:
-      api_token:
-        env_vars: ["DISCORD_BOT_TOKEN"]
-        regenerate_url: "https://discord.com/developers/applications"
-        instructions: "Regenerate Bot Token in Discord Developer Portal"
-
-  - name: "Microsoft Teams"
-    key: "teams"
-    features: [Messages, Channels, Threads]
-    official_mcp: null
-    community_mcp: "teams-mcp"
-    auth: ["OAuth", "App Registration"]
-    test_op: "list_teams"
-    notes: "Microsoft 365 integration"
-    credential_update:
-      oauth:
-        method: "force_reauth"
-        instructions: "Clear cached OAuth tokens and restart Claude Code to re-authenticate"
-      api_token:
-        env_vars: ["TEAMS_CLIENT_ID", "TEAMS_CLIENT_SECRET", "TEAMS_TENANT_ID"]
-        regenerate_url: "https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps"
-        instructions: "Regenerate client secret in Azure App Registration"
-
-excluded:
-  - name: "Email (SMTP)"
-    reason: "No real-time messaging, no channels/threads"
-```
-
-### CI/CD
-
-```yaml
-domain_name: "CI/CD"
-domain_key: "ci-cd"
-purpose: "Continuous integration and deployment pipelines"
-explanation: |
-  ## Why CI/CD Integration?
-
-  CI/CD (Continuous Integration/Continuous Deployment) automates building,
-  testing, and deploying your code. With this integration, Claude can trigger
-  builds, check pipeline status, and help debug failures.
-
-  ### The Problem
-
-  ┌─────────────────────────────────────────────────────────┐
-  │  Manual Pipeline Interaction                            │
-  │                                                         │
-  │  1. Switch to GitHub/GitLab UI                          │
-  │  2. Navigate to Actions/Pipelines                       │
-  │  3. Find the failing build                              │
-  │  4. Click through to see logs                           │
-  │  5. Copy error messages                                 │
-  │  6. Come back to Claude to ask about them               │
-  │                                                         │
-  │  Context-switching slows you down                       │
-  └─────────────────────────────────────────────────────────┘
-
-  ### The Solution
-
-  ┌─────────────────────────────────────────────────────────┐
-  │  "Claude, why did the last build fail?"                 │
-  │                                                         │
-  │  Claude checks pipeline ──▶ Gets logs ──▶ Explains:     │
-  │                                                         │
-  │  "The build failed because test_auth.py has a          │
-  │   missing import. Here's the fix..."                    │
-  └─────────────────────────────────────────────────────────┘
-
-  ### When You Need This
-
-  - You want to check build status without leaving your editor
-  - You need Claude to help debug failing pipelines
-  - You want to trigger builds or deployments via conversation
-  - You need to review build artifacts and logs
-required_features:
-  - List pipelines/workflows
-  - Trigger builds
-  - View logs
-  - Get artifacts
-claude_section: "## CI/CD"
-
-vendors:
-  - name: "GitHub Actions"
-    key: "github-actions"
-    features: [Workflows, Triggers, Logs, Artifacts, Secrets]
-    official_mcp: null
-    community_mcp: "@modelcontextprotocol/server-github"
-    auth: ["PAT", "GitHub App"]
-    test_op: "list_workflows"
-    notes: "Integrated with GitHub repos"
-    credential_update:
-      api_token:
-        env_vars: ["GITHUB_PERSONAL_ACCESS_TOKEN"]
-        regenerate_url: "https://github.com/settings/tokens"
-        instructions: "Generate new PAT with workflow scope at GitHub Settings > Developer settings"
-
-  - name: "GitLab CI"
-    key: "gitlab-ci"
-    features: [Pipelines, Triggers, Logs, Artifacts]
-    official_mcp: null
-    community_mcp: "@modelcontextprotocol/server-gitlab"
-    auth: ["PAT", "OAuth"]
-    test_op: "list_pipelines"
-    notes: "Full DevOps platform"
-    credential_update:
-      api_token:
-        env_vars: ["GITLAB_PERSONAL_ACCESS_TOKEN", "GITLAB_API_URL"]
-        regenerate_url: "https://gitlab.com/-/profile/personal_access_tokens"
-        instructions: "Generate new token with api scope at GitLab User Settings > Access Tokens"
-
-  - name: "CircleCI"
-    key: "circleci"
-    features: [Pipelines, Triggers, Logs, Artifacts]
-    official_mcp: null
-    community_mcp: "circleci-mcp"
-    auth: ["API Token"]
-    test_op: "list_pipelines"
-    notes: "Cloud-native CI/CD"
-    credential_update:
-      api_token:
-        env_vars: ["CIRCLECI_TOKEN"]
-        regenerate_url: "https://app.circleci.com/settings/user/tokens"
-        instructions: "Generate new Personal API Token in CircleCI User Settings"
-
-  - name: "Jenkins"
-    key: "jenkins"
-    features: [Jobs, Triggers, Logs, Artifacts]
-    official_mcp: null
-    community_mcp: "jenkins-mcp"
-    auth: ["API Token", "Username/Password"]
-    test_op: "list_jobs"
-    notes: "Self-hosted, highly extensible"
-    credential_update:
-      api_token:
-        env_vars: ["JENKINS_URL", "JENKINS_USER", "JENKINS_API_TOKEN"]
-        regenerate_url: "Jenkins instance > User > Configure > API Token"
-        instructions: "Generate new API token in your Jenkins user profile"
-
-excluded:
-  - name: "Make/Makefile"
-    reason: "Local only, no remote triggers or artifacts"
-```
-
-### Memory/Knowledge
-
-```yaml
-domain_name: "Memory & Knowledge"
-domain_key: "memory"
-purpose: "Persistent memory, context, and knowledge retrieval"
-explanation: |
-  ## Why Memory Integration?
-
-  By default, Claude forgets everything when you start a new session. A memory
-  integration lets Claude remember important facts about your project,
-  preferences, and decisions across conversations.
-
-  ### The Problem
-
-  ┌─────────────────────────────────────────────────────────┐
-  │  Session 1:                                             │
-  │  "We use PostgreSQL, deploy to AWS, prefer TypeScript"  │
-  │                                                         │
-  │  Session 2 (new day):                                   │
-  │  "What database do we use?"                             │
-  │  Claude: "I don't have that information..."             │
-  │                                                         │
-  │  You have to re-explain context every session           │
-  └─────────────────────────────────────────────────────────┘
-
-  ### The Solution
-
-  ┌─────────────────────────────────────────────────────────┐
-  │  Claude stores facts ──▶ Memory System ──▶ Recalls later│
-  │                                                         │
-  │  "Remember: We use PostgreSQL on AWS"                   │
-  │           ↓                                             │
-  │  [Stored in memory]                                     │
-  │           ↓                                             │
-  │  Next session: Claude already knows your stack          │
-  └─────────────────────────────────────────────────────────┘
-
-  ### When You Need This
-
-  - You want Claude to remember project conventions
-  - You need persistent context across sessions
-  - You want Claude to recall past decisions and why
-  - You have complex project knowledge to maintain
-required_features:
-  - Store entities/facts
-  - Retrieve by query
-  - Search/similarity
-  - Update/delete
-claude_section: "## Memory & Knowledge"
-
-vendors:
-  - name: "Memory MCP"
-    key: "memory"
-    features: [Store, Retrieve, Search, Relations]
-    official_mcp: null
-    community_mcp: "@modelcontextprotocol/server-memory"
-    auth: []
-    test_op: "list_entities"
-    notes: "Built-in knowledge graph, file-based"
-    credential_update:
-      api_token:
-        env_vars: []
-        regenerate_url: "N/A (no credentials required)"
-        instructions: "Memory MCP uses local file storage, no credentials needed"
-
-  - name: "Pinecone"
-    key: "pinecone"
-    features: [Store, Retrieve, Similarity Search]
-    official_mcp: null
-    community_mcp: "pinecone-mcp"
-    auth: ["API Key"]
-    test_op: "list_indexes"
-    notes: "Managed vector database for AI"
-    credential_update:
-      api_token:
-        env_vars: ["PINECONE_API_KEY", "PINECONE_ENVIRONMENT"]
-        regenerate_url: "https://app.pinecone.io/organizations/-/projects/-/keys"
-        instructions: "Generate new API key in Pinecone Console > API Keys"
-
-  - name: "Chroma"
-    key: "chroma"
-    features: [Store, Retrieve, Similarity Search]
-    official_mcp: null
-    community_mcp: "chroma-mcp"
-    auth: ["None", "API Key"]
-    test_op: "list_collections"
-    notes: "Open-source embeddings DB"
-    credential_update:
-      api_token:
-        env_vars: ["CHROMA_HOST", "CHROMA_API_KEY"]
-        regenerate_url: "Chroma Cloud dashboard or self-hosted config"
-        instructions: "Update API key from Chroma Cloud or self-hosted server config"
-
-  - name: "Weaviate"
-    key: "weaviate"
-    features: [Store, Retrieve, Similarity Search, GraphQL]
-    official_mcp: null
-    community_mcp: "weaviate-mcp"
-    auth: ["API Key", "OIDC"]
-    test_op: "list_classes"
-    notes: "Vector database with GraphQL"
-    credential_update:
-      api_token:
-        env_vars: ["WEAVIATE_URL", "WEAVIATE_API_KEY"]
-        regenerate_url: "https://console.weaviate.cloud/"
-        instructions: "Generate new API key in Weaviate Cloud Console"
-      oauth:
-        method: "force_reauth"
-        instructions: "Clear OIDC tokens and restart Claude Code to re-authenticate"
-
-excluded:
-  - name: "Plain text files"
-    reason: "No search/similarity, no structured retrieval"
-```
-
-### Monitoring
-
-```yaml
-domain_name: "Monitoring"
-domain_key: "monitoring"
-purpose: "Observability, metrics, logs, and alerting"
-explanation: |
-  ## Why Monitoring Integration?
-
-  Monitoring tools track your application's health - errors, performance,
-  uptime. With this integration, Claude can check metrics, investigate
-  alerts, and help diagnose production issues.
-
-  ### The Solution
-
-  Instead of switching to Datadog/Grafana dashboards, ask Claude directly:
-
-  "Claude, are there any errors in production right now?"
-  "What's the API latency over the last hour?"
-  "Why did we get paged at 3am?"
-
-  ### When You Need This
-
-  - You want to check system health during development
-  - You need Claude to help investigate incidents
-  - You want alerts and metrics in your workflow
-  - You need to correlate code changes with metrics
-required_features:
-  - Query metrics
-  - Search logs
-  - Manage alerts
-claude_section: "## Monitoring"
-
-vendors:
-  - name: "Datadog"
-    key: "datadog"
-    features: [Metrics, Logs, Traces, Alerts, Dashboards]
-    official_mcp: null
-    community_mcp: "datadog-mcp"
-    auth: ["API Key", "App Key"]
-    test_op: "list_dashboards"
-    notes: "Full-stack observability platform"
-    credential_update:
-      api_token:
-        env_vars: ["DD_API_KEY", "DD_APP_KEY", "DD_SITE"]
-        regenerate_url: "https://app.datadoghq.com/organization-settings/api-keys"
-        instructions: "Generate new API/App keys in Datadog Organization Settings"
-
-  - name: "Grafana"
-    key: "grafana"
-    features: [Metrics, Logs, Dashboards, Alerts]
-    official_mcp: null
-    community_mcp: "grafana-mcp"
-    auth: ["API Key", "Service Account"]
-    test_op: "list_dashboards"
-    notes: "Open-source visualization"
-    credential_update:
-      api_token:
-        env_vars: ["GRAFANA_URL", "GRAFANA_API_KEY"]
-        regenerate_url: "Grafana instance > Configuration > API Keys"
-        instructions: "Generate new API key or service account token in Grafana admin"
-
-  - name: "PagerDuty"
-    key: "pagerduty"
-    features: [Alerts, Incidents, Escalations, On-call]
-    official_mcp: null
-    community_mcp: "pagerduty-mcp"
-    auth: ["API Key"]
-    test_op: "list_services"
-    notes: "Incident management"
-    credential_update:
-      api_token:
-        env_vars: ["PAGERDUTY_API_KEY"]
-        regenerate_url: "https://support.pagerduty.com/docs/api-access-keys"
-        instructions: "Generate new API key in PagerDuty User Settings > API Access"
-
-  - name: "Prometheus"
-    key: "prometheus"
-    features: [Metrics, Alerts, Rules]
-    official_mcp: null
-    community_mcp: "prometheus-mcp"
-    auth: ["None", "Basic Auth"]
-    test_op: "query"
-    notes: "Open-source metrics"
-    credential_update:
-      api_token:
-        env_vars: ["PROMETHEUS_URL", "PROMETHEUS_USER", "PROMETHEUS_PASSWORD"]
-        regenerate_url: "N/A (configured in Prometheus server)"
-        instructions: "Update basic auth credentials in your Prometheus server configuration"
-
-excluded:
-  - name: "Simple logging (stdout)"
-    reason: "No querying, no alerting"
-```
-
-### Localization
-
-```yaml
-domain_name: "Localization"
-domain_key: "localization"
-purpose: "Manage internationalization, translation, and localized content"
-explanation: |
-  ## Why Localization Integration?
-
-  If your app supports multiple languages, you need a system to manage
-  translation strings, keep them in sync, and coordinate with translators.
-  This integration lets Claude help manage your i18n workflow.
-
-  ### The Problem
-
-  ┌─────────────────────────────────────────────────────────┐
-  │  Manual Localization Workflow                           │
-  │                                                         │
-  │  1. Add new string in code: t('welcome_message')        │
-  │  2. Add key to en.json manually                         │
-  │  3. Remember to add to fr.json, de.json, es.json...     │
-  │  4. Send files to translators via email                 │
-  │  5. Merge translations back, handle conflicts           │
-  │  6. Discover missing keys in production                 │
-  │                                                         │
-  │  Error-prone, hard to track, translation drift          │
-  └─────────────────────────────────────────────────────────┘
-
-  ### The Solution
-
-  ┌─────────────────────────────────────────────────────────┐
-  │  "Claude, add a new string 'welcome_message' with       │
-  │   English text 'Welcome back!' and request translation" │
-  │                                                         │
-  │  Claude:                                                │
-  │  - Added to en.json ✓                                   │
-  │  - Created translation task in Lokalise ✓               │
-  │  - Translators notified ✓                               │
-  └─────────────────────────────────────────────────────────┘
-
-  ### When You Need This
-
-  - Your app supports multiple languages
-  - You want to track missing translations
-  - You need to sync translation files with a TMS
-  - You want Claude to help extract hardcoded strings
-  - You need to coordinate with translation teams
-required_features:
-  - List translation keys
-  - Add/update keys
-  - Sync with source files
-  - Track translation status
-  - Export translations
-claude_section: "## Localization"
-
-vendors:
-  - name: "Lokalise"
-    key: "lokalise"
-    integration_method: "mcp-community"
-    features: [Keys, Upload, Download, Tasks, Comments, Screenshots]
-    official_mcp: null
-    community_mcp: "lokalise-mcp"
-    auth: ["API Token"]
-    test_op: "list_projects"
-    notes: "Developer-friendly, good CI/CD integration"
-    credential_update:
-      api_token:
-        env_vars: ["LOKALISE_API_TOKEN", "LOKALISE_PROJECT_ID"]
-        regenerate_url: "https://app.lokalise.com/profile#apitokens"
-        instructions: "Generate new API token in Lokalise Profile Settings"
-
-  - name: "Crowdin"
-    key: "crowdin"
-    integration_method: "mcp-community"
-    features: [Keys, Upload, Download, Tasks, Glossary, TM]
-    official_mcp: null
-    community_mcp: "crowdin-mcp"
-    auth: ["API Token"]
-    test_op: "list_projects"
-    notes: "Popular, strong community translation features"
-    credential_update:
-      api_token:
-        env_vars: ["CROWDIN_API_TOKEN", "CROWDIN_PROJECT_ID"]
-        regenerate_url: "https://crowdin.com/settings#api-key"
-        instructions: "Generate new API token in Crowdin Account Settings"
-
-  - name: "Phrase"
-    key: "phrase"
-    integration_method: "mcp-community"
-    features: [Keys, Upload, Download, Jobs, Glossary, TM]
-    official_mcp: null
-    community_mcp: "phrase-mcp"
-    auth: ["API Token"]
-    test_op: "list_projects"
-    notes: "Enterprise translation management"
-    credential_update:
-      api_token:
-        env_vars: ["PHRASE_ACCESS_TOKEN", "PHRASE_PROJECT_ID"]
-        regenerate_url: "https://app.phrase.com/settings/oauth_access_tokens"
-        instructions: "Generate new Access Token in Phrase Settings"
-
-  - name: "i18next"
-    key: "i18next"
-    integration_method: "file-based"
-    features: [Keys, Namespaces, Plurals, Context]
-    official_mcp: null
-    community_mcp: null
-    config_files:
-      - path: "i18next.config.js"
-        description: "i18next configuration"
-      - path: "locales/"
-        description: "Translation files directory"
-    cli_tools:
-      - name: "i18next-parser"
-        install: "npm install -g i18next-parser"
-        check: "i18next --version"
-    setup_steps:
-      - "Install i18next-parser: npm install -g i18next-parser"
-      - "Create i18next-parser.config.js in project root"
-      - "Run extraction: i18next 'src/**/*.{js,jsx,ts,tsx}'"
-    auth: []
-    test_op: "i18next 'src/**/*.{js,jsx}' --dry-run"
-    notes: "File-based, works with any i18next setup"
-
-excluded:
-  - name: "Google Translate API alone"
-    reason: "Translation only, no key management or sync"
-  - name: "DeepL API alone"
-    reason: "Translation only, no project management"
+Vendor Compatibility Analysis: Trello for Task Management
+=========================================================
+
+Entity Mapping:
+  task    → card      [Full Support]
+  user    → member    [Full Support]
+  project → board     [Full Support]
+  tag     → label     [Full Support]
+  status  → list      [Partial - position-based]
+
+Operation Mapping:
+  create     → createCard      [Full Support]
+  read       → getCard         [Full Support]
+  update     → updateCard      [Full Support]
+  list       → getCardsOnBoard [Full Support]
+  assign     → addMemberToCard [Full Support]
+  transition → moveCardToList  [Full Support]
+
+Attribute Mapping:
+  title       → name        [Full Support]
+  description → desc        [Full Support]
+  priority    → (label)     [Workaround - use colored labels]
+  status      → idList      [Partial - list position]
+  assignee    → idMembers   [Full Support]
+  tags        → idLabels    [Full Support]
+
+Overall Compatibility: 92% (11 of 12 capabilities supported)
+
+Gaps & Workarounds:
+  - priority: No native priority field; use colored labels (red=high, yellow=medium, green=low)
+  - status: Status is determined by list position; create lists for each status
+
+Recommendation: Proceed - excellent fit with minor workarounds
 ```
 
 ---
 
 ## Vendor Capability Registry
 
-This registry defines known vendor capabilities for automated matching against extracted domain models. Used by Phase 2.5 to suggest vendors.
-
-### Task/Issue Management Vendors
-
-```yaml
-jira:
-  display_name: "Jira"
-  entities:
-    - issue          # Primary work item
-    - user           # Team members
-    - project        # Container for issues
-    - sprint         # Time-boxed iteration
-    - epic           # Large work item grouping
-    - label          # Categorization tags
-    - comment        # Discussion on issues
-    - attachment     # Files on issues
-    - component      # Project subdivision
-    - version        # Release tracking
-  operations:
-    - create         # createIssue
-    - read           # getIssue
-    - update         # updateIssue
-    - delete         # deleteIssue
-    - list           # searchIssues (JQL)
-    - assign         # assignIssue
-    - transition     # transitionIssue (workflow)
-    - link           # linkIssues
-    - comment        # addComment
-    - attach         # addAttachment
-    - search         # JQL search
-  attributes:
-    - priority       # enum (Highest, High, Medium, Low, Lowest)
-    - status         # enum (workflow states)
-    - assignee       # reference to user
-    - reporter       # reference to user
-    - labels         # list of strings
-    - sprint         # reference to sprint
-    - epic           # reference to epic
-    - due_date       # date
-    - estimate       # number (story points or time)
-    - custom_fields  # extensible
-  strengths:
-    - Complex workflows with customizable states
-    - JQL search language
-    - Extensive custom fields
-    - Issue linking and dependencies
-    - Sprint planning and agile boards
-  limitations:
-    - Complex setup
-    - Can be slow for large instances
-  mcp:
-    official: null
-    community: "@modelcontextprotocol/server-atlassian"
-    auth: ["API Token", "OAuth"]
-
-linear:
-  display_name: "Linear"
-  entities:
-    - issue          # Primary work item
-    - user           # Team members
-    - team           # Organizational unit
-    - project        # Grouping of issues
-    - cycle          # Time-boxed iteration (like sprint)
-    - label          # Categorization tags
-    - comment        # Discussion on issues
-  operations:
-    - create         # createIssue
-    - read           # issue query
-    - update         # updateIssue
-    - delete         # deleteIssue (archive)
-    - list           # issues query
-    - assign         # update assignee
-    - transition     # update state
-    - comment        # createComment
-    - search         # GraphQL search
-  attributes:
-    - priority       # enum (Urgent, High, Medium, Low, No Priority)
-    - status         # enum (workflow states)
-    - assignee       # reference to user
-    - labels         # list of labels
-    - cycle          # reference to cycle
-    - estimate       # number (points)
-    - due_date       # date
-  strengths:
-    - Modern, fast interface
-    - Developer-focused
-    - Keyboard-driven
-    - GraphQL API
-    - Built-in Git integration
-  limitations:
-    - Less customizable than Jira
-    - Fewer integration options
-    - No native customer tracking
-  mcp:
-    official: null
-    community: "linear-mcp"
-    auth: ["API Key"]
-
-trello:
-  display_name: "Trello"
-  entities:
-    - card           # Primary work item (maps to ticket/issue)
-    - member         # Team members (maps to user/agent)
-    - board          # Container for lists
-    - list           # Column/status container
-    - label          # Color-coded tags
-    - checklist      # Sub-tasks
-    - comment        # Discussion on cards
-    - attachment     # Files on cards
-  operations:
-    - create         # createCard
-    - read           # getCard
-    - update         # updateCard
-    - delete         # deleteCard (archive)
-    - list           # getCardsOnBoard
-    - move           # moveCard (between lists)
-    - assign         # addMemberToCard
-    - label          # addLabelToCard
-    - comment        # addComment
-    - attach         # addAttachment
-  attributes:
-    - name           # card title
-    - description    # card description
-    - due_date       # date
-    - labels         # list of color labels
-    - members        # list of assigned members
-    - position       # order in list
-    - checklist      # sub-items
-  strengths:
-    - Simple and visual
-    - Quick setup
-    - Drag-and-drop interface
-    - Free tier available
-  limitations:
-    - No native dependencies
-    - Limited custom fields (Power-Ups required)
-    - No priority field (use labels)
-    - Status = list position only
-  mcp:
-    official: null
-    community: "trello-mcp"
-    auth: ["API Key", "Token"]
-
-asana:
-  display_name: "Asana"
-  entities:
-    - task           # Primary work item
-    - user           # Team members
-    - project        # Container for tasks
-    - section        # Grouping within project
-    - tag            # Categorization
-    - subtask        # Child tasks
-    - comment        # Discussion (stories)
-    - attachment     # Files on tasks
-  operations:
-    - create         # createTask
-    - read           # getTask
-    - update         # updateTask
-    - delete         # deleteTask
-    - list           # getTasks
-    - assign         # update assignee
-    - move           # addToSection
-    - comment        # createStory
-    - attach         # createAttachment
-    - subtask        # createSubtask
-  attributes:
-    - name           # task title
-    - notes          # description
-    - assignee       # reference to user
-    - due_date       # date
-    - due_at         # datetime
-    - tags           # list of tags
-    - completed      # boolean
-    - custom_fields  # extensible
-  strengths:
-    - Clean interface
-    - Timeline view
-    - Portfolios for project grouping
-    - Custom fields available
-  limitations:
-    - Less dev-focused than Linear
-    - Workflow automation costs extra
-  mcp:
-    official: null
-    community: "asana-mcp"
-    auth: ["API Token", "OAuth"]
-
-github_issues:
-  display_name: "GitHub Issues"
-  entities:
-    - issue          # Primary work item
-    - user           # GitHub users
-    - repository     # Container for issues
-    - label          # Categorization tags
-    - milestone      # Release/version grouping
-    - comment        # Discussion on issues
-    - project        # Project board
-  operations:
-    - create         # createIssue
-    - read           # getIssue
-    - update         # updateIssue
-    - close          # closeIssue
-    - list           # listIssues
-    - assign         # addAssignees
-    - label          # addLabels
-    - comment        # createComment
-    - search         # GitHub search syntax
-  attributes:
-    - title          # issue title
-    - body           # description (markdown)
-    - assignees      # list of users
-    - labels         # list of labels
-    - milestone      # reference to milestone
-    - state          # open/closed
-  strengths:
-    - Integrated with code
-    - Free for public repos
-    - Markdown support
-    - PR linking
-  limitations:
-    - Basic workflow (open/closed only)
-    - No native priority field
-    - Limited project management features
-  mcp:
-    official: null
-    community: "@modelcontextprotocol/server-github"
-    auth: ["PAT", "GitHub App"]
-
-monday:
-  display_name: "Monday.com"
-  entities:
-    - item           # Primary work item
-    - user           # Team members
-    - board          # Container for items
-    - group          # Section within board
-    - column         # Custom field definition
-    - update         # Comments/activity
-  operations:
-    - create         # createItem
-    - read           # getItem
-    - update         # changeColumnValue
-    - delete         # deleteItem (archive)
-    - list           # getItems
-    - move           # moveItemToGroup
-    - comment        # createUpdate
-  attributes:
-    - name           # item name
-    - status         # status column
-    - person         # assignee column
-    - date           # date column
-    - priority       # priority column
-    - custom_columns # fully extensible
-  strengths:
-    - Highly customizable columns
-    - Visual automations
-    - Multiple views (timeline, calendar, etc.)
-  limitations:
-    - Can become complex
-    - Pricing by seat
-  mcp:
-    official: null
-    community: "monday-mcp"
-    auth: ["API Token"]
-
-clickup:
-  display_name: "ClickUp"
-  entities:
-    - task           # Primary work item
-    - user           # Team members
-    - space          # Top-level container
-    - folder         # Grouping within space
-    - list           # Container for tasks
-    - tag            # Categorization
-    - comment        # Discussion
-  operations:
-    - create         # createTask
-    - read           # getTask
-    - update         # updateTask
-    - delete         # deleteTask
-    - list           # getTasks
-    - assign         # update assignees
-    - move           # moveTask
-    - comment        # createComment
-  attributes:
-    - name           # task name
-    - description    # task description
-    - assignees      # list of users
-    - status         # enum
-    - priority       # enum (Urgent, High, Normal, Low)
-    - due_date       # date
-    - tags           # list of tags
-    - custom_fields  # extensible
-  strengths:
-    - Feature-rich
-    - Multiple views
-    - Time tracking built-in
-    - Generous free tier
-  limitations:
-    - Can be overwhelming
-    - Performance with large datasets
-  mcp:
-    official: null
-    community: "clickup-mcp"
-    auth: ["API Token"]
-```
+This registry provides **entity and operation mapping aliases** for compatibility analysis between domain requirements and vendor capabilities.
 
 ### Entity Mapping Aliases
 
@@ -1826,7 +844,7 @@ The generated SKILL.md must follow this exact structure:
 ```markdown
 ---
 name: setup-{domain_key}
-description: Interactive setup wizard for {domain_name} integration. Guides through vendor selection ({vendor_list}), MCP choice, and configuration with CLAUDE.md documentation. {feature_summary}.
+description: Interactive setup wizard for {domain_name} integration. Guides through vendor selection, configuration, and CLAUDE.md documentation.
 ---
 
 # Setup {Domain Name}
@@ -2110,7 +1128,7 @@ cat {domain_key}-setup-progress.md 2>/dev/null
 
 ### Management Mode Menu
 
-When {domain_name} is already configured, display comprehensive management options:
+When {domain_name} is already configured, first display the current configuration status:
 
 \`\`\`
 {Domain Name} Management
@@ -2122,26 +1140,27 @@ Current Configuration:
   Config: {.mcp.json | env vars | config files}
   Status: {Connected | Disconnected | Error}
   Last tested: {timestamp from progress file or "never"}
-
-What would you like to do?
-
-  SETUP
-  1. Add another vendor      - Configure additional vendor alongside current
-
-  MANAGE
-  2. Change vendor           - Migrate to a different vendor
-  3. Update credentials      - Refresh API tokens or re-authenticate
-  4. Test connection         - Verify current setup is working
-
-  TROUBLESHOOT
-  5. Diagnose issues         - Run diagnostics and suggest fixes
-  6. View configuration      - Show current .mcp.json and CLAUDE.md entries
-  7. Reset configuration     - Remove current setup and start fresh
-
-  8. Exit                    - Keep current setup
-
-Select option (1-8):
 \`\`\`
+
+Then use AskUserQuestion to present management options:
+
+```typescript
+AskUserQuestion({
+  questions: [{
+    question: "What would you like to do with your {domain_name} configuration?",
+    header: "Action",
+    options: [
+      { label: "Add another vendor", description: "Configure additional vendor alongside current" },
+      { label: "Change vendor", description: "Migrate to a different vendor" },
+      { label: "Update credentials", description: "Refresh API tokens or re-authenticate" },
+      { label: "Test connection", description: "Verify current setup is working" }
+    ],
+    multiSelect: false
+  }]
+})
+```
+
+**Note:** User can select "Other" to access additional options like diagnostics, view configuration, or reset.
 
 ---
 
@@ -2782,7 +1801,7 @@ Type "RESET" to confirm, or "cancel" to abort:
 
 ### Resume Mode
 
-When a progress file exists (setup was interrupted):
+When a progress file exists (setup was interrupted), first display the status:
 
 \`\`\`
 {Domain Name} Setup - Resume
@@ -2794,14 +1813,23 @@ Progress:
   Vendor: {selected_vendor}
   Current Phase: Phase {N} - {phase_name}
   Completed: {completed_steps}
-
-Would you like to:
-1. Resume from Phase {N}
-2. Start over (discard progress)
-3. Exit
-
->
 \`\`\`
+
+Then use AskUserQuestion to present options:
+
+```typescript
+AskUserQuestion({
+  questions: [{
+    question: "How would you like to proceed with the incomplete setup?",
+    header: "Resume",
+    options: [
+      { label: "Resume from Phase {N}", description: "Continue where you left off" },
+      { label: "Start over", description: "Discard progress and begin fresh" }
+    ],
+    multiSelect: false
+  }]
+})
+```
 
 ---
 
@@ -2841,19 +1869,21 @@ Based on selected vendor's available integration methods:
 
 #### For Vendors with Multiple Integration Methods
 
-\`\`\`
-How would you like to integrate {vendor}?
+Use AskUserQuestion to present integration options:
 
-  1. MCP Integration (Recommended)
-     - Tools available directly in Claude
-     - Auto-refresh, seamless experience
-
-  2. CLI/File-based Integration
-     - Uses native tools and config files
-     - More control, works offline
-
-Select option (1-2):
-\`\`\`
+```typescript
+AskUserQuestion({
+  questions: [{
+    question: "How would you like to integrate {vendor}?",
+    header: "Integration",
+    options: [
+      { label: "MCP Integration (Recommended)", description: "Tools available directly in Claude with auto-refresh" },
+      { label: "CLI/File-based Integration", description: "Uses native tools and config files, more control" }
+    ],
+    multiSelect: false
+  }]
+})
+```
 
 #### For Vendors with Single Integration Method
 
@@ -3283,20 +2313,23 @@ For integration options table:
 
 ### Vendor Selection Display Generation
 
-```
-Which {domain_name} tool would you like to integrate?
+Use AskUserQuestion for vendor selection:
 
-All options support: {feature_list}
-
-  1. {Vendor1}     - {vendor1_notes}
-                    Best for: {use_case}
-                    {key_feature}: {description}
-
-  2. {Vendor2}     - {vendor2_notes}
-                    Best for: {use_case}
-                    {key_feature}: {description}
-
-Enter number or name:
+```typescript
+AskUserQuestion({
+  questions: [{
+    question: "Which {domain_name} tool would you like to integrate?",
+    header: "Vendor",
+    options: [
+      // Dynamically generated from vendor matrix
+      { label: "{Vendor1}", description: "{vendor1_notes} - Best for: {use_case}" },
+      { label: "{Vendor2}", description: "{vendor2_notes} - Best for: {use_case}" },
+      { label: "{Vendor3}", description: "{vendor3_notes} - Best for: {use_case}" },
+      { label: "{Vendor4}", description: "{vendor4_notes} - Best for: {use_case}" }
+    ],
+    multiSelect: false
+  }]
+})
 ```
 
 ### MCP Config Generation
