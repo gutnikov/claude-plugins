@@ -1,0 +1,81 @@
+# Project Domains
+#
+# Shared definition of all project domains for setup skills.
+# Skills can load this file to get the canonical list of domains.
+#
+# Usage in skills:
+#   Reference: plugins/crunch/data/domains.yaml
+#   Load domains list and filter by required/optional as needed.
+
+domains:
+  # Required domains (core project infrastructure)
+  - name: Tech Stack
+    key: tech-stack
+    purpose: Auto-detect and configure project stack
+    required: true
+
+  - name: Configuration
+    key: configuration
+    purpose: Manage env variables per environment
+    required: true
+
+  - name: Secrets
+    key: secrets
+    purpose: Store and retrieve secrets securely
+    required: true
+
+  - name: Pipelines
+    key: pipelines
+    purpose: Define project pipelines (local, CI, deploy)
+    required: true
+
+  - name: Deploy Environments
+    key: deploy-environments
+    purpose: Manage dev/staging/prod environments
+    required: true
+
+  - name: Task Management
+    key: task-management
+    purpose: Track and manage work items
+    required: true
+
+  - name: Agents & Orchestration
+    key: agents-and-orchestration
+    purpose: Configure Claude Code agents
+    required: true
+
+  # Optional domains (extended capabilities)
+  - name: Memory Management
+    key: memory-management
+    purpose: Persistent AI context across sessions
+    required: false
+
+  - name: User Communication Bot
+    key: user-communication-bot
+    purpose: Slack app/bot for project development
+    required: false
+
+  - name: CI/CD
+    key: ci-cd
+    purpose: Continuous integration/deployment
+    required: false
+
+  - name: Observability
+    key: observability
+    purpose: Metrics, logs, traces, alerting
+    required: false
+
+  - name: Problem Remediation
+    key: problem-remediation
+    purpose: Runbook automation, self-healing
+    required: false
+
+  - name: Documentation
+    key: documentation
+    purpose: Doc site generation and publishing
+    required: false
+
+  - name: Localization
+    key: localization
+    purpose: Internationalization and translation
+    required: false
