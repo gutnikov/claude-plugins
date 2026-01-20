@@ -1,0 +1,332 @@
+# Universal Tech Stack Schema
+# Covers web, mobile, backend, infra – only technical stack info.
+
+open_question: |
+  Tell me about your project's tech stack.
+
+  What kind of application is this? (web frontend, backend, mobile, CLI, infra, etc.)
+  What programming languages do you use? Which is the primary one?
+  Any frameworks, libraries, or tools worth mentioning? (React, FastAPI, Terraform, etc.)
+  What about package managers, build tools, testing frameworks?
+
+schema:
+  # ─────────────────────────── General tech context ────────────────────────────
+  platforms:
+    type: array
+    required: true
+    description: "What kind of application this project includes"
+    items:
+      type: enum
+      options:
+        - web_frontend
+        - web_backend
+        - mobile_ios
+        - mobile_android
+        - mobile_cross
+        - desktop
+        - cli
+        - infra
+        - data_pipeline
+        - library
+    example: ["web_frontend", "web_backend", "infra"]
+
+  languages:
+    type: array
+    required: true
+    items:
+      type: string
+    description: "Programming languages used anywhere in this project"
+    example: ["TypeScript", "Python", "Go"]
+    presets:
+      - ["TypeScript"]
+      - ["TypeScript", "Python"]
+      - ["JavaScript"]
+      - ["Python"]
+      - ["Go"]
+      - ["Kotlin"]
+      - ["Swift"]
+      - ["Rust"]
+
+  primary_language:
+    type: enum
+    required: true
+    options_from: languages
+    description: "Primary programming language for the project"
+
+  runtimes:
+    type: array
+    required: false
+    description: "Execution runtimes (JS engines, JVM, mobile runtimes, etc.)"
+    items:
+      type: string
+    example: ["Node 20", "Python 3.11", "JVM 21"]
+    detect_from:
+      - ".nvmrc"
+      - ".node-version"
+      - ".python-version"
+      - "runtime.txt"
+      - "go.mod"
+      - "build.gradle"
+      - "pom.xml"
+      - "Gemfile"
+
+  # ──────────────────────────── Global tooling layer ───────────────────────────
+  package_managers:
+    type: array
+    required: false
+    description: "Package managers used in the repository"
+    items:
+      type: enum
+      options: ["npm", "yarn", "pnpm", "bun", "pip", "poetry", "cargo",
+                "go mod", "gradle", "maven", "gem", "cocoapods", "carthage"]
+    detect_from:
+      - "package-lock.json -> npm"
+      - "yarn.lock -> yarn"
+      - "pnpm-lock.yaml -> pnpm"
+      - "bun.lockb -> bun"
+      - "requirements.txt -> pip"
+      - "poetry.lock -> poetry"
+      - "Cargo.lock -> cargo"
+      - "go.sum -> go mod"
+      - "build.gradle / gradlew -> gradle"
+      - "pom.xml -> maven"
+      - "Gemfile -> gem"
+      - "Podfile / Podfile.lock -> cocoapods"
+      - "Cartfile / Cartfile.resolved -> carthage"
+
+  build_tools:
+    type: array
+    required: false
+    description: "Build tools / bundlers / compilers used globally"
+    items:
+      type: string
+    example: ["tsc", "webpack", "Xcode build", "Gradle", "CMake"]
+
+  test_frameworks:
+    type: array
+    required: false
+    description: "Testing frameworks used globally"
+    items:
+      type: string
+    example: ["jest", "vitest", "pytest", "JUnit", "Go test", "XCTest"]
+
+  linters:
+    type: array
+    required: false
+    description: "Static analysis / lint tools"
+    items:
+      type: string
+    example: ["ESLint", "Prettier", "flake8", "golangci-lint", "ktlint"]
+
+  # ────────────────────── Platform-specific stack profiles ─────────────────────
+  # Each block is optional. Fill only if the platform is relevant.
+
+  web_frontend:
+    type: object
+    required: false
+    description: "Tech stack for browser-facing web UI"
+    properties:
+      languages:
+        type: array
+        required: false
+        items:
+          type: string
+        example: ["TypeScript"]
+        options_from: languages
+      primary_framework:
+        type: enum
+        required: false
+        description: "Main web UI framework"
+        options:
+          - React
+          - Next.js
+          - Vue
+          - Nuxt
+          - Angular
+          - Svelte
+          - SolidJS
+          - VanillaJS
+      ui_libraries:
+        type: array
+        required: false
+        items:
+          type: string
+        description: "UI kits / component libraries"
+        example: ["Ant Design", "MUI", "Tailwind CSS"]
+      state_management:
+        type: array
+        required: false
+        items:
+          type: string
+        description: "Client-side state management tools"
+        example: ["Redux Toolkit", "Zustand", "MobX", "TanStack Query"]
+      bundler:
+        type: enum
+        required: false
+        options: ["webpack", "vite", "esbuild", "rollup", "parcel", "none"]
+      test_frameworks:
+        type: array
+        required: false
+        items:
+          type: string
+        example: ["jest", "vitest", "playwright", "cypress"]
+
+  web_backend:
+    type: object
+    required: false
+    description: "Tech stack for backend / API web services"
+    properties:
+      languages:
+        type: array
+        required: false
+        items:
+          type: string
+        options_from: languages
+        example: ["TypeScript", "Go"]
+      primary_framework:
+        type: string
+        required: false
+        description: "Main backend framework"
+        example: "FastAPI"
+      framework_kind:
+        type: enum
+        required: false
+        options:
+          - fullstack
+          - http_api
+          - microframework
+          - rpc
+      api_styles:
+        type: array
+        required: false
+        items:
+          type: enum
+          options: ["REST", "GraphQL", "gRPC", "WebSocket", "RPC"]
+      orm_or_db_layer:
+        type: array
+        required: false
+        items:
+          type: string
+        description: "ORM / query builders / DB access libs"
+        example: ["Prisma", "TypeORM", "SQLAlchemy", "GORM"]
+      test_frameworks:
+        type: array
+        required: false
+        items:
+          type: string
+        example: ["pytest", "JUnit", "Go test", "jest (API tests)"]
+
+  mobile:
+    type: object
+    required: false
+    description: "Tech stack for mobile applications"
+    properties:
+      approach:
+        type: enum
+        required: false
+        options:
+          - native
+          - cross_platform
+          - hybrid
+      ios:
+        type: object
+        required: false
+        properties:
+          languages:
+            type: array
+            required: false
+            items:
+              type: string
+            example: ["Swift"]
+          primary_framework:
+            type: enum
+            required: false
+            options: ["UIKit", "SwiftUI", "React Native", "Flutter", "None"]
+      android:
+        type: object
+        required: false
+        properties:
+          languages:
+            type: array
+            required: false
+            items:
+              type: string
+            example: ["Kotlin"]
+          primary_framework:
+            type: enum
+            required: false
+            options: ["Android SDK", "Jetpack Compose", "React Native", "Flutter", "None"]
+      cross_platform:
+        type: object
+        required: false
+        properties:
+          framework:
+            type: enum
+            required: false
+            options: ["React Native", "Flutter", "KMM", "Ionic", "Cordova"]
+          languages:
+            type: array
+            required: false
+            items:
+              type: string
+            example: ["Dart", "TypeScript"]
+
+  infra:
+    type: object
+    required: false
+    description: "Tech stack for infrastructure-as-code / ops"
+    properties:
+      iac_tools:
+        type: array
+        required: false
+        items:
+          type: enum
+          options:
+            - Terraform
+            - Pulumi
+            - CloudFormation
+            - CDK
+            - Ansible
+            - Helm
+            - Kustomize
+        example: ["Terraform", "Helm"]
+      container_orchestration:
+        type: array
+        required: false
+        items:
+          type: enum
+          options:
+            - Kubernetes
+            - Nomad
+            - ECS
+            - Docker_Swarm
+            - None
+      scripting_languages:
+        type: array
+        required: false
+        items:
+          type: string
+        description: "Languages used for infra scripts"
+        example: ["Bash", "Python", "Go"]
+
+  cli:
+    type: object
+    required: false
+    description: "Tech stack for command-line tools (if present)"
+    properties:
+      languages:
+        type: array
+        required: false
+        items:
+          type: string
+        options_from: languages
+        example: ["Go", "Rust", "Python"]
+      frameworks:
+        type: array
+        required: false
+        items:
+          type: string
+        description: "CLI helper frameworks"
+        example: ["click", "cobra", "oclif"]
+
+context: "Collecting the technical stack (languages, frameworks, runtimes, and tooling) for modern applications: web, mobile, backend, infra."
