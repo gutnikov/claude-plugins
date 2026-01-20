@@ -2,59 +2,11 @@
 
 ---
 
-## Required Domains
-
----
 
 ## Tech Stack
 
 - [ ] Prompt user with `plugins/crunch/schemas/tech-stack.schema.yaml` to collect tech stack info
-- [ ] Parse response and ask follow-up questions for any gaps
-- [ ] Populate this section with collected data
-
-### Setup Instructions
-
-Ask the user about their tech stack in natural language:
-
-> Tell me about your project's tech stack.
->
-> What kind of application is this? (web frontend, backend, mobile, CLI, infra, etc.)
-> What programming languages do you use? Which is the primary one?
-> Any frameworks, libraries, or tools worth mentioning?
-> What about package managers, build tools, testing frameworks?
-
-Parse the response, identify gaps, and ask targeted follow-up questions only for missing required fields.
-
-### Collected Data
-
-**Platforms:**
-
-**Languages:**
-- Primary:
-
-**Tooling:**
-- Package managers:
-- Build tools:
-- Test frameworks:
-- Linters:
-
-**Web Frontend:** *(if applicable)*
-- Framework:
-- UI libraries:
-- State management:
-
-**Web Backend:** *(if applicable)*
-- Framework:
-- API style:
-- ORM / DB layer:
-
-**Mobile:** *(if applicable)*
-- Approach:
-- Frameworks:
-
-**Infrastructure:** *(if applicable)*
-- IaC tools:
-- Container orchestration:
+- [ ] Document environments and access status in this section ( use natural language )
 
 ## Configuration
 
@@ -92,10 +44,9 @@ Parse the response, identify gaps, and ask targeted follow-up questions only for
 
 ## Deploy Environments
 
-- [ ] Run multi-step dialog to identify deployment environments (e.g., local, stable, production)
-- [ ] Run multi-step dialog to check access availability for each environment
+- [ ] Prompt user with `plugins/crunch/schemas/deploy-environments.schema.yaml` to collect tech stack info
+- [ ] Document environments and access status in this section ( use natural language )
 - [ ] If SSH access exists, help verify SSH connectivity
-- [ ] Document environments and access status in this section
 
 ## Task Management
 
@@ -417,14 +368,12 @@ flowchart TD
 
 ---
 
-## Optional Domains
-
----
-
 ## Memory Management
 
-- [ ] Setup vendor for Memory Management
+- [ ] Setup vendor for User Communication Bot
 - [ ] Update this section with vendor-specific operation commands
+
+---
 
 ### Operations Required
 
@@ -471,8 +420,6 @@ flowchart TD
 
 ## Observability
 
-- [ ] Setup vendor for Observability
-- [ ] Update this section with vendor-specific operation commands
 
 ### Operations Required
 
@@ -487,8 +434,6 @@ flowchart TD
 
 ## Problem Remediation
 
-- [ ] Setup vendor for Problem Remediation
-- [ ] Update this section with vendor-specific operation commands
 
 ### Operations Required
 
@@ -503,8 +448,6 @@ flowchart TD
 
 ## Documentation
 
-- [ ] Setup vendor for Documentation
-- [ ] Update this section with vendor-specific operation commands
 
 ### Operations Required
 
@@ -517,9 +460,6 @@ flowchart TD
 | Validate docs    | Check for broken links/errors     |         |
 
 ## Localization
-
-- [ ] Setup vendor for Localization
-- [ ] Update this section with vendor-specific operation commands
 
 ### Operations Required
 
