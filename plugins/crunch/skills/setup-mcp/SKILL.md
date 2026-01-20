@@ -11,6 +11,20 @@ This skill guides users through the complete end-to-end process of setting up **
 
 Unlike specific MCP setup skills (vault-enable, slack-enable, trello-enable) which have hardcoded configuration knowledge, this skill is **dynamic** - it fetches and parses MCP documentation at runtime.
 
+## Dependencies
+
+This skill depends on `track-setup-progress` for state management across sessions:
+
+```yaml
+dependencies:
+  - skill: track-setup-progress
+    operations_used:
+      - resume      # Check for existing progress, handle user decision
+      - create      # Create new progress file
+      - update      # Update phase status and collected data
+      - complete    # Mark complete and cleanup
+```
+
 ## Definition of Done
 
 The setup is complete when:
@@ -30,52 +44,31 @@ This skill supports two setup modes:
 
 ## Progress Tracking
 
-Since MCP setup requires reloading Claude Code (which loses session context), progress is tracked in a file.
+**This skill uses `track-setup-progress` for all progress management.**
 
-### Progress File: `mcp-setup-progress.md`
+Progress file: `mcp-setup-progress.md` (managed by track-setup-progress)
 
-Location: Project root (`./mcp-setup-progress.md`)
+### Phase Definitions
 
-**Format:**
-
-```markdown
-# MCP Setup Progress
-
-## Status
-
-- **Started**: {timestamp}
-- **Current Phase**: Phase {N} - {Phase Name}
-- **Setup Mode**: {Selected Mode}
-- **MCP Name**: {display name}
-- **MCP Package**: {npm package}
-
-## Completed Steps
-
-- [x] Phase 0: Check Existing
-- [x] Phase 1: MCP Discovery
-- [ ] Phase 2: {Next Phase} <- CURRENT
-- [ ] Phase 3: ...
-
-## Extracted Requirements
-
-- **Environment Variables**: {list}
-- **Available Tools**: {list}
-- **Prerequisites**: {list}
-
-## Collected Information
-
-- **Setup Mode**: {value}
-- **Test Operation**: {value}
-- **Config Location**: {value}
+```yaml
+phases:
+  - key: 0
+    name: "Check Existing"
+  - key: 1
+    name: "MCP Discovery"
+  - key: 2
+    name: "Prerequisites"
+  - key: 3
+    name: "Credentials Collection"
+  - key: 4
+    name: "MCP Configuration"
+  - key: 5
+    name: "Connection Test"
+  - key: 6
+    name: "Completion"
 ```
 
-### Progress Tracking Rules
-
-1. Create progress file at Phase 1 start (after MCP identified)
-2. Update after each phase completion
-3. Store non-sensitive data only (never credentials/tokens)
-4. Delete only after successful DOD verification
-5. Check for existing progress on session start
+Since MCP setup requires reloading Claude Code (which loses session context), progress tracking is critical for resuming after reload
 
 ---
 
@@ -170,35 +163,39 @@ What would you like to do?
 - Option 2 -> Skip to Phase 4 (Configure MCP) with existing values
 - Option 3 -> Remove existing config and start from Phase 1
 
-#### Step 3: Check for Progress File
+#### Step 3: Check for Progress (using track-setup-progress)
 
-1. **Check for progress file**
+Invoke `track-setup-progress`:
 
-   ```bash
-   cat mcp-setup-progress.md 2>/dev/null
-   ```
+```yaml
+operation: resume
+domain: mcp
+```
 
-2. **If progress file exists:**
-   - Parse current phase and collected information
-   - Display status to user:
+**Handle response:**
 
-     ```
-     Found existing MCP setup in progress!
+| Response | Action |
+|----------|--------|
+| `decision: "no_progress"` | Proceed to Phase 1 |
+| `decision: "resume"` | Skip to `resume_phase` with `collected_data` |
+| `decision: "start_over"` | Proceed to Phase 1 |
 
-     MCP: {mcp-name}
-     Current Phase: Phase 4 - MCP Configuration
-     Setup Mode: Full Setup
+**If resuming:**
 
-     Would you like to:
-     1. Resume from where you left off
-     2. Start over (will delete progress)
-     ```
+```yaml
+# Response contains:
+resume_phase: 5
+phase_name: "Connection Test"
+collected_data:
+  mcp_name: "Slack"
+  mcp_package: "@modelcontextprotocol/server-slack"
+  setup_mode: "full_setup"
 
-   - If resuming, skip to the indicated phase with collected information
-   - If starting over, delete progress file and begin Phase 1
+# Use collected_data to restore state, skip to resume_phase
+```
 
-3. **If no progress file and no existing configuration:**
-   - Proceed to Phase 1
+**If no progress and no existing configuration:**
+- Proceed to Phase 1
 
 ---
 
@@ -314,38 +311,34 @@ Does this look correct? (If not, I can try a different documentation source or y
 
 #### Step 5: Create Progress File
 
-Create `mcp-setup-progress.md`:
+Invoke `track-setup-progress`:
 
-```markdown
-# MCP Setup Progress
-
-## Status
-
-- **Started**: {timestamp}
-- **Current Phase**: Phase 2A/2B
-- **Setup Mode**: {pending selection}
-- **MCP Name**: {display name}
-- **MCP Package**: {npm package}
-
-## Completed Steps
-
-- [x] Phase 0: Check Existing
-- [x] Phase 1: MCP Discovery
-- [ ] Phase 2: Prerequisites / Connection Details
-- [ ] Phase 3: Credentials Collection
-- [ ] Phase 4: MCP Configuration
-- [ ] Phase 5: Connection Test
-- [ ] Phase 6: Completion
-
-## Extracted Requirements
-
-- **Environment Variables**: {VAR_1}, {VAR_2}, ...
-- **Available Tools**: {tool_1}, {tool_2}, ...
-- **Prerequisites**: Node.js {version}+
-
-## Collected Information
-
-- **Documentation Source**: {url}
+```yaml
+operation: create
+domain: mcp
+display_name: "MCP Setup"
+phases:
+  - key: 0
+    name: "Check Existing"
+  - key: 1
+    name: "MCP Discovery"
+  - key: 2
+    name: "Prerequisites"
+  - key: 3
+    name: "Credentials Collection"
+  - key: 4
+    name: "MCP Configuration"
+  - key: 5
+    name: "Connection Test"
+  - key: 6
+    name: "Completion"
+initial_phase: 2
+initial_data:
+  mcp_name: "{display name}"
+  mcp_package: "{npm package}"
+  documentation_source: "{url}"
+  env_vars: "{VAR_1}, {VAR_2}, ..."
+  available_tools: "{tool_1}, {tool_2}, ..."
 ```
 
 #### Step 6: Mode Selection
@@ -391,6 +384,15 @@ Option B: Connect to Existing MCP Server
    - If MCP requires specific tools (e.g., Docker), check availability
 
 3. **Update progress file**
+
+   Invoke `track-setup-progress`:
+
+   ```yaml
+   operation: update
+   domain: mcp
+   complete_phase: 2
+   set_phase: 3
+   ```
 
 **DOD:** All prerequisites satisfied
 
@@ -456,11 +458,16 @@ Ask user: "This project has {Vault/SOPS} configured for secrets management. Woul
 
 #### Step 4: Update Progress File
 
-```markdown
-## Collected Information
+Invoke `track-setup-progress`:
 
-- **Setup Mode**: Full Setup
-- **Credentials Collected**: Yes (stored in {location})
+```yaml
+operation: update
+domain: mcp
+complete_phase: 3
+set_phase: 4
+add_data:
+  setup_mode: "full_setup"
+  credentials_location: "{location}"
 ```
 
 **DOD:** All credentials collected and format-validated
@@ -529,26 +536,17 @@ grep -q "^\.mcp\.json$" .gitignore 2>/dev/null
 
 #### Step 5: Update Progress File for Reload
 
-```markdown
-## Status
+Invoke `track-setup-progress`:
 
-- **Current Phase**: Phase 5 - Connection Test (PENDING RELOAD)
-
-## Completed Steps
-
-- [x] Phase 0: Check Existing
-- [x] Phase 1: MCP Discovery
-- [x] Phase 2A: Prerequisites
-- [x] Phase 3: Credentials Collection
-- [x] Phase 4: MCP Configuration
-- [ ] Phase 5: Connection Test <- RESUME HERE AFTER RELOAD
-- [ ] Phase 6: Completion
-
-## Collected Information
-
-- **Setup Mode**: Full Setup
-- **Config Location**: .mcp.json
-- **Test Operation**: {selected test operation}
+```yaml
+operation: update
+domain: mcp
+complete_phase: 4
+set_phase: 5
+add_data:
+  config_location: ".mcp.json"
+  test_operation: "{selected test operation}"
+add_note: "Waiting for Claude Code reload to activate MCP"
 ```
 
 #### Step 6: Instruct User to Reload
@@ -773,15 +771,26 @@ Security Notes:
   - Review permissions periodically
 ```
 
-#### Step 5: Cleanup Progress File
+#### Step 5: Complete Setup
 
-```bash
-rm mcp-setup-progress.md
+Invoke `track-setup-progress`:
+
+```yaml
+operation: complete
+domain: mcp
+```
+
+**Response:**
+
+```yaml
+completed: true
+file_deleted: true
+duration: "8m 45s"
 ```
 
 ```
 {MCP Name} setup complete!
-Progress file cleaned up
+Duration: {duration}
 Configuration documented in CLAUDE.md
 ```
 

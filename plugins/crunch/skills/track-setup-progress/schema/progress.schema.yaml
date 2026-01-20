@@ -1,0 +1,223 @@
+# Progress File Schema
+# Defines the structure of {domain}-setup-progress.md files
+# Used by track-setup-progress skill and consumed by domain setup skills
+
+# =============================================================================
+# METADATA - File-level information
+# =============================================================================
+
+_metadata:
+  schema_version: "1.0"
+  domain: string                      # Domain key (e.g., "secrets", "mcp")
+  display_name: string                # Human-readable name (e.g., "Secrets Management")
+  skill: string                       # Skill that created this file (optional)
+  created: datetime                   # When file was created (ISO 8601)
+  updated: datetime                   # When file was last updated (ISO 8601)
+
+# =============================================================================
+# STATUS - Current state
+# =============================================================================
+
+status:
+  started: datetime                   # When setup started
+  current_phase: number               # Current phase number (0-indexed)
+  phase_name: string                  # Current phase name
+  setup_mode: string                  # Setup mode (full_setup, connect_only, etc.)
+
+# =============================================================================
+# PHASES - Phase definitions and progress
+# =============================================================================
+
+phases:
+  - key: number                       # Phase number (0, 1, 2, ...)
+    name: string                      # Phase name
+    status: enum                      # pending | current | completed
+    completed_at: datetime            # When completed (if completed)
+
+# Derived fields (computed from phases):
+completed_phases: [number]            # List of completed phase keys
+pending_phases: [number]              # List of pending phase keys
+current_phase_key: number             # Current phase key
+
+# =============================================================================
+# COLLECTED DATA - Information gathered during setup
+# =============================================================================
+
+collected_data:
+  # Free-form key-value pairs
+  # Keys should be snake_case
+  # Values should be strings or simple types
+  # NEVER store sensitive data (passwords, tokens, API keys)
+
+  # Common keys by domain:
+
+  # Secrets domain:
+  vendor_key: string                  # Selected vendor key
+  vendor_name: string                 # Selected vendor display name
+  setup_mode: string                  # full_setup | connect_only
+  auth_method: string                 # token | oauth | api_key | etc.
+  config_location: string             # .env | shell_profile | session
+
+  # MCP domain:
+  mcp_name: string                    # MCP server name
+  mcp_package: string                 # npm package name
+  config_file: string                 # .mcp.json path
+
+  # Generic:
+  # {key}: {value}
+
+# =============================================================================
+# NOTES - Status notes and messages
+# =============================================================================
+
+notes:
+  - string                            # Free-form notes
+  # Common notes:
+  # - "Waiting for Claude Code reload"
+  # - "Installation may take a few minutes"
+  # - "Manual step required: ..."
+
+# =============================================================================
+# FILE FORMAT (Markdown representation)
+# =============================================================================
+
+# The schema above is represented in markdown format as:
+#
+# ```markdown
+# # {display_name} Setup Progress
+#
+# ## Status
+#
+# - **Started**: {status.started}
+# - **Updated**: {_metadata.updated}
+# - **Current Phase**: Phase {status.current_phase} - {status.phase_name}
+# - **Setup Mode**: {status.setup_mode}
+#
+# ## Completed Steps
+#
+# - [x] Phase 0: {phases[0].name} ({phases[0].completed_at})
+# - [x] Phase 1: {phases[1].name} ({phases[1].completed_at})
+# - [ ] Phase 2: {phases[2].name} <- CURRENT
+# - [ ] Phase 3: {phases[3].name}
+#
+# ## Collected Information
+#
+# - **vendor_key**: {collected_data.vendor_key}
+# - **vendor_name**: {collected_data.vendor_name}
+# - **setup_mode**: {collected_data.setup_mode}
+#
+# ## Notes
+#
+# - {notes[0]}
+# - {notes[1]}
+# ```
+
+# =============================================================================
+# PARSING RULES
+# =============================================================================
+
+parsing:
+  # Section detection
+  sections:
+    status:
+      marker: "## Status"
+      format: "- **{key}**: {value}"
+    phases:
+      marker: "## Completed Steps"
+      format: "- [{checkbox}] Phase {key}: {name}"
+      current_marker: "<- CURRENT"
+      completed_checkbox: "x"
+      pending_checkbox: " "
+    collected_data:
+      marker: "## Collected Information"
+      format: "- **{key}**: {value}"
+    notes:
+      marker: "## Notes"
+      format: "- {text}"
+
+  # Value extraction patterns
+  patterns:
+    timestamp: '\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z?'
+    phase_line: '- \[(x| )\] Phase (\d+): (.+?)(?:\s+\((\d{2}:\d{2}:\d{2})\))?(?:\s+<- CURRENT)?$'
+    data_line: '- \*\*([^*]+)\*\*: (.+)$'
+    status_line: '- \*\*([^*]+)\*\*: (.+)$'
+
+# =============================================================================
+# VALIDATION RULES
+# =============================================================================
+
+validation:
+  # Required fields
+  required:
+    - _metadata.domain
+    - status.started
+    - status.current_phase
+    - phases  # Must have at least one phase
+
+  # Type constraints
+  types:
+    _metadata.created: datetime
+    _metadata.updated: datetime
+    status.started: datetime
+    status.current_phase: integer
+    phases[].key: integer
+    phases[].status: enum(pending, current, completed)
+
+  # Value constraints
+  constraints:
+    - "status.current_phase must match a phase with status='current'"
+    - "Only one phase can have status='current'"
+    - "Phases with status='completed' must have completed_at"
+    - "collected_data values must not contain sensitive information"
+
+# =============================================================================
+# EXAMPLE: Complete progress file
+# =============================================================================
+
+example:
+  _metadata:
+    schema_version: "1.0"
+    domain: "secrets"
+    display_name: "Secrets Management"
+    skill: "setup-secrets"
+    created: "2024-01-20T10:30:00Z"
+    updated: "2024-01-20T10:45:00Z"
+
+  status:
+    started: "2024-01-20T10:30:00Z"
+    current_phase: 3
+    phase_name: "Configuration"
+    setup_mode: "full_setup"
+
+  phases:
+    - key: 0
+      name: "State Detection"
+      status: "completed"
+      completed_at: "2024-01-20T10:30:15Z"
+    - key: 1
+      name: "Vendor Selection"
+      status: "completed"
+      completed_at: "2024-01-20T10:32:00Z"
+    - key: 2
+      name: "Prerequisites"
+      status: "completed"
+      completed_at: "2024-01-20T10:40:00Z"
+    - key: 3
+      name: "Configuration"
+      status: "current"
+    - key: 4
+      name: "Connection Test"
+      status: "pending"
+    - key: 5
+      name: "Documentation"
+      status: "pending"
+
+  collected_data:
+    vendor_key: "vault"
+    vendor_name: "HashiCorp Vault"
+    setup_mode: "full_setup"
+    auth_method: "token"
+    config_location: ".env"
+
+  notes:
+    - "Using Vault dev server for local development"

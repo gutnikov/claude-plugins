@@ -21,7 +21,7 @@ setup-project/           # Main dashboard - detects and configures 14 project do
     ├── ci-cd.template.md
     └── [11 more domains]
 
-setup-project-domain/    # Meta-skill to generate new domain skills
+create-project-domain-setup-skill/  # Meta-skill to generate new domain skills
 setup-mcp/               # Generic MCP server setup wizard
 create-tool-skills/      # Generate skills for tools
 ```

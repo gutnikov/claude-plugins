@@ -1,0 +1,346 @@
+# Vendor Definition Schema
+# All vendor definitions must follow this structure.
+# This schema is used by lookup-vendor and consumed by all domain setup skills.
+
+# =============================================================================
+# IDENTITY - Required for all vendors
+# =============================================================================
+
+name: string                          # Human-readable name (e.g., "HashiCorp Vault")
+key: string                           # Lowercase identifier (e.g., "vault")
+domain: string                        # Domain this vendor serves (e.g., "secrets")
+description: string                   # One-line description
+best_for: string                      # When to choose this vendor
+website: url                          # Official website (optional)
+documentation: url                    # Official docs URL (optional)
+
+# =============================================================================
+# INTEGRATIONS - At least one required
+# =============================================================================
+
+integrations:
+  # ---------------------------------------------------------------------------
+  # MCP Integration (Model Context Protocol)
+  # ---------------------------------------------------------------------------
+  mcp:
+    available: boolean                # Whether MCP is available
+    official:                         # Official MCP server (OAuth-based)
+      url: url                        # Remote MCP URL (e.g., "https://vendor.com/mcp")
+      auth_type: "oauth"              # Always OAuth for official
+    community:                        # Community MCP server (API token-based)
+      package: string                 # npm package (e.g., "@org/vendor-mcp")
+      repository: url                 # GitHub repo (optional)
+      env_vars:                       # Required environment variables
+        - name: string
+          description: string
+          sensitive: boolean          # true for secrets/tokens
+
+  # ---------------------------------------------------------------------------
+  # CLI Integration (Command Line Interface)
+  # ---------------------------------------------------------------------------
+  cli:
+    available: boolean
+    tools:                            # CLI tools required
+      - name: string                  # Tool name (e.g., "vault")
+        check: string                 # Command to verify installation (e.g., "vault --version")
+        install:
+          darwin: string              # macOS install command
+          linux: string               # Linux install command
+          windows: string             # Windows install command (optional)
+        docs_url: url                 # Installation docs (optional)
+
+    env_vars:                         # Environment variables for CLI
+      - name: string                  # Variable name (e.g., "VAULT_ADDR")
+        description: string           # What it's for
+        example: string               # Example value (optional)
+        default: string               # Default value (optional)
+        sensitive: boolean            # true for secrets/tokens
+        required: boolean             # Whether required for operation
+
+    operations:                       # Available CLI operations
+      # Common operation types - include what's applicable
+      get:
+        command: string               # Command template with {placeholders}
+        description: string
+      set:
+        command: string
+        description: string
+      list:
+        command: string
+        description: string
+      delete:
+        command: string
+        description: string
+      create:
+        command: string
+        description: string
+      update:
+        command: string
+        description: string
+      # Domain-specific operations
+      encrypt:                        # For file-based encryption
+        command: string
+        description: string
+      decrypt:
+        command: string
+        description: string
+      # Add more as needed per vendor
+
+  # ---------------------------------------------------------------------------
+  # API Integration (REST/GraphQL)
+  # ---------------------------------------------------------------------------
+  api:
+    available: boolean
+    base_url: url                     # API base URL
+    version: string                   # API version (optional)
+    openapi_spec: url                 # OpenAPI/Swagger spec URL (optional)
+    graphql_schema: url               # GraphQL schema URL (optional)
+
+    auth_methods:                     # Supported authentication methods
+      - type: enum                    # api_key | bearer_token | oauth2 | basic
+        header: string                # Header name (e.g., "Authorization")
+        format: string                # Format (e.g., "Bearer {token}")
+        env_var: string               # Env var for credential
+
+    endpoints:                        # Key API endpoints
+      - name: string                  # Operation name
+        method: enum                  # GET | POST | PUT | PATCH | DELETE
+        path: string                  # Endpoint path (e.g., "/v1/secrets/{path}")
+        description: string
+
+# =============================================================================
+# SETUP - Installation and configuration
+# =============================================================================
+
+setup:
+  # ---------------------------------------------------------------------------
+  # Setup Modes (for server-based tools)
+  # ---------------------------------------------------------------------------
+  modes:
+    full_setup:
+      available: boolean
+      description: string             # What full setup does
+      use_when: string                # When to use this mode
+      steps:                          # Setup steps
+        - string
+    connect_only:
+      available: boolean
+      description: string
+      use_when: string
+      steps:
+        - string
+
+  # ---------------------------------------------------------------------------
+  # Authentication Methods
+  # ---------------------------------------------------------------------------
+  auth_methods:
+    - name: string                    # Method name (e.g., "Token")
+      type: enum                      # token | oauth | api_key | interactive | iam_role
+      description: string             # When to use this method
+      env_var: string                 # Single env var (for simple auth)
+      env_vars:                       # Multiple env vars (for complex auth)
+        - string
+      command: string                 # Command for interactive auth (e.g., "vault login")
+      setup_steps:                    # Steps to configure
+        - string
+
+  # ---------------------------------------------------------------------------
+  # Configuration Files (for file-based integrations)
+  # ---------------------------------------------------------------------------
+  config_files:
+    - path: string                    # File path (e.g., ".sops.yaml")
+      description: string             # What this file does
+      required: boolean               # Whether required
+      template: |                     # File template with {placeholders}
+        # Template content
+
+  # ---------------------------------------------------------------------------
+  # Key Generation (for encryption tools)
+  # ---------------------------------------------------------------------------
+  key_generation:
+    required: boolean
+    command: string                   # Command to generate keys
+    creates: string                   # Path to generated key file
+    output_contains: string           # Pattern to verify success
+
+# =============================================================================
+# TESTING - Verify setup works
+# =============================================================================
+
+testing:
+  test_operation:
+    setup: string                     # Optional setup command (e.g., create test data)
+    write: string                     # Write/create operation
+    read: string                      # Read/verify operation
+    cleanup: string                   # Cleanup command
+    success_indicator: string         # Expected output pattern
+
+  health_check:
+    command: string                   # Quick health check command
+    success_indicator: string         # Expected output
+
+# =============================================================================
+# ERRORS - Known error patterns
+# =============================================================================
+
+errors:
+  patterns:
+    - pattern: string                 # Error text pattern to match
+      cause: string                   # What causes this error
+      solution: string                # How to fix it
+      recovery_action: enum           # retry | reconfigure | reinstall | manual
+
+  common_issues:
+    - symptom: string                 # What user observes
+      diagnosis: string               # How to diagnose
+      fix: string                     # How to fix
+
+# =============================================================================
+# METADATA - Cache and discovery info
+# =============================================================================
+
+_metadata:
+  schema_version: "1.0"
+  created: datetime                   # When this definition was created
+  updated: datetime                   # When last updated
+  source: enum                        # manual | web_search | api
+  confidence: number                  # 0.0 - 1.0 confidence in accuracy
+  search_queries:                     # Queries used to discover this vendor
+    - string
+  needs_review:                       # Fields that may need verification
+    - string
+
+# =============================================================================
+# EXAMPLE: Complete vendor definition
+# =============================================================================
+#
+# name: "HashiCorp Vault"
+# key: "vault"
+# domain: "secrets"
+# description: "Centralized secrets management with dynamic secrets and encryption"
+# best_for: "Enterprise environments, dynamic secrets, centralized management"
+# website: "https://www.vaultproject.io"
+# documentation: "https://developer.hashicorp.com/vault/docs"
+#
+# integrations:
+#   mcp:
+#     available: true
+#     community:
+#       package: "@anthropic/vault-mcp"
+#       env_vars:
+#         - name: "VAULT_ADDR"
+#           description: "Vault server address"
+#           sensitive: false
+#         - name: "VAULT_TOKEN"
+#           description: "Authentication token"
+#           sensitive: true
+#
+#   cli:
+#     available: true
+#     tools:
+#       - name: "vault"
+#         check: "vault version"
+#         install:
+#           darwin: "brew tap hashicorp/tap && brew install hashicorp/tap/vault"
+#           linux: "sudo apt update && sudo apt install vault"
+#         docs_url: "https://developer.hashicorp.com/vault/downloads"
+#
+#     env_vars:
+#       - name: "VAULT_ADDR"
+#         description: "Vault server address"
+#         example: "http://127.0.0.1:8200"
+#         required: true
+#         sensitive: false
+#       - name: "VAULT_TOKEN"
+#         description: "Authentication token"
+#         required: true
+#         sensitive: true
+#
+#     operations:
+#       get:
+#         command: "vault kv get secret/{path}"
+#         description: "Retrieve a secret"
+#       set:
+#         command: "vault kv put secret/{path} {key}={value}"
+#         description: "Store a secret"
+#       list:
+#         command: "vault kv list secret/{path}"
+#         description: "List secrets at path"
+#       delete:
+#         command: "vault kv delete secret/{path}"
+#         description: "Delete a secret"
+#
+#   api:
+#     available: true
+#     base_url: "http://127.0.0.1:8200/v1"
+#     openapi_spec: "https://github.com/hashicorp/vault/blob/main/api/openapi.json"
+#     auth_methods:
+#       - type: "bearer_token"
+#         header: "X-Vault-Token"
+#         format: "{token}"
+#         env_var: "VAULT_TOKEN"
+#
+# setup:
+#   modes:
+#     full_setup:
+#       available: true
+#       description: "Install Vault and run local dev server"
+#       use_when: "Local development, getting started"
+#       steps:
+#         - "Install Vault CLI"
+#         - "Start dev server: vault server -dev"
+#         - "Capture root token from output"
+#         - "Set VAULT_ADDR and VAULT_TOKEN"
+#     connect_only:
+#       available: true
+#       description: "Connect to existing Vault server"
+#       use_when: "Production, team server, cloud Vault"
+#       steps:
+#         - "Get Vault address from admin"
+#         - "Choose authentication method"
+#         - "Configure credentials"
+#
+#   auth_methods:
+#     - name: "Token"
+#       type: "token"
+#       description: "Direct token authentication - simplest method"
+#       env_var: "VAULT_TOKEN"
+#     - name: "AppRole"
+#       type: "api_key"
+#       description: "Machine authentication for automation"
+#       env_vars: ["VAULT_ROLE_ID", "VAULT_SECRET_ID"]
+#     - name: "OIDC"
+#       type: "oauth"
+#       description: "Single sign-on via identity provider"
+#       command: "vault login -method=oidc"
+#
+# testing:
+#   test_operation:
+#     write: "vault kv put secret/claude-test message='Setup successful'"
+#     read: "vault kv get secret/claude-test"
+#     cleanup: "vault kv delete secret/claude-test"
+#     success_indicator: "Setup successful"
+#   health_check:
+#     command: "vault status"
+#     success_indicator: "Sealed.*false"
+#
+# errors:
+#   patterns:
+#     - pattern: "connection refused"
+#       cause: "Vault server not running"
+#       solution: "Start Vault server or check VAULT_ADDR"
+#       recovery_action: "reconfigure"
+#     - pattern: "permission denied"
+#       cause: "Token lacks required permissions"
+#       solution: "Check token policies or get new token"
+#       recovery_action: "reconfigure"
+#     - pattern: "missing client token"
+#       cause: "VAULT_TOKEN not set"
+#       solution: "Set VAULT_TOKEN environment variable"
+#       recovery_action: "reconfigure"
+#
+# _metadata:
+#   schema_version: "1.0"
+#   created: "2024-01-20T10:00:00Z"
+#   source: "web_search"
+#   confidence: 0.95
