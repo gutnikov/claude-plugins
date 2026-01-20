@@ -1,349 +1,314 @@
 ---
 name: prompt-user
-description: Multi-turn conversation skill that collects structured data from users based on a schema with comments.
+description: Natural conversation skill that collects structured data from free-form user input, then fills gaps with targeted questions.
 ---
 
 # Prompt User
 
-A utility skill that takes a schema definition and runs a multi-turn conversation to collect all field values from the user.
+A utility skill that collects structured data through natural conversation:
+1. Ask an open question with hints about what info is needed
+2. User writes free-form text
+3. Parse text into schema fields
+4. Ask targeted follow-up questions only for missing required fields
 
 ## Usage
 
 Other skills invoke this skill by providing:
-1. A schema definition with field types and comments
-2. Optional context about why the data is being collected
+1. A schema definition with field types and descriptions
+2. An open question to start the conversation
+3. Optional context about why the data is being collected
+
+## Flow Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Step 1: Ask Open Question                                       │
+│  "Tell me about your project's tech stack..."                    │
+│  Hints: languages, frameworks, package manager                   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Step 2: User Free-Form Response                                 │
+│  "We use TypeScript with React for frontend and Python with      │
+│   FastAPI for backend. npm for packages."                        │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Step 3: Parse into Schema                                       │
+│  languages: [TypeScript, Python] ✓                               │
+│  frameworks: [React, FastAPI] ✓                                  │
+│  package_manager: npm ✓                                          │
+│  primary_language: ? (missing)                                   │
+│  test_framework: ? (missing)                                     │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Step 4: Ask Only for Gaps                                       │
+│  "Which is the primary language - TypeScript or Python?"         │
+│  "What testing framework do you use?"                            │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Step 5: Confirm & Return                                        │
+│  Show parsed result, get confirmation                            │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ## Input Schema Format
 
 ```yaml
+open_question: "Tell me about {topic}. Include details like {hint1}, {hint2}, {hint3}."
+
 schema:
   field_name:
     type: string | number | boolean | array | enum | object
-    required: true | false  # default: true
-    default: <value>        # optional default value
+    required: true | false
+    default: <value>
     options: [...]          # for enum type
-    items:                  # for array type
-      type: string
-    description: "Field description shown to user"
+    description: "What this field represents"
     example: "Example value"
-    validate: <pattern>     # optional regex for strings
+    parse_hints:            # Keywords/patterns to look for in free text
+      - "typescript"
+      - "ts"
+      - "node"
 
-context: "Brief explanation of what we're collecting and why"
+context: "Brief explanation shown to user"
 ```
 
 ## Definition of Done
 
 The conversation is complete when:
 
-1. All required fields have values
-2. User has confirmed the collected data
-3. Result is returned as structured YAML/JSON
+1. User has provided initial free-form response
+2. All required fields have been extracted or collected
+3. User has confirmed the parsed result
+4. Result is returned as structured data
 
 ---
 
 ## Workflow
 
-### Step 1: Parse Schema
+### Step 1: Ask Open Question
 
-Read the provided schema and identify:
-- Required fields (must be collected)
-- Optional fields (can be skipped)
-- Field types and constraints
-- Default values
+Present a single open question that hints at all needed information:
 
 ```yaml
-# Example input schema
-schema:
-  project_name:
-    type: string
-    required: true
-    description: "Name of your project"
-    example: "my-awesome-app"
+open_question: |
+  Tell me about your deployment environments.
 
-  languages:
-    type: array
-    required: true
-    items:
-      type: string
-    description: "Programming languages used"
-    example: ["TypeScript", "Python"]
-
-  environment:
-    type: enum
-    required: true
-    options: ["development", "staging", "production"]
-    description: "Target deployment environment"
-
-  port:
-    type: number
-    required: false
-    default: 3000
-    description: "Port number for the application"
-
-  enable_ssl:
-    type: boolean
-    required: false
-    default: true
-    description: "Enable SSL/TLS encryption"
-
-context: "Setting up deployment configuration"
+  For example: what environments do you deploy to (local, staging, production)?
+  Do you have SSH access? What are the hostnames?
 ```
 
-### Step 2: Group Fields for Conversation
+Display the question and wait for free-form text input.
 
-Organize fields into logical conversation steps:
-- Group related fields (max 4 per question due to AskUserQuestion limit)
-- Order by: required first, then optional
-- Consider field dependencies
+### Step 2: Receive Free-Form Response
 
-### Step 3: Multi-Turn Collection
+User types natural text, for example:
 
-For each field or field group, use appropriate collection method:
-
-#### String Fields
-
-```typescript
-AskUserQuestion({
-  questions: [{
-    question: "{description}. Example: {example}",
-    header: "{field_name}",
-    options: [
-      { label: "Enter value", description: "Type your value" },
-      { label: "Use example", description: "Use: {example}" },
-      { label: "Skip", description: "Leave empty (if optional)" }
-    ],
-    multiSelect: false
-  }]
-})
+```
+We deploy to three environments:
+- local for development
+- stable at stable.example.com (SSH as deploy user)
+- production at prod.example.com (SSH on port 2222)
 ```
 
-If user selects "Enter value", they provide custom input via "Other".
+### Step 3: Parse Response into Schema
 
-#### Enum Fields
-
-```typescript
-AskUserQuestion({
-  questions: [{
-    question: "{description}",
-    header: "{field_name}",
-    options: options.map(opt => ({
-      label: opt,
-      description: ""
-    })),
-    multiSelect: false
-  }]
-})
-```
-
-#### Array Fields
-
-```typescript
-// First, ask how many items or collect one by one
-AskUserQuestion({
-  questions: [{
-    question: "{description}. What items would you like to add?",
-    header: "{field_name}",
-    options: [
-      { label: "Add items", description: "Enter comma-separated values" },
-      { label: "Common presets", description: "Choose from common options" },
-      { label: "Skip", description: "Empty list (if optional)" }
-    ],
-    multiSelect: false
-  }]
-})
-```
-
-#### Boolean Fields
-
-```typescript
-AskUserQuestion({
-  questions: [{
-    question: "{description}",
-    header: "{field_name}",
-    options: [
-      { label: "Yes", description: "Enable this option" },
-      { label: "No", description: "Disable this option" },
-      { label: "Default ({default})", description: "Use default value" }
-    ],
-    multiSelect: false
-  }]
-})
-```
-
-#### Number Fields
-
-```typescript
-AskUserQuestion({
-  questions: [{
-    question: "{description}. Example: {example}",
-    header: "{field_name}",
-    options: [
-      { label: "Enter value", description: "Type a number" },
-      { label: "Default ({default})", description: "Use default: {default}" },
-      { label: "Skip", description: "Leave empty (if optional)" }
-    ],
-    multiSelect: false
-  }]
-})
-```
-
-#### Object Fields (Nested)
-
-For nested objects, recursively apply the same collection process:
+Use LLM to extract schema fields from the free-form text:
 
 ```yaml
-database:
-  type: object
-  description: "Database configuration"
-  properties:
-    host:
-      type: string
-      required: true
-    port:
-      type: number
-      default: 5432
+# Parsing prompt
+Given this schema:
+{schema}
+
+Extract field values from this user response:
+{user_response}
+
+For each field:
+- If clearly mentioned: extract the value
+- If implied but ambiguous: mark as "needs_clarification"
+- If not mentioned: mark as "missing"
 ```
 
-### Step 4: Validation
+**Parsed result:**
 
-After collecting each field:
+```yaml
+parsed:
+  environments:
+    value:
+      - { name: "local", type: "local" }
+      - { name: "stable", type: "staging" }
+      - { name: "production", type: "production" }
+    status: extracted
 
-1. **Type validation** - Ensure value matches expected type
-2. **Pattern validation** - If `validate` regex is provided, check match
-3. **Required check** - Ensure required fields have values
+  access_details:
+    value:
+      - { environment: "stable", ssh_host: "stable.example.com", ssh_user: "deploy" }
+      - { environment: "production", ssh_host: "prod.example.com", ssh_port: 2222 }
+    status: extracted
+    gaps:
+      - "stable: ssh_port not specified (default 22?)"
+      - "production: ssh_user not specified"
 
-If validation fails:
+  verify_access:
+    status: missing
+```
+
+### Step 4: Fill Gaps with Targeted Questions
+
+Only ask about missing or ambiguous fields:
+
+#### For Missing Required Fields
+
 ```typescript
 AskUserQuestion({
   questions: [{
-    question: "Invalid value for {field_name}: {error}. Please try again.",
-    header: "Retry",
+    question: "Would you like to verify SSH connectivity after setup?",
+    header: "Verify",
     options: [
-      { label: "Enter new value", description: "Try again" },
-      { label: "Use default", description: "Use: {default}" },
-      { label: "Skip", description: "Leave empty (if optional)" }
+      { label: "Yes", description: "Test SSH connections" },
+      { label: "No", description: "Skip verification" }
     ],
     multiSelect: false
   }]
 })
 ```
 
-### Step 5: Confirmation
+#### For Ambiguous Values
 
-After all fields are collected, show summary and confirm:
+```typescript
+AskUserQuestion({
+  questions: [{
+    question: "For production SSH - what username should be used?",
+    header: "SSH User",
+    options: [
+      { label: "deploy", description: "Same as stable" },
+      { label: "root", description: "Root user" },
+      { label: "Other", description: "Specify different user" }
+    ],
+    multiSelect: false
+  }]
+})
+```
+
+#### For Confirmation of Defaults
+
+```typescript
+AskUserQuestion({
+  questions: [{
+    question: "For stable environment, SSH port wasn't specified. Use default?",
+    header: "SSH Port",
+    options: [
+      { label: "Yes, use 22", description: "Standard SSH port" },
+      { label: "Specify different", description: "Enter port number" }
+    ],
+    multiSelect: false
+  }]
+})
+```
+
+### Step 5: Confirm and Return
+
+Show the complete parsed result:
 
 ```
-Collected Configuration
-=======================
+Parsed Configuration
+====================
 
-project_name: my-awesome-app
-languages: [TypeScript, Python]
-environment: production
-port: 3000 (default)
-enable_ssl: true (default)
+Environments:
+  ✓ local (local)
+  ✓ stable (staging) - stable.example.com
+  ✓ production (production) - prod.example.com
 
+SSH Access:
+  ✓ stable: deploy@stable.example.com:22
+  ✓ production: deploy@prod.example.com:2222
+
+Verify access: Yes
 ```
 
 ```typescript
 AskUserQuestion({
   questions: [{
-    question: "Does this configuration look correct?",
+    question: "Does this look correct?",
     header: "Confirm",
     options: [
-      { label: "Yes, looks good", description: "Proceed with these values" },
-      { label: "Edit a field", description: "Change a specific value" },
-      { label: "Start over", description: "Re-enter all values" }
+      { label: "Yes, correct", description: "Proceed with these values" },
+      { label: "Make changes", description: "Edit some values" }
     ],
     multiSelect: false
   }]
 })
 ```
 
-If "Edit a field" is selected, ask which field to edit and re-collect that field.
-
 ### Step 6: Return Result
-
-Return the collected data in structured format:
 
 ```yaml
 result:
   status: complete
   data:
-    project_name: "my-awesome-app"
-    languages: ["TypeScript", "Python"]
-    environment: "production"
-    port: 3000
-    enable_ssl: true
-  skipped_fields: []  # List of optional fields that were skipped
+    environments:
+      - { name: "local", type: "local" }
+      - { name: "stable", type: "staging" }
+      - { name: "production", type: "production" }
+    access_details:
+      - { environment: "stable", ssh_host: "stable.example.com", ssh_user: "deploy", ssh_port: 22 }
+      - { environment: "production", ssh_host: "prod.example.com", ssh_user: "deploy", ssh_port: 2222 }
+    verify_access: true
+  source:
+    from_text: ["environments", "access_details.ssh_host", "access_details.ssh_port"]
+    from_questions: ["verify_access", "access_details.ssh_user"]
+    from_defaults: ["access_details.ssh_port (stable)"]
 ```
 
 ---
 
-## Advanced Features
+## Parsing Strategies
 
-### Conditional Fields
-
-Fields can depend on other field values:
+### Keyword Matching
 
 ```yaml
-schema:
-  use_database:
-    type: boolean
-    description: "Does your project use a database?"
-
-  database_type:
-    type: enum
-    options: ["postgres", "mysql", "mongodb"]
-    description: "Which database?"
-    condition: "use_database == true"  # Only ask if use_database is true
+languages:
+  parse_hints:
+    - pattern: "typescript|ts"
+      value: "TypeScript"
+    - pattern: "python|py"
+      value: "Python"
+    - pattern: "javascript|js"
+      value: "JavaScript"
 ```
 
-### Field Groups
-
-Group related fields to ask together:
+### Pattern Extraction
 
 ```yaml
-schema:
-  host:
-    type: string
-    group: "server"
-  port:
-    type: number
-    group: "server"
+ssh_host:
+  parse_hints:
+    - pattern: "(?:at|@|host[: ]+)([a-zA-Z0-9.-]+)"
+      group: 1
+    - pattern: "([a-zA-Z0-9-]+\\.example\\.com)"
+      group: 1
 
-  username:
-    type: string
-    group: "credentials"
-  password:
-    type: string
-    group: "credentials"
+ssh_port:
+  parse_hints:
+    - pattern: "port[: ]+([0-9]+)"
+      group: 1
+    - pattern: ":([0-9]+)(?:\\s|$)"
+      group: 1
 ```
 
-### Pre-populated Values
-
-Schema can include detected/suggested values:
+### Context-Aware Extraction
 
 ```yaml
-schema:
-  project_name:
-    type: string
-    detected: "claude-plugins"  # Auto-detected from package.json
-    description: "Project name"
-```
-
-When detected value exists:
-```typescript
-AskUserQuestion({
-  questions: [{
-    question: "Project name. Detected: {detected}",
-    header: "project_name",
-    options: [
-      { label: "Use detected", description: "Use: {detected}" },
-      { label: "Enter different", description: "Specify another name" }
-    ],
-    multiSelect: false
-  }]
-})
+# When user says "stable at host.com as deploy"
+# LLM understands:
+#   - "stable" is environment name
+#   - "host.com" is ssh_host
+#   - "deploy" is ssh_user (due to "as" keyword)
 ```
 
 ---
@@ -352,52 +317,101 @@ AskUserQuestion({
 
 ```yaml
 invoke: prompt-user
+
+open_question: |
+  Tell me about your project's tech stack.
+
+  What languages do you use? Any frameworks?
+  What package manager? Testing tools?
+
 schema:
-  environment:
+  languages:
+    type: array
+    required: true
+    items:
+      type: string
+    description: "Programming languages"
+    parse_hints:
+      - { pattern: "typescript|ts", value: "TypeScript" }
+      - { pattern: "javascript|js", value: "JavaScript" }
+      - { pattern: "python|py", value: "Python" }
+      - { pattern: "go|golang", value: "Go" }
+      - { pattern: "rust", value: "Rust" }
+
+  frameworks:
+    type: array
+    required: false
+    items:
+      type: string
+    description: "Frameworks and libraries"
+
+  package_manager:
     type: enum
     required: true
-    options: ["local", "stable", "production"]
-    description: "Deployment environment"
+    options: ["npm", "yarn", "pnpm", "bun", "pip", "poetry", "cargo"]
+    description: "Package manager"
 
-  ssh_host:
-    type: string
-    required: true
-    description: "SSH hostname or IP"
-    example: "deploy.example.com"
-    condition: "environment != 'local'"
-
-  ssh_user:
-    type: string
+  test_framework:
+    type: enum
     required: false
-    default: "deploy"
-    description: "SSH username"
-    condition: "environment != 'local'"
+    options: ["jest", "vitest", "pytest", "go test", "none"]
+    description: "Testing framework"
 
-  ssh_port:
-    type: number
-    required: false
-    default: 22
-    description: "SSH port"
-    condition: "environment != 'local'"
-
-context: "Configuring deployment environment access"
+context: "Setting up tech stack documentation"
 ```
+
+---
+
+## Conversation Example
+
+**Claude:** Tell me about your project's tech stack.
+
+What languages do you use? Any frameworks? What package manager? Testing tools?
+
+**User:** It's a TypeScript project with React frontend and Express backend. We use npm and jest for testing.
+
+**Claude:** Got it! I parsed:
+- Languages: TypeScript
+- Frameworks: React, Express
+- Package manager: npm
+- Test framework: jest
+
+Just one question - is TypeScript your only language, or do you use anything else (Python, Go, etc.)?
+
+**User:** Just TypeScript
+
+**Claude:**
+```
+Tech Stack
+==========
+Languages: [TypeScript]
+Frameworks: [React, Express]
+Package Manager: npm
+Test Framework: jest
+```
+
+Does this look correct?
+
+**User:** Yes
+
+**Claude:** *(returns structured result)*
 
 ---
 
 ## Error Handling
 
-| Error | Recovery |
-|-------|----------|
-| User cancels mid-collection | Return partial result with `status: cancelled` |
-| Invalid schema format | Return error with `status: invalid_schema` |
-| Validation repeatedly fails | Offer to skip (if optional) or use default |
+| Situation | Response |
+|-----------|----------|
+| User response is too vague | Ask clarifying open question |
+| Can't parse any fields | Fall back to field-by-field questions |
+| User contradicts earlier input | Show conflict, ask for clarification |
+| Required field truly missing | Ask specific targeted question |
 
 ---
 
 ## Interactive Checkpoints
 
-- [ ] For each required field: "What is {field_name}?"
-- [ ] For optional fields: "Would you like to set {field_name}? (default: {default})"
-- [ ] After collection: "Does this look correct?"
-- [ ] If editing: "Which field would you like to change?"
+- [ ] Initial open question
+- [ ] Parse user response
+- [ ] For each gap: targeted question
+- [ ] Final confirmation
