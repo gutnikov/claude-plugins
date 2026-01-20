@@ -1,11 +1,11 @@
 ---
 name: setup-project-domain
-description: Meta-skill for creating domain-specific setup skills. Generates SKILL.md files for project domains (Task Management, Secrets, Communication, CI/CD, etc.) following the example-domain-setup pattern.
+description: Meta-skill for creating domain-specific setup skills. Generates SKILL.md files for project domains (Task Management, Secrets, Communication, CI/CD, etc.).
 ---
 
 # Setup Project Domain
 
-This meta-skill generates domain-specific setup skills for different project domains. It abstracts the common patterns from the `example-domain-setup` reference and allows creating new ones for any integration domain.
+This meta-skill generates domain-specific setup skills for different project domains. It abstracts the common patterns and allows creating new ones for any integration domain.
 
 ## Definition of Done
 
@@ -14,7 +14,7 @@ The skill creation is complete when:
 1. Domain is selected from pre-defined list
 2. Vendor matrix is configured (pre-defined or gathered)
 3. SKILL.md is generated at `plugins/crunch/skills/setup-{domain-key}/SKILL.md`
-4. Generated skill follows the example-domain-setup pattern exactly
+4. Generated skill follows the standard setup skill pattern
 5. User verifies the generated skill
 
 ## Domain Abstraction Model
@@ -427,23 +427,28 @@ mkdir -p plugins/crunch/skills/setup-{domain_key}
 
 Use the **Template Structure** (below) with these substitutions:
 
-| Placeholder                  | Value                                       |
-|------------------------------|---------------------------------------------|
-| `{domain_name}`              | Domain name (e.g., "Secret Management")     |
-| `{domain_key}`               | Domain key (e.g., "secret-manager")         |
-| `{purpose}`                  | Domain purpose                              |
-| `{feature_list}`             | Comma-separated features                    |
-| `{feature_summary}`          | Brief feature summary for description       |
-| `{vendor_list}`              | Comma-separated vendor names                |
-| `{qualified_vendors_table}`  | Markdown table of qualified vendors         |
-| `{excluded_vendors_table}`   | Markdown table of excluded vendors          |
-| `{mcp_options_table}`        | Markdown table of MCP options               |
-| `{progress_file_format}`     | Progress file template                      |
-| `{phase_N_content}`          | Content for each workflow phase             |
-| `{vendor_credentials_guide}` | Vendor-specific credential instructions     |
-| `{error_table}`              | Error handling table                        |
-| `{checkpoints}`              | Interactive checkpoints                     |
-| `{related_skills}`           | Related skill links                         |
+| Placeholder                       | Value                                          |
+|-----------------------------------|------------------------------------------------|
+| `{domain_name}`                   | Domain name (e.g., "Secret Management")        |
+| `{domain_key}`                    | Domain key (e.g., "secret-manager")            |
+| `{purpose}`                       | Domain purpose                                 |
+| `{feature_list}`                  | Comma-separated features                       |
+| `{feature_summary}`               | Brief feature summary for description          |
+| `{vendor_list}`                   | Comma-separated vendor names                   |
+| `{qualified_vendors_table}`       | Markdown table of qualified vendors            |
+| `{excluded_vendors_table}`        | Markdown table of excluded vendors             |
+| `{mcp_options_table}`             | Markdown table of MCP options                  |
+| `{progress_file_format}`          | Progress file template                         |
+| `{phase_N_content}`               | Content for each workflow phase                |
+| `{vendor_credentials_guide}`      | Vendor-specific credential instructions        |
+| `{error_table}`                   | Error handling table                           |
+| `{checkpoints}`                   | Interactive checkpoints                        |
+| `{related_skills}`                | Related skill links                            |
+| `{preflight_env_checks}`          | Bash commands to verify env vars               |
+| `{preflight_connectivity_check}`  | Bash command to verify service connectivity    |
+| `{missing_config_description}`    | Description of missing config for error msg    |
+| `{operations_table}`              | Table of available operations for domain       |
+| `{domain_specific_security_notes}`| Security guidance specific to domain           |
 
 #### Step 3: Write File
 
@@ -672,11 +677,46 @@ The setup is complete when:
 3. User successfully executes a test operation
 4. CLAUDE.md is updated with "{Domain Name}" section documenting capabilities and integration method
 
+## Setup Modes
+
+This skill supports two setup modes:
+
+| Mode             | Description                                            | Use When                            |
+|------------------|--------------------------------------------------------|-------------------------------------|
+| **Full Setup**   | Install tools + configure from scratch                 | Starting fresh, local development   |
+| **Connect Only** | Configure client to connect to existing infrastructure | Team server, cloud service, shared  |
+
+### Mode Selection Prompt
+
+At the start of setup (after Phase 0 state detection), if the vendor supports both modes:
+
+\`\`\`
+How would you like to set up {vendor}?
+
+1. Full Setup - Install and configure from scratch
+2. Connect Only - I already have {vendor} running/configured elsewhere
+\`\`\`
+
+**Full Setup path:**
+- Check for existing installation
+- Install if needed (OS-specific instructions)
+- Configure and start service (if applicable)
+- Set up authentication
+- Proceed to connection test
+
+**Connect Only path:**
+- Ask for connection details (address/URL/endpoint)
+- Ask for authentication credentials
+- Configure environment variables
+- Proceed to connection test
+
+**Note:** Not all vendors support both modes. CLI tools typically only support Full Setup, while cloud services typically only support Connect Only.
+
 ## Domain Template
 
 This skill uses a template file to generate the CLAUDE.md section for {domain_name}.
 
-**Template Location**: `plugins/crunch/skills/setup-project/templates/{domain_key}.template.md`
+**Template Location**: `plugins/crunch/templates/{domain_key}.template.md`
 
 ### Template Usage
 
@@ -684,7 +724,7 @@ When updating CLAUDE.md in Phase 5:
 
 #### If Template Exists
 
-1. Read the template from `plugins/crunch/skills/setup-project/templates/{domain_key}.template.md`
+1. Read the template from `plugins/crunch/templates/{domain_key}.template.md`
 2. Use the template content **without modifications** (preserve exact wording and structure)
 3. **Augment** with tool-specific information from the configured vendor:
    - MCP tools available (if MCP integration)
@@ -1991,7 +2031,7 @@ Update CLAUDE.md with "{Domain Name}" section.
 #### Step 2: Check for Domain Template
 
 \`\`\`bash
-cat plugins/crunch/skills/setup-project/templates/{domain_key}.template.md 2>/dev/null
+cat plugins/crunch/templates/{domain_key}.template.md 2>/dev/null
 \`\`\`
 
 #### Step 3: Generate CLAUDE.md Content
@@ -2193,6 +2233,216 @@ Progress file cleaned up.
 - [ ] "Setup complete! Documented in CLAUDE.md."
 
 **Definition of Done:** Only mark setup as complete when user confirms the test operation succeeded.
+
+---
+
+## Operations (Post-Setup Use)
+
+This section defines ongoing operations after initial setup. Generated skills should include operation templates relevant to the domain.
+
+### How It Works
+
+1. **Read CLAUDE.md** to detect {domain_name} configuration
+2. **Verify connection** to the configured backend
+3. **Execute the requested operation**
+4. **Return results** in a consistent format
+
+### Pre-flight Check
+
+Before any operation, ensure environment is configured:
+
+\`\`\`bash
+# Load environment if applicable
+source .env 2>/dev/null || true
+
+# Verify required variables
+{preflight_env_checks}
+
+# Verify tool/service is accessible
+{preflight_connectivity_check}
+\`\`\`
+
+**If not configured:**
+
+\`\`\`
+⚠️ {Domain Name} environment not configured.
+
+{missing_config_description}
+
+To fix this:
+1. Check that {domain_name} is configured in CLAUDE.md
+2. Ensure your .env file contains required variables
+3. Or run the setup skill: /setup-{domain_key}
+\`\`\`
+
+### Available Operations
+
+{operations_table}
+
+**Table format:**
+
+| Operation | Tool/Command | Description | Example |
+|-----------|--------------|-------------|---------|
+| {op_1}    | {tool_1}     | {desc_1}    | {ex_1}  |
+| {op_2}    | {tool_2}     | {desc_2}    | {ex_2}  |
+
+### Operation Templates
+
+Each domain should define CRUD-style operations as appropriate:
+
+**Create/Add Operation:**
+\`\`\`
+Parse from user request:
+- Item name/identifier
+- Required attributes
+
+Command: {create_command}
+
+Response:
+✓ Created: {item_name}
+  ID: {item_id}
+  {additional_details}
+\`\`\`
+
+**Read/Get Operation:**
+\`\`\`
+Parse from user request:
+- Item identifier
+
+Command: {read_command}
+
+Response:
+✓ Retrieved: {item_name}
+  {item_details}
+\`\`\`
+
+**Update Operation:**
+\`\`\`
+Parse from user request:
+- Item identifier
+- Fields to update
+
+Command: {update_command}
+
+Response:
+✓ Updated: {item_name}
+  Changes: {changes_summary}
+\`\`\`
+
+**Delete Operation:**
+\`\`\`
+Parse from user request:
+- Item identifier
+
+Confirmation required:
+⚠️ You're about to delete: {item_name}
+This action cannot be undone. Continue? (yes/no)
+
+Command: {delete_command}
+
+Response:
+✓ Deleted: {item_name}
+\`\`\`
+
+**List Operation:**
+\`\`\`
+Parse from user request:
+- Filter criteria (optional)
+
+Command: {list_command}
+
+Response:
+✓ {Items} in {context}:
+- {item_1}
+- {item_2}
+- {item_3}
+
+Total: {count} items
+\`\`\`
+
+---
+
+## Response Format Standards
+
+### Success Formats
+
+**Success - Create:**
+\`\`\`
+✓ {Operation}: {identifier}
+
+{details}
+\`\`\`
+
+**Success - Read (with --show flag):**
+\`\`\`
+✓ Retrieved: {identifier}
+
+{full_content}
+\`\`\`
+
+**Success - Read (default, sensitive data hidden):**
+\`\`\`
+✓ Retrieved: {identifier}
+
+Value: ******* (hidden)
+Use --show to display value
+\`\`\`
+
+**Success - List:**
+\`\`\`
+✓ {Items} in {path}:
+
+- {item_1}
+- {item_2}
+- {item_3}
+
+Total: {count} items
+\`\`\`
+
+**Success - Update:**
+\`\`\`
+✓ Updated: {identifier}
+
+Changes: {summary}
+\`\`\`
+
+**Success - Delete:**
+\`\`\`
+✓ Deleted: {identifier}
+\`\`\`
+
+### Error Format
+
+\`\`\`
+✗ Failed to {operation}: {identifier}
+
+Error: {error_message}
+
+Suggestions:
+- {suggestion_1}
+- {suggestion_2}
+\`\`\`
+
+---
+
+## Security Reminders
+
+Include domain-appropriate security guidance:
+
+### General Security
+- Never commit credentials to git
+- Ensure sensitive files are in .gitignore
+- Use short-lived tokens when possible
+- Rotate credentials periodically
+
+### Domain-Specific ({domain_name})
+{domain_specific_security_notes}
+
+**Example security notes by domain type:**
+- **Secrets**: Never log secret values; use references instead
+- **Task Management**: Be careful with project/board access tokens
+- **CI/CD**: Pipeline tokens have broad access; scope appropriately
+- **Observability**: API keys often have read access to all data
 
 ---
 
