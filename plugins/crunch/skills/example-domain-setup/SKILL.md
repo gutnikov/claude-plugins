@@ -1,13 +1,21 @@
 ---
-name: vault-enable
-description: Interactive setup wizard for HashiCorp Vault integration. Guides user through enabling Vault, configuring authentication, and verifying access by reading/writing a test secret.
+name: example-domain-setup
+description: Reference example of a complete domain setup skill, combining setup wizard and operations. Based on HashiCorp Vault integration pattern.
 ---
 
-# Enable HashiCorp Vault
+# Example Domain Setup Skill (Vault Reference)
 
-This skill guides users through the complete end-to-end process of setting up HashiCorp Vault for secrets management in their project.
+> **This file serves as a reference example for creating domain-specific setup skills.**
+> It demonstrates the complete pattern including setup, operations, and teardown.
+> Based on HashiCorp Vault as the concrete example.
 
-## Definition of Done
+---
+
+## Part 1: Enable/Setup
+
+This section guides users through the complete end-to-end process of setting up HashiCorp Vault for secrets management in their project.
+
+### Definition of Done
 
 The setup is complete when:
 
@@ -15,20 +23,20 @@ The setup is complete when:
 2. Authentication is configured
 3. User successfully writes and reads back a test secret via Vault
 
-## Setup Modes
+### Setup Modes
 
 This skill supports two setup modes:
 
 | Mode             | Description                                   | Use When                             |
-| ---------------- | --------------------------------------------- | ------------------------------------ |
+|------------------|-----------------------------------------------|--------------------------------------|
 | **Full Setup**   | Install Vault + run local dev server          | Starting fresh, local development    |
 | **Connect Only** | Configure client to connect to existing Vault | Production Vault, shared team server |
 
-## Progress Tracking
+### Progress Tracking
 
 Since Vault setup may require session restarts (e.g., after environment changes), progress is tracked in a file.
 
-### Progress File: `vault-setup-progress.md`
+#### Progress File: `vault-setup-progress.md`
 
 Location: Project root (`./vault-setup-progress.md`)
 
@@ -65,7 +73,7 @@ Location: Project root (`./vault-setup-progress.md`)
 - Resume from Phase 5 after environment reload if needed
 ```
 
-### Progress Tracking Rules
+#### Progress Tracking Rules
 
 1. **Create progress file** at the start of Phase 1
 2. **Update after each phase** completion
@@ -73,15 +81,15 @@ Location: Project root (`./vault-setup-progress.md`)
 4. **Delete progress file** only after successful DOD verification
 5. **On session start**, check for existing progress file and resume
 
-## Workflow
+### Workflow
 
 Follow these steps interactively, confirming each stage with the user before proceeding.
 
-### Phase 0: Check for Existing Installation & Progress
+#### Phase 0: Check for Existing Installation & Progress
 
 **ALWAYS start here.** Before anything else:
 
-#### Step 1: Check for Existing Vault Configuration
+##### Step 1: Check for Existing Vault Configuration
 
 First, detect if Vault is already set up in this project:
 
@@ -141,7 +149,7 @@ Would you like to:
 - Option 1 → Resume from the appropriate phase based on what's missing
 - Option 2 → Clear existing config and start from Phase 1
 
-#### Step 2: Check for Progress File
+##### Step 2: Check for Progress File
 
 1. **Check for progress file**
 
@@ -171,7 +179,7 @@ Would you like to:
 3. **If no progress file and no existing configuration:**
    - Proceed to Phase 1
 
-### Phase 1: Prerequisites & Mode Selection
+#### Phase 1: Prerequisites & Mode Selection
 
 First, determine what kind of setup the user needs:
 
@@ -231,9 +239,9 @@ First, determine what kind of setup the user needs:
 
 ---
 
-## Path A: Full Setup (Local Dev Server)
+### Path A: Full Setup (Local Dev Server)
 
-### Phase 2A: Install Vault
+#### Phase 2A: Install Vault
 
 1. **Check if Vault is already installed**
 
@@ -270,7 +278,7 @@ First, determine what kind of setup the user needs:
    vault version
    ```
 
-### Phase 3A: Start Dev Server
+#### Phase 3A: Start Dev Server
 
 1. **Explain dev server mode**
    - Dev server is for local development only
@@ -299,7 +307,7 @@ First, determine what kind of setup the user needs:
    export VAULT_TOKEN='<root-token>'
    ```
 
-### Phase 4A: Configure Project
+#### Phase 4A: Configure Project
 
 1. **Ask about configuration approach**
    - Environment variables only (recommended for dev)
@@ -330,9 +338,9 @@ First, determine what kind of setup the user needs:
 
 ---
 
-## Path B: Connect to Existing Vault Server
+### Path B: Connect to Existing Vault Server
 
-### Phase 2B: Gather Connection Details
+#### Phase 2B: Gather Connection Details
 
 Ask the user for existing Vault server information:
 
@@ -395,7 +403,7 @@ Ask the user for existing Vault server information:
    export VAULT_CACERT='/path/to/ca.crt'
    ```
 
-### Phase 3B: Configure Client Connection
+#### Phase 3B: Configure Client Connection
 
 1. **Set Vault address**
 
@@ -429,9 +437,9 @@ Ask the user for existing Vault server information:
 
 ---
 
-## Common Path: Testing & Completion
+### Common Path: Testing & Completion
 
-### Phase 5: Connection Test
+#### Phase 5: Connection Test
 
 This is the critical verification step (same for both paths):
 
@@ -469,7 +477,7 @@ This is the critical verification step (same for both paths):
 5. **Confirm with user**
    "I was able to write and read a test secret. Did the operation complete successfully?"
 
-### Phase 6: Completion
+#### Phase 6: Completion
 
 Once test is confirmed:
 
@@ -523,7 +531,7 @@ Once test is confirmed:
    **Known MCP Server GitHub Repositories:**
 
    | Server                                      | GitHub Repository                               |
-   | ------------------------------------------- | ----------------------------------------------- |
+   |---------------------------------------------|------------------------------------------------|
    | `@modelcontextprotocol/server-filesystem`   | https://github.com/modelcontextprotocol/servers |
    | `@modelcontextprotocol/server-github`       | https://github.com/modelcontextprotocol/servers |
    | `@modelcontextprotocol/server-gitlab`       | https://github.com/modelcontextprotocol/servers |
@@ -594,9 +602,9 @@ Once test is confirmed:
 
 ---
 
-## Error Handling
+### Setup Error Handling
 
-### Common Issues
+#### Common Issues
 
 **"connection refused" error:**
 - Vault server not running
@@ -628,22 +636,349 @@ Once test is confirmed:
 - CLI handles this automatically with `kv` commands
 - Check secrets engine version: `vault secrets list`
 
-## Interactive Checkpoints
+### Setup Interactive Checkpoints
 
-### Mode Selection
+#### Mode Selection
 - [ ] "Which setup mode do you need: Full Setup (local dev) or Connect Only (existing server)?"
 
-### Path A (Full Setup)
+#### Path A (Full Setup)
 - [ ] "Vault installed. Ready to start dev server?"
 - [ ] "Dev server running. I see the root token. Ready to configure?"
 - [ ] "Configuration saved. Ready to test?"
 
-### Path B (Connect Only)
+#### Path B (Connect Only)
 - [ ] "What is the Vault server address?"
 - [ ] "Which authentication method do you use?"
 - [ ] "I have the credentials. Ready to configure?"
 - [ ] "Configuration saved. Ready to test?"
 
-### Final Verification (Both Paths)
+#### Final Verification (Both Paths)
 - [ ] "Test secret written and read successfully. Setup complete?"
 - [ ] "Would you like me to delete the test secret?"
+
+---
+
+## Part 2: Operations/Use
+
+This section provides a unified interface for Vault secrets operations by detecting the configuration from CLAUDE.md and executing the appropriate commands.
+
+### How It Works
+
+1. **Read CLAUDE.md** to detect Vault configuration
+2. **Verify connection** to Vault server
+3. **Execute the requested operation**
+4. **Return results** in a consistent format
+
+### Backend Detection
+
+**Read CLAUDE.md from project root and look for:**
+
+```markdown
+## Secrets Management
+
+### HashiCorp Vault
+
+- **Status**: Configured
+- **Address**: http://127.0.0.1:8200
+- **Auth method**: Token
+- **Config location**: .env
+```
+
+**If Vault not detected:**
+
+- Inform user: "No Vault configuration found in CLAUDE.md"
+- Suggest running setup: "Would you like to set up Vault? Run `/vault-enable`"
+
+### Pre-flight Check
+
+Before any operation, ensure environment is configured:
+
+```bash
+# Load from .env if specified
+source .env 2>/dev/null || true
+
+# Check required variables
+echo $VAULT_ADDR
+echo $VAULT_TOKEN
+```
+
+**If not configured:**
+
+```
+⚠️ Vault environment not configured.
+
+VAULT_ADDR or VAULT_TOKEN not set.
+
+To fix this:
+1. Check that Vault is configured in CLAUDE.md
+2. Ensure your .env file contains VAULT_ADDR and VAULT_TOKEN
+3. Or run: export VAULT_ADDR=<address> && export VAULT_TOKEN=<token>
+```
+
+### Operations
+
+#### Get Secret
+
+**Parse from user request:**
+
+- Secret path (e.g., "database/password", "api/key")
+- Specific field (optional)
+
+**Commands:**
+
+```bash
+# Get entire secret
+vault kv get secret/<path>
+
+# Get specific field
+vault kv get -field=<field> secret/<path>
+
+# Get as JSON
+vault kv get -format=json secret/<path>
+```
+
+**Response:**
+
+```
+✓ Secret retrieved: database/password
+
+Value: ******* (hidden)
+```
+
+Or with `--show` flag:
+
+```
+✓ Secret retrieved: database/password
+
+Value: my-secret-password-123
+```
+
+#### Set Secret
+
+**Parse from user request:**
+
+- Secret path
+- Key-value pairs
+
+**Commands:**
+
+```bash
+# Set single key-value
+vault kv put secret/<path> <key>=<value>
+
+# Set multiple
+vault kv put secret/<path> key1=value1 key2=value2
+
+# Patch (update without overwriting other keys)
+vault kv patch secret/<path> <key>=<value>
+```
+
+**Confirmation before write:**
+
+```
+You're about to set secret: api/key
+
+Backend: Vault
+Path: secret/myapp/api/key
+Value: [hidden - 32 characters]
+
+Proceed? (yes/no)
+```
+
+**Response:**
+
+```
+✓ Secret stored: api/key
+
+Backend: HashiCorp Vault
+Path: secret/myapp/api/key
+```
+
+#### List Secrets
+
+**Commands:**
+
+```bash
+# List paths at root
+vault kv list secret/
+
+# List paths at specific location
+vault kv list secret/<path>/
+```
+
+**Response:**
+
+```
+✓ Secrets in secret/myapp/:
+
+- database/
+- api/
+- cache/
+
+Total: 3 paths
+```
+
+#### Delete Secret
+
+**Parse from user request:**
+
+- Secret path to delete
+
+**Confirmation required:**
+
+```
+⚠️ You're about to delete secret: database/password
+
+This action cannot be undone. Continue? (yes/no)
+```
+
+**Commands:**
+
+```bash
+# Soft delete (can recover with undelete)
+vault kv delete secret/<path>
+
+# Permanent delete (all versions)
+vault kv destroy -versions=all secret/<path>
+```
+
+**Response:**
+
+```
+✓ Secret deleted: database/password
+
+Backend: HashiCorp Vault
+```
+
+### Response Format
+
+#### Success - Get
+
+```
+✓ Secret retrieved: <path>
+
+Value: ******* (hidden)
+```
+
+#### Success - Set
+
+```
+✓ Secret stored: <path>
+
+Backend: HashiCorp Vault
+```
+
+#### Success - List
+
+```
+✓ Secrets in <path>:
+
+- database/username
+- database/password
+- api/key
+
+Total: 3 secrets
+```
+
+#### Success - Delete
+
+```
+✓ Secret deleted: <path>
+
+Backend: HashiCorp Vault
+```
+
+#### Error
+
+```
+✗ Failed to <operation> secret: <path>
+
+Error: <error message>
+Backend: HashiCorp Vault
+
+Suggestions:
+- <suggestion 1>
+- <suggestion 2>
+```
+
+### Operations Error Handling
+
+#### Common Issues
+
+**"connection refused" error:**
+- Vault server not running
+- Wrong address/port
+- Firewall blocking connection
+
+**"permission denied" error:**
+- Token doesn't have access to path
+- Policy doesn't allow operation
+- Token expired
+
+**"seal status: sealed" error:**
+- Vault needs to be unsealed
+- In production, requires unseal keys
+- Dev server should auto-unseal
+
+**"token not found" or "missing client token":**
+- `VAULT_TOKEN` not set
+- Token file `~/.vault-token` not present
+- Need to authenticate first
+
+**KV v1 vs v2 path issues:**
+- KV v2 requires `/data/` in path for API
+- CLI handles this automatically with `kv` commands
+- Check secrets engine version: `vault secrets list`
+
+#### Error Table
+
+| Error                  | Cause              | Solution                               |
+|------------------------|--------------------|----------------------------------------|
+| `permission denied`    | Token lacks access | Check policy, get new token            |
+| `connection refused`   | Vault not running  | Start Vault or check address           |
+| `missing client token` | Not authenticated  | Run `vault login` or set `VAULT_TOKEN` |
+
+### Operations Interactive Checkpoints
+
+- [ ] Confirm before destructive operations (delete)
+- [ ] Confirm before writing secrets (optional, can be skipped)
+
+---
+
+## Part 3: Related Skills
+
+For a complete domain lifecycle, also consider implementing:
+
+- **Disable/Teardown Skill** - Remove configuration and clean up (see `vault-disable` pattern in legacy folder)
+  - Remove CLAUDE.md sections
+  - Clean up environment variables
+  - Optionally stop/uninstall the service
+
+### Skill Lifecycle Pattern
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                     Domain Skill Lifecycle                          │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌──────────────┐     ┌──────────────┐     ┌──────────────┐        │
+│  │    Enable    │────▶│     Use      │────▶│   Disable    │        │
+│  │    (Setup)   │     │ (Operations) │     │  (Teardown)  │        │
+│  └──────────────┘     └──────────────┘     └──────────────┘        │
+│                                                                     │
+│  - Install/connect    - Get/Set/List      - Remove config          │
+│  - Configure          - CRUD operations   - Clean up env           │
+│  - Document           - Error handling    - Update CLAUDE.md       │
+│  - Verify (DOD)                           - Optionally uninstall   │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Key Patterns to Follow
+
+1. **Definition of Done (DOD)** - Clear, testable completion criteria
+2. **Progress Tracking** - Persistent state for multi-session setups
+3. **Backend Detection** - Read configuration from CLAUDE.md
+4. **Interactive Checkpoints** - Confirm with user at key decision points
+5. **Error Handling** - Common issues with suggested solutions
+6. **CLAUDE.md Documentation** - Self-documenting configuration

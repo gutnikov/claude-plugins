@@ -1,20 +1,20 @@
 ---
 name: setup-project-domain
-description: Meta-skill for creating domain-specific setup skills. Generates SKILL.md files for project domains (Task Management, Secrets, Communication, CI/CD, etc.) following the setup-task-manager pattern.
+description: Meta-skill for creating domain-specific setup skills. Generates SKILL.md files for project domains (Task Management, Secrets, Communication, CI/CD, etc.) following the example-domain-setup pattern.
 ---
 
 # Setup Project Domain
 
-This meta-skill generates domain-specific setup skills (like `setup-task-manager`) for different project domains. It abstracts the common patterns from setup skills and allows creating new ones for any integration domain.
+This meta-skill generates domain-specific setup skills for different project domains. It abstracts the common patterns from the `example-domain-setup` reference and allows creating new ones for any integration domain.
 
 ## Definition of Done
 
 The skill creation is complete when:
 
-1. Domain is selected or defined (pre-defined or custom)
+1. Domain is selected from pre-defined list
 2. Vendor matrix is configured (pre-defined or gathered)
 3. SKILL.md is generated at `plugins/crunch/skills/setup-{domain-key}/SKILL.md`
-4. Generated skill follows the setup-task-manager pattern exactly
+4. Generated skill follows the example-domain-setup pattern exactly
 5. User verifies the generated skill
 
 ## Domain Abstraction Model
@@ -83,25 +83,24 @@ vendors:
 
 These domains have known purposes, feature requirements, and popular vendors.
 
-| Domain                       | Key                          | Purpose                                    | Required Features                    | Popular Vendors                               |
-|------------------------------|------------------------------|--------------------------------------------|--------------------------------------|-----------------------------------------------|
-| **Task Management**          | `task-management`            | Track and manage work items                | Tasks, Tags, Statuses, Dependencies  | Jira, Linear, Trello, Asana, GitHub Issues    |
-| **Secrets**                  | `secrets`                    | Store and retrieve secrets securely        | Get, Set, List, Delete               | Vault, SOPS+age, AWS Secrets Manager, 1Password |
-| **CI/CD**                    | `ci-cd`                      | Continuous integration/deployment          | Pipelines, Triggers, Logs, Artifacts | GitHub Actions, GitLab CI, CircleCI, Jenkins  |
-| **Pipelines**                | `pipelines`                  | Define project pipelines (local, CI, deploy) | Detect, Define, Document, Validate   | Depends on tech-stack + CI + environments     |
-| **Configuration**            | `configuration`              | Manage env variables per environment       | Define, Switch, Validate, Sync       | dotenv, direnv, Doppler, Infisical            |
-| **Observability**            | `observability`              | Metrics, logs, traces, alerting            | Metrics, Logs, Traces, Alerts        | Datadog, Grafana, Prometheus, Honeycomb       |
-| **Documentation**            | `documentation`              | Doc site generation and publishing         | Generate, Publish, Version, Search   | Docusaurus, GitBook, ReadTheDocs, Mintlify    |
-| **Localization**             | `localization`               | Internationalization and translation       | Extract, Translate, Sync, Manage keys | Lokalise, Crowdin, Phrase, i18next            |
-| **Memory Management**        | `memory-management`          | Persistent AI context across sessions      | Store, Retrieve, Search, Update      | Memory MCP, Pinecone, Chroma, Weaviate        |
-| **Deploy Environments**      | `deploy-environments`        | Manage dev/staging/prod environments       | Config, Feature flags, Env switching | LaunchDarkly, ConfigCat, Vercel, Netlify      |
-| **Problem Remediation**      | `problem-remediation`        | Runbook automation, self-healing           | Detect, Execute, Verify, Rollback    | Rundeck, Ansible, PagerDuty Runbooks, Shoreline |
-| **Tech Stack**               | `tech-stack`                 | Auto-detect and configure project stack    | Detect, Configure, Validate          | Custom detection, Nx, Turborepo, mise         |
-| **User Communication Bot**   | `user-communication-bot`     | Slack app/bot for project development      | Send, Receive, React, Thread         | Slack Bot, Discord Bot                        |
-| **Agents & Orchestration**   | `agents-and-orchestration`   | Configure Claude Code agents               | Define, Connect, Coordinate          | Claude Code agents, custom configs            |
-| **Custom**                   | (user-defined)               | (user-defined)                             | (user-defined)                       | (user-defined)                                |
+| Domain                       | Key                          | Purpose                                      |
+|------------------------------|------------------------------|----------------------------------------------|
+| **Task Management**          | `task-management`            | Track and manage work items                  |
+| **Secrets**                  | `secrets`                    | Store and retrieve secrets securely          |
+| **CI/CD**                    | `ci-cd`                      | Continuous integration/deployment            |
+| **Pipelines**                | `pipelines`                  | Define project pipelines (local, CI, deploy) |
+| **Configuration**            | `configuration`              | Manage env variables per environment         |
+| **Observability**            | `observability`              | Metrics, logs, traces, alerting              |
+| **Documentation**            | `documentation`              | Doc site generation and publishing           |
+| **Localization**             | `localization`               | Internationalization and translation         |
+| **Memory Management**        | `memory-management`          | Persistent AI context across sessions        |
+| **Deploy Environments**      | `deploy-environments`        | Manage dev/staging/prod environments         |
+| **Problem Remediation**      | `problem-remediation`        | Runbook automation, self-healing             |
+| **Tech Stack**               | `tech-stack`                 | Auto-detect and configure project stack      |
+| **User Communication Bot**   | `user-communication-bot`     | Slack app/bot for project development        |
+| **Agents & Orchestration**   | `agents-and-orchestration`   | Configure Claude Code agents                 |
 
-**Note:** Users select their existing vendor from the popular list (or specify "Other"). The skill then analyzes vendor compatibility with the domain requirements.
+**Note:** Users select their existing vendor from the popular list. The skill then analyzes vendor compatibility with the domain requirements.
 
 ---
 
@@ -109,9 +108,10 @@ These domains have known purposes, feature requirements, and popular vendors.
 
 ### Phase 1: Domain Selection
 
-Use the AskUserQuestion tool to present domain options with an interactive selector:
+Present domain options using AskUserQuestion. Since only 4 options can be shown at once, use pagination - if user selects "Other", show the next set of domains.
 
 ```typescript
+// First set (most common domains)
 AskUserQuestion({
   questions: [{
     question: "Which project domain would you like to create a setup skill for?",
@@ -125,8 +125,9 @@ AskUserQuestion({
     multiSelect: false
   }]
 })
+// User can select "Other" to see more options
 
-// If user needs more options, present second set:
+// Second set (if user selected "Other")
 AskUserQuestion({
   questions: [{
     question: "More domain options:",
@@ -141,7 +142,7 @@ AskUserQuestion({
   }]
 })
 
-// Additional domains:
+// Third set (if user selected "Other" again)
 AskUserQuestion({
   questions: [{
     question: "Additional domains:",
@@ -156,10 +157,10 @@ AskUserQuestion({
   }]
 })
 
-// More domains:
+// Fourth set (if user selected "Other" again)
 AskUserQuestion({
   questions: [{
-    question: "More domains:",
+    question: "Remaining domains:",
     header: "Domain",
     options: [
       { label: "User Communication Bot", description: "Slack/Discord bot for development" },
@@ -170,180 +171,136 @@ AskUserQuestion({
 })
 ```
 
-**Note:** User can select "Other" to define a custom domain.
+**Flow:**
+1. Show first 4 domains
+2. If user selects "Other" → show next 4 domains
+3. Repeat until user selects a domain or all options exhausted
 
-**If pre-defined domain selected:** Continue to Phase 1.7 (Vendor Selection)
-
-**If custom domain selected (Other):** Continue to Phase 1.5 (Scenario Collection)
+**After domain selection:** Continue to Phase 1.5 (Story Collection).
 
 **DOD:** Domain selected
 
 ---
 
-### Phase 1.5: Scenario Collection (Custom Only)
+### Phase 1.5: Story Collection
 
-Before defining domain details, collect usage scenarios to extract the domain model.
+Collect user stories that describe required capabilities for the selected domain.
 
 #### Entry Dialog
 
 ```
-Custom Domain Setup - Scenario Collection
------------------------------------------
+{Domain Name} Setup - Story Collection
+--------------------------------------
 
-Before defining your domain, let's understand how you'll use it.
+Let's understand what capabilities you need from {domain_name}.
 
-Describe a scenario where you'd interact with this system. Be specific about:
-- What you're trying to accomplish
-- What data or objects you're working with
-- What actions you need to take
+Describe what should be possible using "it should be possible to..." statements.
+Focus on concrete actions and outcomes.
 
-Example: "I want to create a new support ticket for a customer,
-assign it to an agent, set priority to high, and add labels."
+Examples:
+  - "it should be possible to create a task with a description"
+  - "it should be possible to set one task to be dependent on another task"
+  - "it should be possible to filter tasks by status and assignee"
+  - "it should be possible to move a task between projects"
 
-Describe your first scenario:
+Enter your first story:
 >
 ```
 
 #### Multi-Turn Collection Loop
 
-1. User provides scenario
-2. Claude extracts and displays extraction (see Phase 1.6)
-3. Ask: "Add another scenario, or type 'done'"
+1. User provides a story
+2. Claude confirms and displays the story
+3. Ask: "Add another story, or type 'done'"
 4. Repeat until user says "done"
 
-#### After Each Scenario
+#### After Each Story
 
 ```
-Scenario {N} captured!
+Story {N} captured!
 
-I've extracted:
-  Entities: {new_entities}
-  Operations: {new_operations}
-  Attributes: {new_attributes}
+  "{story_text}"
 
-Your domain model now includes:
-  {total} entities, {total} operations, {total} attributes
+Stories collected so far: {total}
 
-Add another scenario, or type 'done':
+Add another story, or type 'done':
 >
 ```
 
-**DOD:** At least 1 scenario collected, user says "done"
+**DOD:** At least 1 story collected, user says "done"
 
 ---
 
-### Phase 1.6: Model Extraction & Review (Custom Only)
+### Phase 1.6: Story Review
 
-Extract and consolidate domain model from collected scenarios.
-
-#### Extraction Rules
-
-**Entities (nouns):**
-- Direct objects: "create a **ticket**" → `ticket`
-- Subjects: "**agent** handles..." → `agent`
-- Implicit entities from relationships: "assign to **team**" → `team`
-- Possessives: "customer's **order**" → `order`, `customer`
-
-**Operations (verbs):**
-- CRUD operations: create, read/get/list, update, delete
-- Relationships: assign, link, attach, add, remove
-- State changes: transition, close, resolve, approve, reject
-- Bulk operations: import, export, archive
-
-**Attributes (properties):**
-- Set expressions: "set **priority** to high" → `priority` (enum)
-- Filter criteria: "filter by **status**" → `status`
-- Inferred from operations:
-  - assign → `assignee` (reference)
-  - create → `created_at` (timestamp)
-  - update → `updated_at` (timestamp)
-- Described values: "with **description**" → `description` (text)
-
-#### Per-Scenario Extraction Display
-
-```
-Scenario Analysis
------------------
-"{user's scenario text}"
-
-Extracted:
-
-ENTITIES:
-  + ticket      [NEW] - Support ticket
-  + agent       [NEW] - Support agent
-  + customer    [NEW] - Customer record
-
-OPERATIONS:
-  + create      [NEW] - Create new items
-  + assign      [NEW] - Assign to owner
-  + set         [NEW] - Set property value
-
-ATTRIBUTES:
-  + priority    [NEW] on ticket - enum
-  + labels      [NEW] on ticket - list
-  + assignee    [INFERRED] on ticket - reference to agent
-
-Does this look correct? (yes / adjust / skip)
->
-```
-
-**If user says "adjust":**
-```
-What would you like to change?
-1. Add entity: <name> - <description>
-2. Remove entity: <name>
-3. Add operation: <name> - <description>
-4. Remove operation: <name>
-5. Add attribute: <name> on <entity> - <type>
-6. Remove attribute: <name>
-7. Done adjusting
->
-```
+Review and organize collected stories before vendor matching.
 
 #### Consolidated Review (After "done")
 
 ```
-Domain Model Review
-===================
+Story Review
+============
 
-Based on your {N} scenarios:
+You've collected {N} stories:
 
-ENTITIES ({count})
-| Entity   | Description      | Attributes                 |
-|----------|------------------|----------------------------|
-| ticket   | Support ticket   | priority, status, assignee |
-| agent    | Support agent    | name, email, team          |
-| customer | Customer record  | name, email                |
+REQUIRED CAPABILITIES
+| #  | Story                                                          |
+|----|----------------------------------------------------------------|
+| 1  | it should be possible to create a task with a description     |
+| 2  | it should be possible to set one task dependent on another    |
+| 3  | it should be possible to filter tasks by status and assignee  |
+| 4  | it should be possible to move a task between projects         |
 
-OPERATIONS ({count})
-| Operation  | Applies To    | Description      |
-|------------|---------------|------------------|
-| create     | ticket, agent | Create new items |
-| assign     | ticket        | Assign to owner  |
-| transition | ticket        | Change status    |
-
-ATTRIBUTES ({count})
-| Attribute | Entity | Type              |
-|-----------|--------|-------------------|
-| priority  | ticket | enum              |
-| status    | ticket | enum              |
-| assignee  | ticket | reference (agent) |
-| labels    | ticket | list              |
-
-Does this model represent your domain?
-1. Yes, continue to domain configuration
-2. Add more scenarios
-3. Make adjustments
+Do these stories capture your requirements?
+1. Yes, continue to vendor selection
+2. Add more stories
+3. Edit a story (enter story number)
+4. Remove a story (enter "remove" + number)
 >
 ```
 
-**DOD:** Domain model extracted and confirmed
+**If user selects "Edit":**
+```
+Editing story #{N}:
+Current: "{current_story_text}"
+
+Enter updated story:
+>
+```
+
+**If user selects "Remove":**
+```
+Removed story #{N}: "{removed_story_text}"
+
+{N-1} stories remaining.
+```
+
+#### Story Quality Guidelines
+
+Good stories are:
+- **Specific**: "create a task with a description" (not "manage tasks")
+- **Testable**: Can verify if a tool supports this capability
+- **Action-oriented**: Describe what should be possible to do
+- **Self-contained**: Each story represents one capability
+
+If a story is too vague, suggest breaking it down:
+```
+Story seems broad: "it should be possible to manage tasks"
+
+Consider breaking into specific stories:
+  - "it should be possible to create a task"
+  - "it should be possible to update a task's status"
+  - "it should be possible to delete a task"
+
+Would you like to replace with these? (yes/no)
+>
+```
+
+**DOD:** Stories reviewed and confirmed
 
 ---
 
 ### Phase 1.7: Vendor Selection
-
-**Applies to:** Both pre-defined and custom domains. For pre-defined domains, this is the next step after Phase 1. For custom domains, this follows Phase 1.6.
 
 Present popular vendors for the selected domain and let the user choose which one they use.
 
@@ -378,15 +335,15 @@ AskUserQuestion({
 
 ### Phase 1.8: Vendor Compatibility Analysis
 
-After vendor selection, analyze how well the vendor matches the domain's requirements.
+After vendor selection, analyze how well the vendor's tools match the required stories.
 
-#### Step 1: Map Vendor Capabilities
+#### Step 1: Match Stories to Vendor Tools
 
-Using the Entity and Operation Mapping Aliases (see Vendor Capability Registry), determine:
+For each collected story, identify which vendor tool(s) can fulfill it:
 
-1. **Entity Coverage** - Which domain entities the vendor supports
-2. **Operation Coverage** - Which domain operations the vendor supports
-3. **Gaps** - What's missing or requires workarounds
+1. **Full Support** - A vendor tool directly supports this capability
+2. **Partial Support** - Can be achieved with workarounds or multiple tools
+3. **Gap** - No tool available for this capability
 
 #### Step 2: Display Compatibility Report
 
@@ -394,21 +351,20 @@ Using the Entity and Operation Mapping Aliases (see Vendor Capability Registry),
 Vendor Compatibility Analysis: {Vendor} for {Domain Name}
 =========================================================
 
-Entity Mapping:
-  {domain_entity_1} → {vendor_entity} [Full Support]
-  {domain_entity_2} → {vendor_entity} [Full Support]
-  {domain_entity_3} → (custom field)  [Workaround Required]
-  {domain_entity_4} → (not supported) [Gap]
+Story Coverage:
 
-Operation Mapping:
-  {operation_1} → {vendor_api_method} [Full Support]
-  {operation_2} → {vendor_api_method} [Full Support]
-  {operation_3} → (manual process)    [Workaround Required]
+| #  | Story                                               | Support         | Tool/Method              |
+|----|-----------------------------------------------------|-----------------|--------------------------|
+| 1  | create a task with a description                    | ✓ Full          | createCard               |
+| 2  | set one task dependent on another                   | ~ Partial       | attachments + convention |
+| 3  | filter tasks by status and assignee                 | ✓ Full          | getCardsOnBoard + filter |
+| 4  | move a task between projects                        | ✗ Gap           | not supported            |
 
-Overall Compatibility: {X}% ({Y} of {Z} capabilities supported)
+Overall Compatibility: {X}% ({Y} of {Z} stories supported)
 
 Gaps & Workarounds:
-  - {entity/operation}: {description of workaround or limitation}
+  - Story #2: No native dependencies; use card attachments with naming convention
+  - Story #4: Cannot move cards between boards; must recreate in target board
 
 Recommendation: {Proceed / Consider alternatives / Not recommended}
 ```
@@ -433,202 +389,7 @@ AskUserQuestion({
 
 ---
 
-### Phase 2: Domain Configuration (Custom Only)
-
-For custom domains, gather the following. If Phase 1.5/1.6 was completed, fields are **auto-populated from the extracted model**.
-
-#### Step 1: Domain Definition
-
-```
-Custom Domain Setup
--------------------
-
-Based on your scenarios, I've prepared these defaults:
-
-1. What is this domain called? (e.g., "Database Management")
-   [Auto-populated: "{inferred_domain_name}"]
-   > [press Enter to accept, or type new name]
-
-2. What is the purpose of this domain? (one sentence)
-   [Auto-populated: "{inferred_purpose}"]
-   > [press Enter to accept, or type new purpose]
-
-3. What features must vendors support? (comma-separated)
-   [Auto-populated from extracted operations: {operation_list}]
-   > [press Enter to accept, or type new features]
-```
-
-**Auto-population from Extracted Model:**
-
-| Field               | Source                                                              |
-|---------------------|---------------------------------------------------------------------|
-| `domain_name`       | Inferred from primary entity (e.g., "ticket" → "Ticket Management") |
-| `purpose`           | Generated from entities and operations                              |
-| `required_features` | Directly from extracted operations                                  |
-
-**Auto-generate from user input:**
-
-- `domain_key`: Lowercase, hyphenated (e.g., "Database Management" → `database-manager`)
-- `claude_section`: `## {Domain Name}`
-- `progress_file`: `{domain_key}-setup-progress.md`
-
-#### Step 2: Vendor Research
-
-```
-Now let's define the qualified vendors for {Domain Name}.
-
-How many vendors would you like to add? (1-10)
->
-```
-
-For each vendor, collect:
-
-```
-Vendor {N} of {Total}
---------------------
-
-1. Vendor name: (e.g., "PostgreSQL")
-   >
-
-2. Vendor key: (lowercase, e.g., "postgres")
-   >
-
-3. Feature support: (which required features does it support?)
-   Features: {required_features}
-   Supports all? (yes/no)
-   >
-
-4. Official MCP: (URL if remote, null if none)
-   >
-
-5. Community MCP: (npm package name, or null if none)
-   >
-
-6. Authentication methods: (comma-separated)
-   Examples: OAuth, API Token, Username/Password, IAM
-   >
-
-7. Test operation: (command or tool call to verify connection)
-   Example: "list_databases" or "SELECT 1"
-   >
-
-8. Notes: (brief description, best use case)
-   >
-```
-
-#### Step 3: Excluded Vendors (Optional)
-
-```
-Are there any vendors that appear relevant but should be excluded?
-(These are vendors that don't meet all required features)
-
-Enter vendor names and reasons, or "none" to skip:
-
-Format: VendorName: reason
-Example: SQLite: No remote connections
-
->
-```
-
-**DOD:** Domain definition and vendor matrix complete
-
----
-
-### Phase 2.5: Vendor Suggestion (Custom Only with Scenarios)
-
-If scenarios were collected in Phase 1.5, suggest vendors based on extracted model before manual vendor research.
-
-#### Capability Matching Algorithm
-
-Score vendors by matching extracted model against known vendor capabilities:
-
-| Category              | Weight | Scoring                                             |
-|-----------------------|--------|-----------------------------------------------------|
-| **Entity Support**    | 40%    | % of extracted entities that vendor can model       |
-| **Operation Support** | 40%    | % of extracted operations that vendor API supports  |
-| **Attribute Support** | 20%    | % of extracted attributes vendor can store          |
-
-**Match Levels:**
-- **Full**: Vendor has native support (entity/operation/attribute exists)
-- **Partial**: Can be achieved with workarounds (custom fields, tags, etc.)
-- **Gap**: Not supported, would need external solution
-
-#### Suggestion Display
-
-```
-Vendor Suggestions
-==================
-
-Based on your model ({N} entities, {M} operations):
-
-RECOMMENDED
-
-1. Jira (95% match)
-   Entity Mapping:
-     ticket    → Issue    [Full]
-     agent     → User     [Full]
-     customer  → Customer [Gap - use custom field]
-
-   Operation Mapping:
-     create    → createIssue     [Full]
-     assign    → assignIssue     [Full]
-     transition → transitionIssue [Full]
-
-   Gaps:
-     - customer entity → use custom field or linked Jira Service Management
-
-   Why Jira: Complex workflows, issue linking, JQL search, extensive API
-
-2. Linear (82% match)
-   Entity Mapping:
-     ticket    → Issue    [Full]
-     agent     → User     [Full]
-     customer  → Customer [Gap - no native support]
-
-   Gaps:
-     - customer entity → no native support, use labels
-     - limited link types
-
-   Why Linear: Modern API, fast performance, developer-focused
-
-3. Trello (68% match)
-   Entity Mapping:
-     ticket    → Card     [Full]
-     agent     → Member   [Full]
-     customer  → Customer [Gap - no native support]
-
-   Gaps:
-     - No native dependencies
-     - No status transitions (use lists)
-     - Limited custom fields (Power-Ups required)
-
-   Why Trello: Simple, visual, quick setup
-
-Proceed with:
-1. Jira (recommended)
-2. Linear
-3. Trello
-4. Skip suggestions, define vendors manually
-5. See more vendors
->
-```
-
-#### If User Selects a Suggested Vendor
-
-Auto-populate Phase 2 Step 2 (Vendor Research) with the selected vendor's details:
-- Pre-fill vendor name, key, features from capability registry
-- Pre-fill MCP options from known configurations
-- Only ask for any missing custom information
-
-#### If User Skips or Selects Manual
-
-Continue to Phase 2 Step 2 with standard vendor collection flow.
-
-**DOD:** Vendor suggested and selected, OR user chose manual entry
-
----
-
-### Phase 3: Check for Existing Skill
+### Phase 2: Check for Existing Skill
 
 Before generating, check if skill already exists:
 
@@ -652,7 +413,7 @@ What would you like to do?
 
 ---
 
-### Phase 4: Generate Setup Skill
+### Phase 3: Generate Setup Skill
 
 Create the SKILL.md file using the domain configuration.
 
@@ -695,7 +456,7 @@ plugins/crunch/skills/setup-{domain_key}/SKILL.md
 
 ---
 
-### Phase 5: Verification
+### Phase 4: Verification
 
 Display result summary:
 
@@ -758,29 +519,16 @@ popular_vendors:
   - Asana
   - GitHub Issues
 
-# Required capabilities for compatibility analysis
-required_entities:
-  - task        # Primary work item
-  - user        # Team member / assignee
-  - project     # Container for tasks
-  - tag         # Categorization labels
-  - status      # Workflow state
-
-required_operations:
-  - create      # Create new tasks
-  - read        # View task details
-  - update      # Modify tasks
-  - list        # List/search tasks
-  - assign      # Assign to users
-  - transition  # Change status
-
-required_attributes:
-  - title       # Task name
-  - description # Task details
-  - priority    # Urgency level
-  - status      # Current state
-  - assignee    # Assigned user
-  - tags        # Labels/categories
+# Required stories for compatibility analysis
+required_stories:
+  - "it should be possible to create a task with a title and description"
+  - "it should be possible to assign a task to a team member"
+  - "it should be possible to set task priority (high, medium, low)"
+  - "it should be possible to add labels/tags to a task"
+  - "it should be possible to change task status (todo, in progress, done)"
+  - "it should be possible to list and filter tasks by status or assignee"
+  - "it should be possible to set one task as dependent on another"
+  - "it should be possible to move a task between projects"
 
 explanation: |
   ## Why Task Management Integration?
@@ -805,34 +553,25 @@ When user selects "Trello" for Task Management:
 Vendor Compatibility Analysis: Trello for Task Management
 =========================================================
 
-Entity Mapping:
-  task    → card      [Full Support]
-  user    → member    [Full Support]
-  project → board     [Full Support]
-  tag     → label     [Full Support]
-  status  → list      [Partial - position-based]
+Story Coverage:
 
-Operation Mapping:
-  create     → createCard      [Full Support]
-  read       → getCard         [Full Support]
-  update     → updateCard      [Full Support]
-  list       → getCardsOnBoard [Full Support]
-  assign     → addMemberToCard [Full Support]
-  transition → moveCardToList  [Full Support]
+| #  | Story                                          | Support   | Tool/Method              |
+|----|------------------------------------------------|-----------|--------------------------|
+| 1  | create a task with a title and description    | ✓ Full    | createCard               |
+| 2  | assign a task to a team member                | ✓ Full    | addMemberToCard          |
+| 3  | set task priority (high, medium, low)         | ~ Partial | labels (colored)         |
+| 4  | add labels/tags to a task                     | ✓ Full    | addLabelToCard           |
+| 5  | change task status (todo, in progress, done)  | ✓ Full    | moveCardToList           |
+| 6  | list and filter tasks by status or assignee   | ✓ Full    | getCardsOnBoard + filter |
+| 7  | set one task as dependent on another          | ~ Partial | attachments (workaround) |
+| 8  | move a task between projects                  | ✗ Gap     | not supported            |
 
-Attribute Mapping:
-  title       → name        [Full Support]
-  description → desc        [Full Support]
-  priority    → (label)     [Workaround - use colored labels]
-  status      → idList      [Partial - list position]
-  assignee    → idMembers   [Full Support]
-  tags        → idLabels    [Full Support]
-
-Overall Compatibility: 92% (11 of 12 capabilities supported)
+Overall Compatibility: 81% (6.5 of 8 stories supported)
 
 Gaps & Workarounds:
-  - priority: No native priority field; use colored labels (red=high, yellow=medium, green=low)
-  - status: Status is determined by list position; create lists for each status
+  - Story #3: No native priority field; use colored labels (red=high, yellow=medium, green=low)
+  - Story #7: No native dependencies; use card attachments with naming convention
+  - Story #8: Cannot move cards between boards; must recreate in target board
 
 Recommendation: Proceed - excellent fit with minor workarounds
 ```
@@ -841,38 +580,71 @@ Recommendation: Proceed - excellent fit with minor workarounds
 
 ## Vendor Capability Registry
 
-This registry provides **entity and operation mapping aliases** for compatibility analysis between domain requirements and vendor capabilities.
+This registry maps **common story patterns to vendor tools** for compatibility analysis.
 
-### Entity Mapping Aliases
+### Story Pattern Recognition
 
-When matching extracted entities to vendor capabilities, use these aliases:
+When matching stories to vendor tools, recognize these common patterns:
 
 ```yaml
-entity_aliases:
-  ticket:     [issue, card, task, item]
-  user:       [member, person, assignee, agent]
-  project:    [board, space, repository, workspace]
-  sprint:     [cycle, iteration]
-  tag:        [label]
-  status:     [state, column]
-  priority:   [urgency]
-  comment:    [update, story, note]
-  customer:   [contact, client, requester]
+story_patterns:
+  create_item:
+    pattern: "create a {item} with {attributes}"
+    tools: [createCard, createIssue, addTask, createItem]
+
+  assign_item:
+    pattern: "assign a {item} to {target}"
+    tools: [addMemberToCard, assignIssue, setAssignee]
+
+  set_property:
+    pattern: "set {property} to {value}"
+    tools: [updateCard, updateIssue, setField]
+
+  add_tag:
+    pattern: "add {tag_type} to a {item}"
+    tools: [addLabelToCard, addLabels, setTags]
+
+  change_status:
+    pattern: "change {item} status"
+    tools: [moveCardToList, transitionIssue, updateStatus]
+
+  list_filter:
+    pattern: "list and filter {items} by {criteria}"
+    tools: [getCardsOnBoard, searchIssues, listTasks]
+
+  set_dependency:
+    pattern: "set {item} as dependent on another"
+    tools: [createIssueLink, addRelation, linkItems]
+
+  move_item:
+    pattern: "move a {item} between {containers}"
+    tools: [moveIssue, moveCard, transferItem]
 ```
 
-### Operation Mapping Aliases
+### Vendor Tool Mappings
 
 ```yaml
-operation_aliases:
-  create:     [add, new, insert]
-  read:       [get, fetch, retrieve, view]
-  update:     [edit, modify, change, set]
-  delete:     [remove, archive, trash]
-  list:       [search, query, find, filter]
-  assign:     [allocate, delegate]
-  transition: [move, change_status, update_state]
-  link:       [connect, relate, attach]
-  comment:    [discuss, note, update]
+vendor_tools:
+  trello:
+    createCard: "Create new card on a board"
+    addMemberToCard: "Assign member to card"
+    addLabelToCard: "Add label to card"
+    moveCardToList: "Move card to different list"
+    getCardsOnBoard: "List all cards on board"
+
+  jira:
+    createIssue: "Create new issue"
+    assignIssue: "Assign issue to user"
+    addLabels: "Add labels to issue"
+    transitionIssue: "Change issue status"
+    searchIssues: "Search with JQL"
+    createIssueLink: "Link issues together"
+    moveIssue: "Move issue to different project"
+
+  linear:
+    createIssue: "Create new issue"
+    updateIssue: "Update issue properties"
+    issues: "Query issues with filters"
 ```
 
 ---
@@ -910,49 +682,96 @@ This skill uses a template file to generate the CLAUDE.md section for {domain_na
 
 When updating CLAUDE.md in Phase 5:
 
+#### If Template Exists
+
 1. Read the template from `plugins/crunch/skills/setup-project/templates/{domain_key}.template.md`
-2. Replace all `{placeholder}` variables with values collected during setup
-3. If CLAUDE.md exists, find and replace the existing `## {Domain Section}` or append
-4. If CLAUDE.md doesn't exist, create it and add the filled template
+2. Use the template content **without modifications** (preserve exact wording and structure)
+3. **Augment** with tool-specific information from the configured vendor:
+   - MCP tools available (if MCP integration)
+   - CLI commands (if CLI integration)
+   - API methods (if API integration)
+   - How each template capability maps to the vendor's tools
+4. If CLAUDE.md exists, find and replace the existing `## {Domain Section}` or append
+5. If CLAUDE.md doesn't exist, create it and add the augmented template
 
-### Creating Domain Templates
+#### If Template Does Not Exist
 
-If no template exists for this domain, create one at the template location following this pattern:
+1. Generate a simple CLAUDE.md section listing common ways to use the configured tool
+2. Include:
+   - Vendor name and integration type
+   - List of available MCP tools / CLI commands / API methods
+   - Brief description of what each tool/command does
+   - Basic usage examples
 
-1. Start with `## {Domain Section Header}`
-2. Include configuration table with `{placeholder}` variables
-3. Add operations/commands section
-4. Add usage examples section
-5. Add any domain-specific notes
+### Template Augmentation Format
 
-## Domain Model (if generated from scenarios)
+When a template exists, append a "Tool Reference" subsection after the template content:
 
-This section is included when the skill was generated from usage scenarios.
+```markdown
+### Tool Reference ({Vendor})
 
-### Entities
+**Integration**: {MCP | CLI | File-based}
 
-| Entity | Description | Vendor Mapping |
-|--------|-------------|----------------|
-| {entity_name} | {description} | {vendor} → {vendor_entity} |
+**Available Operations**:
 
-### Operations
+| Operation        | Tool/Command         | Description                    |
+|------------------|----------------------|--------------------------------|
+| {operation_1}    | {tool_name}          | {what it does}                 |
+| {operation_2}    | {tool_name}          | {what it does}                 |
 
-| Operation | Applies To | API Mapping |
-|-----------|------------|-------------|
-| {operation} | {entities} | {vendor_api_method} |
+**Examples**:
+- To {action}: use `{tool_name}` with {parameters}
+```
 
-### Attributes
+### Fallback Documentation Format (No Template)
 
-| Attribute | Entity | Type | Vendor Field |
-|-----------|--------|------|--------------|
-| {attr_name} | {entity} | {type} | {vendor_field} |
+When no template exists, generate this structure:
 
-### Source Scenarios
+```markdown
+## {Domain Name}
 
-The domain model was extracted from these user scenarios:
+**Vendor**: {vendor_name}
+**Integration**: {integration_type}
+**Configuration**: {config_location}
 
-1. "{scenario_1_text}"
-2. "{scenario_2_text}"
+### Available Tools
+
+| Tool/Command     | Description                              |
+|------------------|------------------------------------------|
+| {tool_1}         | {description}                            |
+| {tool_2}         | {description}                            |
+
+### Common Operations
+
+- **{Operation 1}**: Use `{tool}` to {description}
+- **{Operation 2}**: Use `{tool}` to {description}
+
+### Examples
+
+{Basic usage examples for the vendor}
+```
+
+## Required Stories
+
+Stories collected during Phase 1.5/1.6 that define the domain requirements.
+
+### Story List
+
+| #  | Story                                          | Vendor Tool          |
+|----|------------------------------------------------|----------------------|
+| 1  | {story_1_text}                                 | {vendor_tool_1}      |
+| 2  | {story_2_text}                                 | {vendor_tool_2}      |
+
+### Vendor Tool Coverage
+
+When checking vendor compatibility, match stories against available tools:
+
+```
+For each story:
+  1. Identify the action pattern (create, assign, filter, etc.)
+  2. Find vendor tool that fulfills this capability
+  3. Mark as: ✓ Full | ~ Partial | ✗ Gap
+```
 
 ## Qualified Vendors
 
@@ -1017,11 +836,11 @@ Location: Project root (`./{domain_key}-setup-progress.md`)
 
 - [x] Phase 0: State Detection
 - [x] Phase 0.5: Domain Explanation
-- [x] Phase 1: Vendor Selection
-- [x] Phase 1.5: Scenario Collection (custom only)
-- [x] Phase 1.6: Model Extraction (custom only)
+- [x] Phase 1: Domain Selection
+- [x] Phase 1.5: Story Collection
+- [x] Phase 1.6: Story Review
+- [x] Phase 1.7: Vendor Selection
 - [ ] Phase 2: Integration Selection <- CURRENT
-- [ ] Phase 2.5: Vendor Suggestion (custom only)
 - [ ] Phase 3: Integration Setup
 - [ ] Phase 4: Connection Test
 - [ ] Phase 5: Documentation
@@ -1051,45 +870,13 @@ Tracks management operations performed on configured setup.
 - **Last Test Result**: {Pass | Fail}
 - **Last Error**: {error_message or "None"}
 
-## Collected Scenarios (Custom Domain)
+## Collected Stories
 
-### Scenario 1
-"{scenario text as provided by user}"
-
-### Scenario 2
-"{scenario text as provided by user}"
-
-## Extracted Domain Model (Custom Domain)
-
-### Entities
-| Entity | Description    | Source Scenario |
-|--------|----------------|-----------------|
-| ticket | Support ticket | 1               |
-| agent  | Support agent  | 1               |
-
-### Operations
-| Operation | Applies To | Source Scenario |
-|-----------|------------|-----------------|
-| create    | ticket     | 1               |
-| assign    | ticket     | 1               |
-
-### Attributes
-| Attribute | Entity | Type | Source Scenario |
-|-----------|--------|------|-----------------|
-| priority  | ticket | enum | 1               |
-| assignee  | ticket | ref  | 1               |
-
-## Vendor Analysis (Custom Domain with Scenarios)
-
-### Suggested Vendors
-| Vendor | Match % | Gaps                         |
-|--------|---------|------------------------------|
-| Jira   | 95%     | customer (use custom field)  |
-| Linear | 82%     | customer (no native support) |
-
-### Selected Vendor
-- **Vendor**: {selected from suggestions or manual}
-- **Selection Method**: {suggested / manual}
+| #  | Story                                                    |
+|----|----------------------------------------------------------|
+| 1  | it should be possible to create a task with description |
+| 2  | it should be possible to set task dependent on another  |
+| 3  | it should be possible to filter tasks by status         |
 
 ## Collected Information
 
@@ -1114,18 +901,17 @@ Tracks which credentials are configured (not the values).
 
 ### Progress Tracking Rules
 
-1. Create progress file at Phase 1 start (after vendor selected)
+1. Create progress file at Phase 1 start (after domain selected)
 2. Update after each phase completion
 3. Store non-sensitive data only (never credentials/tokens)
 4. Delete only after successful DOD verification
 5. Check for existing progress on session start
-6. For custom domains: store scenarios as collected (verbatim)
-7. For custom domains: store extracted model after Phase 1.6
-8. For custom domains: store vendor analysis after Phase 2.5
-9. Log all management operations in Management History
-10. Update Connection Tests after each test (keep last 10)
-11. Update Last Known State after each connection test
-12. Track credential metadata (not values) for troubleshooting
+6. Store stories as collected (verbatim) after Phase 1.5
+7. Store reviewed stories after Phase 1.6
+8. Log all management operations in Management History
+9. Update Connection Tests after each test (keep last 10)
+10. Update Last Known State after each connection test
+11. Track credential metadata (not values) for troubleshooting
 
 ---
 
@@ -2195,35 +1981,91 @@ Did you see the expected output? Please confirm.
 
 ### Phase 5: Documentation
 
-Update CLAUDE.md with "{Domain Name}" section using the domain template.
+Update CLAUDE.md with "{Domain Name}" section.
 
 #### Step 1: Check if CLAUDE.md Exists
 
 - If not, create it with basic structure
 - If exists, prepare to add/update "{Domain Name}" section
 
-#### Step 2: Read Domain Template
+#### Step 2: Check for Domain Template
 
 \`\`\`bash
-cat plugins/crunch/skills/setup-project/templates/{domain_key}.template.md
+cat plugins/crunch/skills/setup-project/templates/{domain_key}.template.md 2>/dev/null
 \`\`\`
 
-#### Step 3: Fill Template Placeholders
+#### Step 3: Generate CLAUDE.md Content
 
-Replace all `{placeholder}` variables with values collected during setup:
+**If template exists:**
 
-- `{secrets_backend}` → actual backend name (e.g., "SOPS + age")
-- `{integration_type}` → integration method (e.g., "File-based")
-- `{config_file}` → actual config path (e.g., ".sops.yaml")
-- etc.
+1. Read the template file
+2. Use template content exactly as-is (no placeholder replacement)
+3. Gather tool information from the configured vendor:
+   - For MCP: List all available MCP tools and their descriptions
+   - For CLI: List all CLI commands available
+   - For API: List API methods available
+4. Append "Tool Reference" section after template content:
+
+\`\`\`markdown
+### Tool Reference ({Vendor})
+
+**Integration**: {integration_type}
+
+**Available Operations**:
+
+| Operation              | Tool/Command           | Description                      |
+|------------------------|------------------------|----------------------------------|
+| Create task            | mcp_trello_createCard  | Creates a new card on a board    |
+| List tasks             | mcp_trello_getCards    | Gets all cards from a board      |
+| Update task            | mcp_trello_updateCard  | Updates card properties          |
+
+**Examples**:
+- To create a task: use \`mcp_trello_createCard\` with name, description, and listId
+- To find tasks: use \`mcp_trello_getCards\` with boardId filter
+\`\`\`
+
+**If template does NOT exist:**
+
+Generate documentation from vendor tools directly:
+
+\`\`\`markdown
+## {Domain Name}
+
+**Vendor**: {vendor_name}
+**Integration**: {integration_type}
+**Configuration**: {config_location}
+
+### Available Tools
+
+| Tool/Command              | Description                              |
+|---------------------------|------------------------------------------|
+| mcp_trello_createCard     | Create a new card on a Trello board      |
+| mcp_trello_getCards       | Get cards from a board or list           |
+| mcp_trello_updateCard     | Update card properties                   |
+| mcp_trello_moveCard       | Move card to a different list            |
+
+### Common Operations
+
+- **Create item**: Use \`mcp_trello_createCard\` to create new cards
+- **List items**: Use \`mcp_trello_getCards\` to retrieve cards
+- **Update item**: Use \`mcp_trello_updateCard\` to modify cards
+
+### Examples
+
+\`\`\`
+# Create a new task
+mcp_trello_createCard(name: "Fix login bug", idList: "abc123")
+
+# Get all tasks from a board
+mcp_trello_getCards(idBoard: "xyz789")
+\`\`\`
+\`\`\`
 
 #### Step 4: Update CLAUDE.md
 
-**If section exists:** Replace the existing `## {Domain Section}` with filled template
+**If section exists:** Replace the existing `## {Domain Section}` with generated content
 
-**If section doesn't exist:** Append the filled template to CLAUDE.md
-
-{claude_md_template}
+**If section doesn't exist:** Append the generated content to CLAUDE.md
 
 #### Step 5: Cleanup Progress File
 
@@ -2448,50 +2290,29 @@ For community MCPs:
 }
 ```
 
-### Domain Model Section Generation (Custom Domains with Scenarios)
+### Required Stories Section Generation
 
-When generating a skill from scenarios, include the Domain Model section with:
+When generating a skill, include the Required Stories section with collected stories:
 
-**Entity Table:**
+**Story Coverage Table:**
 ```markdown
-| Entity | Description    | Vendor Mapping |
-|--------|----------------|----------------|
-| ticket | Support ticket | Jira → Issue   |
-| agent  | Support agent  | Jira → User    |
+| #  | Story                                               | Support   | Vendor Tool              |
+|----|-----------------------------------------------------|-----------|--------------------------|
+| 1  | it should be possible to create a task              | ✓ Full    | createIssue              |
+| 2  | it should be possible to set one task dependent     | ~ Partial | attachments (workaround) |
+| 3  | it should be possible to filter tasks by status     | ✓ Full    | searchIssues             |
 ```
 
-- List all extracted entities
-- Map each entity to the selected vendor's equivalent
-- If no direct mapping, note workaround (e.g., "use custom field")
+- List all collected stories from Phase 1.5/1.6
+- Map each story to vendor tools that fulfill it
+- Indicate support level: ✓ Full, ~ Partial, ✗ Gap
 
-**Operation Table:**
-```markdown
-| Operation | Applies To | API Mapping |
-|-----------|------------|-------------|
-| create    | ticket     | createIssue |
-| assign    | ticket     | assignIssue |
-```
-
-- List all extracted operations
-- Map to vendor API methods
-- Include any operation-specific notes
-
-**Attribute Table:**
-```markdown
-| Attribute | Entity | Type | Vendor Field |
-|-----------|--------|------|--------------|
-| priority  | ticket | enum | priority     |
-| assignee  | ticket | ref  | assignee     |
-```
-
-- List all extracted attributes
-- Include type (enum, ref, text, date, etc.)
-- Map to vendor field names
-
-**Source Scenarios:**
-- Include verbatim text of user scenarios (quoted)
-- Number them for reference
-- These provide context for future modifications
+**Vendor Compatibility:**
+When the generated skill checks vendor compatibility, it should:
+1. List the vendor's available tools
+2. Match each story against available tools
+3. Calculate overall story coverage percentage
+4. Identify gaps and suggest workarounds
 
 ---
 
@@ -2521,7 +2342,9 @@ When generating a skill from scenarios, include the Domain Model section with:
 ## Interactive Checkpoints
 
 - [ ] "Which domain would you like to create a setup skill for?"
-- [ ] (Custom only) "Domain definition complete. Confirm details?"
-- [ ] (Custom only) "Vendor matrix complete. Confirm vendors?"
+- [ ] "Describe your first story (it should be possible to...)"
+- [ ] "Add another story, or type 'done'"
+- [ ] "Do these stories capture your requirements?"
+- [ ] "Which vendor do you use?"
 - [ ] "Ready to generate skill at plugins/crunch/skills/setup-{domain_key}/?"
 - [ ] "Skill generated. Review the output?"

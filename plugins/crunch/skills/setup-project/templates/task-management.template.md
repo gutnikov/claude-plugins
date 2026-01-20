@@ -1,23 +1,15 @@
 ## Task Management
 
-This project uses the **Task System** — work is organized by the maturity of a thought, with every transition explicit.
 
-### Configuration
-
-| Setting     | Value          |
-|-------------|----------------|
-| Project     | {project_key}  |
-| Input Queue | {input_queue}  |
-| Work Board  | {work_board}   |
 
 ### Task Types (exactly 4)
 
-| Type          | Meaning              | Core Question               | Backend Mapping         |
-|---------------|----------------------|-----------------------------|-------------------------|
-| **Input**     | Raw incoming signal  | What came to us?            | {input_type_mapping}    |
-| **Intent**    | Desired change       | What do we want to change?  | {intent_type_mapping}   |
-| **Issue**     | Problem / deviation  | What is broken or risky?    | {issue_type_mapping}    |
-| **Work Item** | Executable unit      | What exactly are we doing?  | {workitem_type_mapping} |
+| Type          | Meaning              | Core Question               |
+|---------------|----------------------|-----------------------------|
+| **Input**     | Raw incoming signal  | What came to us?            |
+| **Intent**    | Desired change       | What do we want to change?  |
+| **Issue**     | Problem / deviation  | What is broken or risky?    |
+| **Work Item** | Executable unit      | What exactly are we doing?  |
 
 There are no other task types. "Blocker" is a role of a Work Item, not a type.
 
@@ -129,22 +121,6 @@ When a Work Item reaches `WorkItem:Done`:
 | Is a Blocker for another Work Item | Blocked Work Item → `WorkItem:InProgress` |
 
 ---
-
-### Backend Mapping: {task_backend}
-
-| Minimal Task System | {task_backend} Equivalent   |
-|---------------------|----------------------------|
-| Input               | {backend_input_mapping}    |
-| Intent              | {backend_intent_mapping}   |
-| Issue               | {backend_issue_mapping}    |
-| Work Item           | {backend_workitem_mapping} |
-| Blocker             | {backend_blocker_mapping}  |
-
-**State Mapping:**
-
-```
-{state_mapping_table}
-```
 
 ---
 
@@ -297,16 +273,4 @@ flowchart TD
 ```
 
 ---
-
-### Usage Examples
-
-```
-"Create an input from the customer feedback about slow loading"
-"Convert Input-123 to an Issue"
-"Create a work item to fix Issue-456"
-"What intents are waiting for approval?"
-"Show all blocked work items"
-"Create a blocker for WorkItem-789 - needs API access"
-"Mark WorkItem-101 as done"
-```
 
