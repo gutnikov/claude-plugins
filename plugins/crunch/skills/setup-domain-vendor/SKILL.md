@@ -300,11 +300,11 @@ add_data:
 
 #### Step 5.1: Load Verification Steps
 
-Get `vendor_check` from `domains.yaml` and `testing.verification_steps` from vendor definition.
+Get `domain_check.vendor_check` from `domains.yaml` and `testing.verification_steps` from vendor definition.
 
 ```typescript
-const domainChecks = domain.vendor_check;    // High-level checks
-const vendorSteps = vendor.testing.verification_steps;  // Specific commands
+const domainChecks = domain.domain_check?.vendor_check;  // High-level checks from domain
+const vendorSteps = vendor.testing.verification_steps;   // Specific commands from vendor
 ```
 
 #### Step 5.2: Execute Each Check

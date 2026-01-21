@@ -9,14 +9,32 @@
 #
 # vendor_requirements: List of capabilities a vendor must support for this domain.
 # Used by lookup-vendor to evaluate vendor fit and by setup skills to verify configuration.
+#
+# domain_check: Verification steps for the domain
+#   general_check: Steps run during setup-project (after survey, before vendor)
+#   vendor_check: Steps run during setup-domain-vendor (after vendor installation)
 
 domains:
   # Required domains (core project infrastructure)
+  - name: Project Info
+    key: project-info
+    purpose: Capture project goal, objectives, and context
+    required: true
+    has_vendor: false
+    survey: plugins/crunch/data/survey/project-info.md
+
   - name: Tech Stack
     key: tech-stack
     purpose: Auto-detect and configure project stack
     required: true
     has_vendor: false
+    survey: plugins/crunch/data/survey/tech-stack.md
+    domain_check:
+      general_check:
+        - Verify primary language runtime is installed (e.g., `node --version`, `python --version`)
+        - Verify package manager is installed (e.g., `npm --version`, `pip --version`)
+        - Verify build tool is available if specified
+        - Run `{package_manager} install` to ensure dependencies are installable
 
   - name: Configuration
     key: configuration
@@ -37,12 +55,13 @@ domains:
       - It should allow to delete a secret
       - It should allow to list available secrets
       - It should allow to check whether a secret exists
-    vendor_check:
-      - Create a test secret named `_claude_setup_test` with value `test123`
-      - Read the secret back and verify value matches `test123`
-      - List secrets and verify `_claude_setup_test` appears
-      - Delete the test secret `_claude_setup_test`
-      - Verify the secret no longer exists
+    domain_check:
+      vendor_check:
+        - Create a test secret named `_claude_setup_test` with value `test123`
+        - Read the secret back and verify value matches `test123`
+        - List secrets and verify `_claude_setup_test` appears
+        - Delete the test secret `_claude_setup_test`
+        - Verify the secret no longer exists
     vendors:
       - HashiCorp Vault
       - AWS Secrets Manager
@@ -65,6 +84,12 @@ domains:
     purpose: Manage dev/staging/prod environments
     required: true
     has_vendor: false
+    survey: plugins/crunch/data/survey/deploy-environments.md
+    domain_check:
+      general_check:
+        - If SSH access was specified, test SSH connectivity to each host
+        - Verify environment URLs are accessible (if provided)
+        - Confirm deployment method is available (e.g., CI/CD pipeline exists)
 
   - name: Task Management
     key: task-management
@@ -122,13 +147,14 @@ domains:
       - "It should validate invariant: WorkItem:InProgress ⇒ {Intent:Approved ∨ Issue:Planned}"
       - "It should validate invariant: WorkItem:Blocked ⇒ ∃ Blocker WorkItem"
       - "It should validate invariant: Issue:Resolved ⇒ ∃ Done WorkItem fixing it"
-    vendor_check:
-      - Create a test task titled `[Claude Setup Test] Verify Integration`
-      - Read the task back and verify title matches
-      - Update the task description to `Automated setup verification`
-      - List tasks and verify the test task appears in results
-      - Transition the task to a closed/done state
-      - Delete or archive the test task (if supported, otherwise leave closed)
+    domain_check:
+      vendor_check:
+        - Create a test task titled `[Claude Setup Test] Verify Integration`
+        - Read the task back and verify title matches
+        - Update the task description to `Automated setup verification`
+        - List tasks and verify the test task appears in results
+        - Transition the task to a closed/done state
+        - Delete or archive the test task (if supported, otherwise leave closed)
 
   - name: Agents & Orchestration
     key: agents-and-orchestration
@@ -149,7 +175,34 @@ domains:
     purpose: Slack app/bot for project development
     required: false
     has_vendor: true
-    vendor_requirements: []
+    vendor_requirements:
+      # Channel operations
+      - It should allow to list available channels (public, private, DMs)
+      - It should allow to get channel information by name or ID
+      # Messaging operations
+      - It should allow to send a message to a channel
+      - It should allow to send a message to a thread (reply)
+      - It should allow to send a direct message to a user
+      - It should allow to get channel message history
+      - It should allow to get thread replies
+      # Reactions
+      - It should allow to add a reaction to a message
+      - It should allow to remove a reaction from a message
+      # User operations
+      - It should allow to get user info by name, email, or ID
+      - It should allow to list workspace users
+    domain_check:
+      vendor_check:
+        - List channels and verify at least one channel is accessible
+        - Send a test message `[Claude Setup Test] Integration verified` to a test channel
+        - Verify the message appears in the channel (user confirmation)
+        - Add a reaction `:white_check_mark:` to the test message
+        - Delete or archive the test message (if supported, otherwise leave it)
+    vendors:
+      - Slack
+      - Discord
+      - Microsoft Teams
+      - Mattermost
 
   - name: CI/CD
     key: ci-cd
