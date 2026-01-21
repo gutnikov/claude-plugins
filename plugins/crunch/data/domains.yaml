@@ -6,6 +6,9 @@
 # Usage in skills:
 #   Reference: plugins/crunch/data/domains.yaml
 #   Load domains list and filter by required/optional as needed.
+#
+# vendor_requirements: List of capabilities a vendor must support for this domain.
+# Used by lookup-vendor to evaluate vendor fit and by setup skills to verify configuration.
 
 domains:
   # Required domains (core project infrastructure)
@@ -13,69 +16,166 @@ domains:
     key: tech-stack
     purpose: Auto-detect and configure project stack
     required: true
+    has_vendor: false
 
   - name: Configuration
     key: configuration
     purpose: Manage env variables per environment
     required: true
+    has_vendor: true
+    vendor_requirements:
+      - It should allow to set an environment variable
+      - It should allow to get an environment variable value
+      - It should allow to delete an environment variable
+      - It should allow to list all environment variables
+      - It should allow to switch between environments
+      - It should allow to check whether a variable exists
 
   - name: Secrets
     key: secrets
     purpose: Store and retrieve secrets securely
     required: true
+    has_vendor: true
+    vendor_requirements:
+      - It should allow to create a new secret
+      - It should allow to read a secret value
+      - It should allow to update an existing secret
+      - It should allow to delete a secret
+      - It should allow to list available secrets
+      - It should allow to check whether a secret exists
 
   - name: Pipelines
     key: pipelines
     purpose: Define project pipelines (local, CI, deploy)
     required: true
+    has_vendor: false
 
   - name: Deploy Environments
     key: deploy-environments
     purpose: Manage dev/staging/prod environments
     required: true
+    has_vendor: false
 
   - name: Task Management
     key: task-management
     purpose: Track and manage work items
     required: true
+    has_vendor: true
+    vendor_requirements:
+      # Core operations
+      - It should allow to create a task (Input, Intent, Issue, WorkItem)
+      - It should allow to read a task by id
+      - It should allow to update task fields
+      - It should allow to delete or cancel a task
+      - It should allow to list tasks filtered by type, status, or relations
+      - It should allow to check whether a task exists
+      - It should allow to change task status with valid transitions
+      # Input operations
+      - It should allow to classify Input into Intent or Issue
+      # Intent operations
+      - It should allow to decompose Intent into WorkItems
+      - It should allow to query WorkItems implementing an Intent
+      # Issue operations
+      - It should allow to create WorkItem fixing an Issue
+      - It should allow to query WorkItems fixing an Issue
+      # WorkItem operations
+      - It should allow to assign or reassign a WorkItem
+      - It should allow to link WorkItem to Intent (implements)
+      - It should allow to link WorkItem to Issue (fixes)
 
   - name: Agents & Orchestration
     key: agents-and-orchestration
     purpose: Configure Claude Code agents
     required: true
+    has_vendor: false
 
   # Optional domains (extended capabilities)
   - name: Memory Management
     key: memory-management
     purpose: Persistent AI context across sessions
     required: false
+    has_vendor: true
+    vendor_requirements:
+      - It should allow to store a memory or context
+      - It should allow to retrieve a stored memory
+      - It should allow to update an existing memory
+      - It should allow to delete a memory
+      - It should allow to list all stored memories
+      - It should allow to search memories by query
 
   - name: User Communication Bot
     key: user-communication-bot
     purpose: Slack app/bot for project development
     required: false
+    has_vendor: true
+    vendor_requirements:
+      - It should allow to send a message to a channel or user
+      - It should allow to receive and handle incoming messages
+      - It should allow to create a new thread or channel
+      - It should allow to list available channels
+      - It should allow to get user information
+      - It should allow to add a reaction to a message
 
   - name: CI/CD
     key: ci-cd
     purpose: Continuous integration/deployment
     required: false
+    has_vendor: true
+    vendor_requirements:
+      - It should allow to trigger a new build or pipeline
+      - It should allow to get build status
+      - It should allow to cancel a running build
+      - It should allow to list recent builds
+      - It should allow to retrieve build logs
+      - It should allow to retry a failed build
 
   - name: Observability
     key: observability
     purpose: Metrics, logs, traces, alerting
     required: false
+    has_vendor: true
+    vendor_requirements:
+      - It should allow to query metric values
+      - It should allow to search through logs
+      - It should allow to retrieve distributed traces
+      - It should allow to create an alerting rule
+      - It should allow to list configured alerts
+      - It should allow to view dashboards
 
   - name: Problem Remediation
     key: problem-remediation
     purpose: Runbook automation, self-healing
     required: false
+    has_vendor: true
+    vendor_requirements:
+      - It should allow to execute a runbook
+      - It should allow to list available runbooks
+      - It should allow to get incident details
+      - It should allow to acknowledge an incident
+      - It should allow to resolve an incident
+      - It should allow to list active incidents
 
   - name: Documentation
     key: documentation
     purpose: Doc site generation and publishing
     required: false
+    has_vendor: true
+    vendor_requirements:
+      - It should allow to build the documentation site
+      - It should allow to deploy docs to hosting
+      - It should allow to preview docs locally
+      - It should allow to search documentation
+      - It should allow to validate docs for broken links or errors
 
   - name: Localization
     key: localization
     purpose: Internationalization and translation
     required: false
+    has_vendor: true
+    vendor_requirements:
+      - It should allow to extract translatable strings
+      - It should allow to import translation files
+      - It should allow to export strings for translation
+      - It should allow to list supported locales
+      - It should allow to validate translation completeness
+      - It should allow to sync with a translation service
