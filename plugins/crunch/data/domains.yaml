@@ -37,6 +37,122 @@ domains:
       - It should allow to delete a secret
       - It should allow to list available secrets
       - It should allow to check whether a secret exists
+    vendors:
+      - name: HashiCorp Vault
+        key: vault
+        description: Enterprise secrets management with dynamic secrets and encryption
+        integration:
+          - type: cli
+            tool: vault
+            install: "brew install vault"
+          - type: api
+            docs: "https://developer.hashicorp.com/vault/api-docs"
+          - type: mcp
+            package: "@anthropic/mcp-vault"
+        best_for: "Enterprise, dynamic secrets, multi-cloud"
+        satisfies_all: true
+
+      - name: AWS Secrets Manager
+        key: aws-secrets-manager
+        description: AWS-native secrets management with rotation support
+        integration:
+          - type: cli
+            tool: aws
+            install: "brew install awscli"
+            prefix: "aws secretsmanager"
+          - type: api
+            docs: "https://docs.aws.amazon.com/secretsmanager/latest/apireference/"
+        best_for: "AWS-native workloads"
+        satisfies_all: true
+
+      - name: Google Secret Manager
+        key: gcp-secret-manager
+        description: GCP-native secrets management
+        integration:
+          - type: cli
+            tool: gcloud
+            install: "brew install google-cloud-sdk"
+            prefix: "gcloud secrets"
+          - type: api
+            docs: "https://cloud.google.com/secret-manager/docs/reference/rest"
+        best_for: "GCP-native workloads"
+        satisfies_all: true
+
+      - name: Azure Key Vault
+        key: azure-key-vault
+        description: Azure-native secrets, keys, and certificates management
+        integration:
+          - type: cli
+            tool: az
+            install: "brew install azure-cli"
+            prefix: "az keyvault secret"
+          - type: api
+            docs: "https://learn.microsoft.com/en-us/rest/api/keyvault/"
+        best_for: "Azure-native workloads"
+        satisfies_all: true
+
+      - name: Doppler
+        key: doppler
+        description: Universal secrets manager with sync to multiple platforms
+        integration:
+          - type: cli
+            tool: doppler
+            install: "brew install dopplerhq/cli/doppler"
+          - type: api
+            docs: "https://docs.doppler.com/reference/api"
+          - type: mcp
+            package: "@doppler/mcp-server"
+        best_for: "Multi-environment, team collaboration"
+        satisfies_all: true
+
+      - name: 1Password
+        key: 1password
+        description: Password manager with secrets automation and CLI
+        integration:
+          - type: cli
+            tool: op
+            install: "brew install 1password-cli"
+          - type: api
+            docs: "https://developer.1password.com/docs/connect/connect-api-reference/"
+          - type: mcp
+            package: "@1password/mcp-server"
+        best_for: "Teams already using 1Password, developer secrets"
+        satisfies_all: true
+
+      - name: Infisical
+        key: infisical
+        description: Open-source secrets management with E2E encryption
+        integration:
+          - type: cli
+            tool: infisical
+            install: "brew install infisical/get-cli/infisical"
+          - type: api
+            docs: "https://infisical.com/docs/api-reference/overview"
+        best_for: "Open-source, self-hosted, E2E encryption"
+        satisfies_all: true
+
+      - name: SOPS
+        key: sops
+        description: File-based secrets with encryption (age, GPG, cloud KMS)
+        integration:
+          - type: cli
+            tool: sops
+            install: "brew install sops"
+        best_for: "GitOps, file-based config, no external service"
+        satisfies_all: true
+        notes: "Requires age or GPG for key management"
+
+      - name: Bitwarden Secrets Manager
+        key: bitwarden-sm
+        description: Secrets management from Bitwarden with CLI and SDK
+        integration:
+          - type: cli
+            tool: bws
+            install: "brew install bitwarden/tap/bws"
+          - type: api
+            docs: "https://bitwarden.com/help/secrets-manager-api/"
+        best_for: "Teams using Bitwarden, open-source friendly"
+        satisfies_all: true
 
   - name: Pipelines
     key: pipelines
