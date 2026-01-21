@@ -23,12 +23,7 @@ domains:
     purpose: Manage env variables per environment
     required: true
     has_vendor: true
-    vendor_requirements:
-      - It should allow to set an environment variable
-      - It should allow to get an environment variable value
-      - It should allow to delete an environment variable
-      - It should allow to list all environment variables
-      - It should allow to check whether a variable exists
+    vendor_requirements: []
 
   - name: Secrets
     key: secrets
@@ -124,87 +119,46 @@ domains:
     purpose: Persistent AI context across sessions
     required: false
     has_vendor: true
-    vendor_requirements:
-      - It should allow to store a memory or context
-      - It should allow to retrieve a stored memory
-      - It should allow to update an existing memory
-      - It should allow to delete a memory
-      - It should allow to list all stored memories
-      - It should allow to search memories by query
+    vendor_requirements: []
 
   - name: User Communication Bot
     key: user-communication-bot
     purpose: Slack app/bot for project development
     required: false
     has_vendor: true
-    vendor_requirements:
-      - It should allow to send a message to a channel or user
-      - It should allow to receive and handle incoming messages
-      - It should allow to create a new thread or channel
-      - It should allow to list available channels
-      - It should allow to get user information
-      - It should allow to add a reaction to a message
+    vendor_requirements: []
 
   - name: CI/CD
     key: ci-cd
     purpose: Continuous integration/deployment
     required: false
     has_vendor: true
-    vendor_requirements:
-      - It should allow to trigger a new build or pipeline
-      - It should allow to get build status
-      - It should allow to cancel a running build
-      - It should allow to list recent builds
-      - It should allow to retrieve build logs
-      - It should allow to retry a failed build
+    vendor_requirements: []
 
   - name: Observability
     key: observability
     purpose: Metrics, logs, traces, alerting
     required: false
     has_vendor: true
-    vendor_requirements:
-      - It should allow to query metric values
-      - It should allow to search through logs
-      - It should allow to retrieve distributed traces
-      - It should allow to create an alerting rule
-      - It should allow to list configured alerts
-      - It should allow to view dashboards
+    vendor_requirements: []
 
   - name: Problem Remediation
     key: problem-remediation
     purpose: Runbook automation, self-healing
     required: false
     has_vendor: true
-    vendor_requirements:
-      - It should allow to execute a runbook
-      - It should allow to list available runbooks
-      - It should allow to get incident details
-      - It should allow to acknowledge an incident
-      - It should allow to resolve an incident
-      - It should allow to list active incidents
+    vendor_requirements: []
 
   - name: Documentation
     key: documentation
     purpose: Doc site generation and publishing
     required: false
     has_vendor: true
-    vendor_requirements:
-      - It should allow to build the documentation site
-      - It should allow to deploy docs to hosting
-      - It should allow to preview docs locally
-      - It should allow to search documentation
-      - It should allow to validate docs for broken links or errors
+    vendor_requirements: []
 
   - name: Localization
     key: localization
     purpose: Internationalization and translation
     required: false
     has_vendor: true
-    vendor_requirements:
-      - It should allow to extract translatable strings
-      - It should allow to import translation files
-      - It should allow to export strings for translation
-      - It should allow to list supported locales
-      - It should allow to validate translation completeness
-      - It should allow to sync with a translation service
+    vendor_requirements: []
