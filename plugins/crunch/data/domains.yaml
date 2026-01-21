@@ -193,11 +193,17 @@ domains:
       - It should allow to list workspace users
     domain_check:
       vendor_check:
+        # Basic operations
         - List channels and verify at least one channel is accessible
         - Send a test message `[Claude Setup Test] Integration verified` to a test channel
-        - Verify the message appears in the channel (user confirmation)
         - Add a reaction `:white_check_mark:` to the test message
-        - Delete or archive the test message (if supported, otherwise leave it)
+        # End-to-end conversation flow
+        - Send a message asking user to reply with a specific word (e.g., `confirm`)
+        - Poll channel history until user reply is received (timeout 60s)
+        - Verify the reply contains the expected word
+        - Send acknowledgment message `[Claude Setup Test] Conversation flow verified`
+        # Cleanup
+        - Delete or archive test messages (if supported, otherwise leave them)
     vendors:
       - Slack
       - Discord
