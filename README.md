@@ -10,52 +10,90 @@ This repository contains the "crunch" plugin - a collection of skills that help 
 
 ```
 plugins/crunch/
-├── data/                    # Shared data files
-│   └── domains.yaml         # 14 project domain definitions
-├── skills/                  # Skill implementations
-│   ├── setup-project-domain-vendor/  # Generic domain setup wizard
-│   ├── setup-mcp/                    # MCP server configuration
-│   ├── lookup-vendor/                # Vendor discovery service
-│   └── track-setup-progress/         # Progress tracking service
-└── templates/               # CLAUDE.md templates
-    ├── CLAUDE.template.md   # Full project template with all domains
-    └── task-management.template.md
+├── data/                        # Shared data files
+│   ├── domains.yaml             # 15 project domain definitions
+│   ├── abstract/                # Vendor-agnostic domain content
+│   │   └── task-management.md   # Task types, states, relationships
+│   └── survey/                  # Survey description files
+│       ├── project-info.md
+│       ├── tech-stack.md
+│       └── deploy-environments.md
+└── skills/                      # Skill implementations
+    ├── setup-project/           # Main project setup wizard
+    ├── setup-domain-vendor/     # Generic domain vendor setup
+    ├── lookup-vendor/           # Vendor discovery service
+    ├── user-survey/             # Conversational survey utility
+    ├── user-communication/      # Two-way messaging with users
+    ├── setup-mcp/               # MCP server configuration
+    └── track-setup-progress/    # Progress tracking service
 ```
 
 ## Project Domains
 
-The framework supports **14 project domains** organized into required and optional categories:
+The framework supports **15 project domains** organized into required and optional categories:
 
-### Required Domains (7)
-- **Tech Stack** - Programming languages and frameworks
-- **Configuration** - Environment variables management
-- **Secrets** - Secure secrets storage
-- **Pipelines** - Local, CI, and deploy pipelines
-- **Deploy Environments** - dev/staging/prod environments
-- **Task Management** - Work item tracking (Input → Intent → Issue → WorkItem)
-- **Agents & Orchestration** - Claude Code agent configuration
+### Required Domains (8)
+
+| Domain                   | Has Vendor | Survey | Abstract |
+|--------------------------|------------|--------|----------|
+| **Project Info**         | No         | Yes    | No       |
+| **Tech Stack**           | No         | Yes    | No       |
+| **Configuration**        | Yes        | No     | No       |
+| **Secrets**              | Yes        | No     | No       |
+| **Pipelines**            | No         | No     | No       |
+| **Deploy Environments**  | No         | Yes    | No       |
+| **Task Management**      | Yes        | No     | Yes      |
+| **Agents & Orchestration** | No       | No     | No       |
 
 ### Optional Domains (7)
-- **Memory Management** - Persistent AI context
-- **User Communication Bot** - Slack/Discord integration
-- **CI/CD** - Continuous integration/deployment
-- **Observability** - Metrics, logs, traces, alerting
-- **Problem Remediation** - Runbook automation
-- **Documentation** - Doc site generation
-- **Localization** - i18n and translation
+
+| Domain                   | Has Vendor |
+|--------------------------|------------|
+| **Memory Management**    | Yes        |
+| **User Communication Bot** | Yes      |
+| **CI/CD**                | Yes        |
+| **Observability**        | Yes        |
+| **Problem Remediation**  | Yes        |
+| **Documentation**        | Yes        |
+| **Localization**         | Yes        |
 
 ## Skills
 
-### setup-project-domain-vendor
+### setup-project
 
-Generic setup wizard that works for any domain. Uses a 6-phase workflow:
+Main entry point for project configuration. Orchestrates domain setup with:
+- CLAUDE.md creation/detection
+- Domain status display (configured vs pending)
+- Survey collection (via `user-survey`)
+- General checks verification
+- Vendor setup delegation (via `setup-domain-vendor`)
+- CLAUDE.md section generation (Survey → Abstract → Vendor)
 
-1. **State Detection** - Check existing configuration
-2. **Vendor Selection** - Discover and select vendors via `lookup-vendor`
-3. **Prerequisites** - Install required CLI tools
-4. **Configuration** - Configure MCP/CLI/file-based integration
-5. **Connection Test** - Verify setup works
-6. **Documentation** - Update CLAUDE.md with configuration
+### setup-domain-vendor
+
+Generic vendor setup wizard with 7-phase workflow:
+
+1. **State Detection** - Resume or start fresh
+2. **Domain Selection** - Pick domain (if not provided)
+3. **Vendor Selection** - Choose vendor from list
+4. **Vendor Lookup** - Get vendor definition via `lookup-vendor`
+5. **Installation** - Install CLI tools, configure env vars
+6. **Verification** - Run `domain_check.vendor_check` steps
+7. **Documentation** - Update CLAUDE.md with abstract + vendor content
+
+### user-survey
+
+Conversational survey skill that:
+- Reads markdown description files
+- Asks open questions, then targeted follow-ups
+- Outputs collected info in markdown format
+
+### user-communication
+
+Two-way async messaging with users:
+- Supports DM (1-1) and channel (group chat) modes
+- Operations: start, poll, send, close
+- Works with any configured messaging vendor
 
 ### Supporting Skills
 
@@ -63,21 +101,31 @@ Generic setup wizard that works for any domain. Uses a 6-phase workflow:
 - **track-setup-progress** - Persistent progress tracking across sessions
 - **setup-mcp** - MCP server configuration helper
 
+## Domain Checks
+
+Domains can define verification steps in `domains.yaml`:
+
+```yaml
+domain_check:
+  general_check:    # Run during setup-project (after survey)
+    - Verify Node.js is installed
+    - Run npm install
+  vendor_check:     # Run during setup-domain-vendor (after install)
+    - Create test secret
+    - Read secret back
+    - Delete test secret
+```
+
 ## Usage
 
-Skills are invoked through Claude Code. The `setup-project-domain-vendor` skill will:
+Skills are invoked through Claude Code:
 
-1. Ask which domain to configure
-2. Enter plan mode to design the setup approach
-3. Guide through vendor selection and configuration
-4. Document the setup in your project's CLAUDE.md
-
-## Templates
-
-The `templates/CLAUDE.template.md` provides a complete project template with:
-- All 14 domain sections
-- Operations required tables for each vendor-enabled domain
-- Setup checklists for tracking configuration progress
+```
+/setup-project                              # Main wizard
+/setup-domain-vendor                        # Domain selector
+/setup-domain-vendor secrets                # Vendor selector for Secrets
+/setup-domain-vendor secrets "HashiCorp Vault"  # Direct setup
+```
 
 ## Contributing
 

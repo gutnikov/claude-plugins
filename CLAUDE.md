@@ -8,33 +8,76 @@ A skill framework for Claude Code, centered on the "crunch" plugin which provide
 
 ## Architecture
 
-### Plugin System (`plugins/crunch/skills/`)
-
-The plugin framework uses **meta-skills** that generate domain-specific setup wizards:
+### Directory Structure
 
 ```
-setup-project/           # Main dashboard - detects and configures 14 project domains
-├── SKILL.md             # Wizard definition with phases and DOD
-└── templates/           # Domain templates for CLAUDE.md generation
-    ├── task-management.template.md
-    ├── secrets.template.md
-    ├── ci-cd.template.md
-    └── [11 more domains]
-
-create-project-domain-setup-skill/  # Meta-skill to generate new domain skills
-setup-mcp/               # Generic MCP server setup wizard
-create-tool-skills/      # Generate skills for tools
+plugins/crunch/
+├── data/
+│   ├── domains.yaml             # Domain definitions with vendor_requirements, domain_check
+│   ├── abstract/                # Vendor-agnostic domain content (e.g., task-management.md)
+│   └── survey/                  # Survey description files for user-survey skill
+└── skills/
+    ├── setup-project/           # Main entry point - orchestrates all domain setup
+    ├── setup-domain-vendor/     # Generic vendor setup (7 phases)
+    ├── lookup-vendor/           # Vendor discovery with web search + caching
+    ├── user-survey/             # Conversational survey from markdown descriptions
+    ├── user-communication/      # Two-way messaging (DM/channel modes)
+    ├── setup-mcp/               # MCP server configuration
+    └── track-setup-progress/    # Persistent state across session restarts
 ```
 
-**14 Project Domains**: Tech Stack, Configuration, Secrets, Pipelines, Environments, Task Management, Agents & Orchestration (required); Memory Management, User Communication Bot, CI/CD, Observability, Problem Remediation, Documentation, Localization (optional)
+### Skill Hierarchy
 
-### Skill Structure Pattern
+```
+setup-project (main wizard)
+├── user-survey          # Collect project-specific info
+├── setup-domain-vendor  # Configure vendor for domain
+│   ├── lookup-vendor    # Get vendor definition
+│   └── track-setup-progress
+└── [writes CLAUDE.md sections: Survey → Abstract → Vendor]
+```
 
-Each skill follows a standardized pattern:
-- **Phases**: Discovery → Suggestion → Configuration → Verification
-- **DOD (Definition of Done)**: Explicit completion criteria
-- **Progress files**: Persistent state across Claude Code reloads (e.g., `{domain}-setup-progress.md`)
-- **CLAUDE.md sections**: Skills generate sections for project context
+### Domain Configuration (`domains.yaml`)
+
+Each domain can have:
+
+```yaml
+- name: Task Management
+  key: task-management
+  required: true
+  has_vendor: true
+  survey: plugins/crunch/data/survey/task-management.md  # Optional
+  vendor_requirements:                                    # What vendor must support
+    - It should allow to create a task
+    - It should allow to read a task by id
+  domain_check:
+    general_check:   # Run by setup-project after survey
+      - Verify runtime is installed
+    vendor_check:    # Run by setup-domain-vendor after install
+      - Create test task
+      - Delete test task
+  vendors:           # Known vendors for this domain
+    - Linear
+    - Jira
+```
+
+### CLAUDE.md Section Structure
+
+Skills generate domain sections in this order:
+
+```markdown
+## {Domain Name}
+
+{Survey result - project-specific info from user-survey}
+
+### Abstract
+
+{Content from data/abstract/{domain-key}.md - vendor-agnostic concepts}
+
+### Vendor: {Vendor Name}
+
+{Vendor-specific configuration, operations, troubleshooting}
+```
 
 ## Code Style
 
@@ -43,18 +86,21 @@ Each skill follows a standardized pattern:
 Align column widths with spaces for readability:
 
 ```markdown
-# Bad - misaligned columns
-| Minimal Task System | {task_backend} Equivalent |
-|---------------------|---------------------------|
-| Input | {backend_input_mapping} |
-| Intent | {backend_intent_mapping} |
-
 # Good - aligned columns
 | Minimal Task System | {task_backend} Equivalent  |
 |---------------------|----------------------------|
 | Input               | {backend_input_mapping}    |
 | Intent              | {backend_intent_mapping}   |
 ```
+
+### Skill Files
+
+Each skill has a `SKILL.md` with:
+- **Frontmatter**: name, description, arguments
+- **Definition of Done**: Explicit completion criteria
+- **Workflow**: Numbered phases with steps
+- **Interactive Checkpoints**: Where user input is needed
+- **Error Handling**: Recovery strategies
 
 ## Git Workflow
 
