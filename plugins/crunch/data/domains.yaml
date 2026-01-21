@@ -28,7 +28,6 @@ domains:
       - It should allow to get an environment variable value
       - It should allow to delete an environment variable
       - It should allow to list all environment variables
-      - It should allow to switch between environments
       - It should allow to check whether a variable exists
 
   - name: Secrets
@@ -62,26 +61,56 @@ domains:
     required: true
     has_vendor: true
     vendor_requirements:
-      # Core operations
-      - It should allow to create a task (Input, Intent, Issue, WorkItem)
+      # 1. Core operations (all task types ∈ {Input, Intent, Issue, WorkItem})
+      - It should allow to create a task ∈ {Input, Intent, Issue, WorkItem}
       - It should allow to read a task by id
       - It should allow to update task fields
-      - It should allow to delete or cancel a task
-      - It should allow to list tasks filtered by type, status, or relations
-      - It should allow to check whether a task exists
-      - It should allow to change task status with valid transitions
-      # Input operations
-      - It should allow to classify Input into Intent or Issue
-      # Intent operations
-      - It should allow to decompose Intent into WorkItems
-      - It should allow to query WorkItems implementing an Intent
-      # Issue operations
-      - It should allow to create WorkItem fixing an Issue
-      - It should allow to query WorkItems fixing an Issue
-      # WorkItem operations
-      - It should allow to assign or reassign a WorkItem
-      - It should allow to link WorkItem to Intent (implements)
-      - It should allow to link WorkItem to Issue (fixes)
+      - It should allow to delete / cancel a task (where allowed by type)
+      - It should allow to list tasks filtered by {type, status, relations}
+      - It should allow to check existence of a task
+      - It should allow to change task status, enforcing valid transitions
+      # 2. Input operations
+      - It should allow to create Input
+      - It should allow to transition Input status ∈ {New → Reviewed → Dropped}
+      - It should allow to classify Input → {Intent, Issue}, creating the target task
+      # 3. Intent operations
+      - It should allow to create Intent (optionally derived from Input)
+      - It should allow to update Intent definition ∈ {outcome, value, success criteria}
+      - It should allow to transition Intent status ∈ {Draft → Refined → Approved → Completed}
+      - It should allow to decompose Intent → {WorkItem}*
+      - It should allow to query WorkItems implementing Intent
+      - It should allow to complete Intent when completion condition is met
+      # 4. Issue operations
+      - It should allow to create Issue (optionally derived from Input)
+      - It should allow to update Issue definition ∈ {expected, actual, severity}
+      - It should allow to transition Issue status ∈ {Reported → Confirmed → Planned → Resolved → Verified, WontFix}
+      - It should allow to create WorkItem fixing Issue
+      - It should allow to query WorkItems fixing Issue
+      - It should allow to resolve Issue when fix WorkItem is Done
+      - It should allow to verify Issue
+      # 5. WorkItem operations
+      - It should allow to create WorkItem (from {Intent, Issue})
+      - It should allow to update WorkItem definition ∈ {scope, exclusions, acceptance criteria, DoD}
+      - It should allow to transition WorkItem status ∈ {Backlog ↔ InProgress ↔ Blocked ↔ Done}
+      - It should allow to assign / reassign WorkItem
+      - It should allow to link WorkItem → Intent (implements)
+      - It should allow to link WorkItem → Issue (fixes)
+      - It should allow to block WorkItem, creating Blocker WorkItem
+      - It should allow to unblock WorkItem when Blocker is Done
+      # 6. Relationship & traceability operations
+      - It should allow to create relations ∈ {derived-from, implements, fixes, blocks}
+      - "It should allow to query relations: Input → {Intent, Issue}"
+      - "It should allow to query relations: Intent → {WorkItem}"
+      - "It should allow to query relations: Issue → {WorkItem}"
+      - "It should allow to query relations: WorkItem → {Intent, Issue, WorkItem(blocks)}"
+      # 7. Validation & invariants
+      - It should allow to validate state transition for any task
+      - It should allow to validate WorkItem readiness (DoD present)
+      - It should allow to check Intent completion (all WorkItems Done)
+      - It should allow to check Issue resolution (fix WorkItems Done)
+      - "It should validate invariant: WorkItem:InProgress ⇒ {Intent:Approved ∨ Issue:Planned}"
+      - "It should validate invariant: WorkItem:Blocked ⇒ ∃ Blocker WorkItem"
+      - "It should validate invariant: Issue:Resolved ⇒ ∃ Done WorkItem fixing it"
 
   - name: Agents & Orchestration
     key: agents-and-orchestration
