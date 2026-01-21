@@ -206,7 +206,6 @@ flowchart TD
   classDef status fill:#f9fafb,stroke:#9ca3af,stroke-width:1px,color:#000;
 
   %% INPUT
-  B0[User communication bot message]:::bot
   I[Create Input]:::created
   I_NEW[Input:New]:::status
   C0[Input clear]:::decision
@@ -214,7 +213,6 @@ flowchart TD
   I_REVIEWED[Input:Reviewed]:::status
   CL[Classify Input]:::decision
 
-  B0 --> I
   I --> I_NEW
   I_NEW --> C0
   C0 -- No --> B1
