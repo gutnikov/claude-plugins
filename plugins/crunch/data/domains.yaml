@@ -37,6 +37,12 @@ domains:
       - It should allow to delete a secret
       - It should allow to list available secrets
       - It should allow to check whether a secret exists
+    vendor_check:
+      - Create a test secret named `_claude_setup_test` with value `test123`
+      - Read the secret back and verify value matches `test123`
+      - List secrets and verify `_claude_setup_test` appears
+      - Delete the test secret `_claude_setup_test`
+      - Verify the secret no longer exists
     vendors:
       - HashiCorp Vault
       - AWS Secrets Manager
@@ -116,6 +122,13 @@ domains:
       - "It should validate invariant: WorkItem:InProgress ⇒ {Intent:Approved ∨ Issue:Planned}"
       - "It should validate invariant: WorkItem:Blocked ⇒ ∃ Blocker WorkItem"
       - "It should validate invariant: Issue:Resolved ⇒ ∃ Done WorkItem fixing it"
+    vendor_check:
+      - Create a test task titled `[Claude Setup Test] Verify Integration`
+      - Read the task back and verify title matches
+      - Update the task description to `Automated setup verification`
+      - List tasks and verify the test task appears in results
+      - Transition the task to a closed/done state
+      - Delete or archive the test task (if supported, otherwise leave closed)
 
   - name: Agents & Orchestration
     key: agents-and-orchestration
