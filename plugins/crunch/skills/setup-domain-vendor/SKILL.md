@@ -414,7 +414,9 @@ set_phase: 6
 
 ### Phase 6: Documentation
 
-**Update CLAUDE.md vendor subsection only, preserving abstract domain content.**
+**Update CLAUDE.md with abstract content (if exists) and vendor subsection.**
+
+Abstract files are located at `plugins/crunch/data/abstract/{domain.key}.md` and contain vendor-agnostic domain concepts. If an abstract file exists for the domain, it must be included in the CLAUDE.md section.
 
 #### CLAUDE.md Section Structure
 
@@ -505,18 +507,23 @@ vault kv delete -mount=secret test/claude
 
 ```
 ## Secrets                          ← Keep
-[abstract content]                  ← Keep
+[abstract content]                  ← Keep (or add if missing)
                                     ← Insert vendor subsection here
 ```
 
-→ Append vendor subsection at end of domain section (before next `## `)
+→ If abstract subsection is missing and abstract file exists, add it first
+→ Then append vendor subsection at end of domain section (before next `## `)
 
 **Scenario C: No domain section exists**
 
-→ Append new domain section with vendor subsection:
+→ Append new domain section with abstract (if exists) and vendor subsection:
 
 ```markdown
 ## {domain.name}
+
+### Abstract
+
+[Content from plugins/crunch/data/abstract/{domain.key}.md - if file exists]
 
 ### Vendor: {vendor.name}
 [generated vendor content]
@@ -528,13 +535,25 @@ vault kv delete -mount=secret test/claude
 // 1. Read CLAUDE.md
 const content = readFile('CLAUDE.md');
 
-// 2. Find domain section boundaries
+// 2. Load abstract content if exists
+const abstractPath = `plugins/crunch/data/abstract/${domain.key}.md`;
+let abstractContent = '';
+if (fileExists(abstractPath)) {
+  const rawAbstract = readFile(abstractPath);
+  // Remove H1 header from abstract file
+  abstractContent = rawAbstract.replace(/^# .+\n+/, '');
+}
+
+// 3. Find domain section boundaries
 const domainStart = content.indexOf(`## ${domain.name}`);
 const domainEnd = findNextH2(content, domainStart + 1);  // Next ## or EOF
 
-// 3. If domain section exists
+// 4. If domain section exists
 if (domainStart !== -1) {
   const domainContent = content.slice(domainStart, domainEnd);
+
+  // Check if Abstract subsection exists
+  const hasAbstract = domainContent.includes('### Abstract');
 
   // Find vendor subsection within domain
   const vendorStart = domainContent.indexOf(`### Vendor: ${vendor.name}`);
@@ -545,11 +564,21 @@ if (domainStart !== -1) {
     replaceRange(domainStart + vendorStart, domainStart + vendorEnd, newVendorContent);
   } else {
     // Scenario B: Append vendor subsection to domain
-    insertAt(domainEnd, '\n' + newVendorContent);
+    // Also add abstract if missing and file exists
+    if (!hasAbstract && abstractContent) {
+      insertAt(domainEnd, '\n### Abstract\n\n' + abstractContent + '\n\n' + newVendorContent);
+    } else {
+      insertAt(domainEnd, '\n' + newVendorContent);
+    }
   }
 } else {
-  // Scenario C: Append new domain section
-  appendToFile(`\n## ${domain.name}\n\n${newVendorContent}`);
+  // Scenario C: Append new domain section with abstract (if exists) and vendor
+  let newSection = `\n## ${domain.name}\n\n`;
+  if (abstractContent) {
+    newSection += `### Abstract\n\n${abstractContent}\n\n`;
+  }
+  newSection += newVendorContent;
+  appendToFile(newSection);
 }
 ```
 
