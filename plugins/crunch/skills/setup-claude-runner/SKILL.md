@@ -1,25 +1,25 @@
 ---
 name: setup-claude-runner
-description: Set up Claude Code runner container with Docker support (local or remote)
+description: Set up Claude Code runner container with Docker support
 arguments:
   - name: action
     required: false
     description: |
       Action to perform:
-      - 'setup': Full setup (check docker, copy dockerfile, build)
-      - 'setup-remote': Setup on a remote machine via SSH (verify, install, build)
-      - 'verify-remote': Verify remote machine prerequisites only
-      - 'check': Check Docker availability only
-      - 'test': Test the dockerfile with a sample repo
-      - 'run': Run the container locally
-      - 'run-remote': Run the container on a remote machine
+      - 'setup': Install Docker (if needed), copy files, build image
+      - 'verify': Check all prerequisites
+      - 'run': Execute container with prompt
+      - 'build': Build Docker image only
+      - 'test': Run test workflow
       Default: setup
-  - name: remote_host
+  - name: host
     required: false
-    description: Remote machine hostname or IP (for remote actions)
+    description: |
+      Target host. Use 'localhost' for local execution or hostname/IP for remote.
+      Default: localhost
   - name: git_repo
     required: false
-    description: Git repository URL to clone
+    description: Git repository URL to clone - any provider (GitHub, GitLab, Gitea, etc.)
   - name: git_branch
     required: false
     description: Git branch to checkout (default: main)
@@ -31,7 +31,7 @@ arguments:
 # Setup Claude Runner Skill
 
 This skill sets up a Docker-based Claude Code runner that can clone a git repository
-and execute Claude Code agent prompts against it. Supports both local and remote execution.
+and execute Claude Code agent prompts against it. Works on local machine or remote hosts.
 
 ## Assets
 
@@ -39,461 +39,302 @@ and execute Claude Code agent prompts against it. Supports both local and remote
 plugins/crunch/skills/setup-claude-runner/
 ├── SKILL.md
 └── assets/
-    ├── claude-runner.dockerfile      # Main dockerfile
-    ├── entrypoint.sh                 # Container entrypoint script
-    ├── remote-setup.sh               # Remote machine setup script
-    ├── remote-config.yaml.template   # Remote configuration template
-    ├── run-remote.sh                 # Run on remote machine script
-    └── verify-remote.sh              # Verify remote prerequisites
+    ├── claude-runner.sh              # Main CLI (unified local/remote)
+    ├── claude-runner.dockerfile      # Docker image definition
+    └── entrypoint.sh                 # Container entrypoint
 ```
 
 ## Arguments
 
-| Argument      | Required | Default | Description                           |
-|---------------|----------|---------|---------------------------------------|
-| `action`      | No       | `setup` | Action to perform (see above)         |
-| `remote_host` | No       | -       | Remote hostname (for remote actions)  |
-| `git_repo`    | No       | -       | Git repository URL                    |
-| `git_branch`  | No       | `main`  | Git branch to checkout                |
-| `prompt`      | No       | -       | Prompt for Claude Code agent          |
+| Argument     | Required | Default     | Description                       |
+|--------------|----------|-------------|-----------------------------------|
+| `action`     | No       | `setup`     | Action to perform                 |
+| `host`       | No       | `localhost` | Target host (local or remote)     |
+| `git_repo`   | No       | -           | Git repository URL                |
+| `git_branch` | No       | `main`      | Git branch to checkout            |
+| `prompt`     | No       | -           | Prompt for Claude Code agent      |
 
 ## Definition of Done
 
-1. Docker is installed and running (local or remote)
-2. Dockerfile and scripts are in place
+1. Docker is installed and running on target host
+2. Dockerfile and entrypoint are in place
 3. Docker image is built
 4. Container can clone a repo and run Claude Code agent
 
 ---
 
-# Local Setup
-
-## Quick Start (Local)
-
-```bash
-# 1. Copy files to project root
-cp plugins/crunch/skills/setup-claude-runner/assets/claude-runner.dockerfile ./
-cp plugins/crunch/skills/setup-claude-runner/assets/entrypoint.sh ./assets/
-
-# 2. Build image
-docker build -f claude-runner.dockerfile -t claude-runner:latest .
-
-# 3. Run
-docker run --rm \
-  -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
-  -e GIT_REPO="https://github.com/user/repo.git" \
-  -e PROMPT="Explain the project structure" \
-  claude-runner:latest
-```
-
----
-
-# Remote Setup
-
-## Action: setup-remote
-
-Full remote setup workflow with verification.
-
-**Steps:**
-
-1. Verify remote prerequisites (`verify-remote.sh`)
-2. Install Docker if missing (`remote-setup.sh`)
-3. Copy dockerfile and entrypoint to remote
-4. Build Docker image on remote
-5. Run test to verify
-
-**Commands:**
-
-```bash
-# Step 1: Verify remote (required before setup)
-./assets/verify-remote.sh remote-host
-
-# Step 2-5: Run full setup
-REMOTE_USER=deploy ./assets/remote-setup.sh remote-host
-```
-
----
-
-## Action: verify-remote
-
-Verify remote machine prerequisites without making changes.
-
-**Checks performed:**
-
-| Check                    | What it verifies                              |
-|--------------------------|-----------------------------------------------|
-| SSH connectivity         | Can connect to remote via SSH                 |
-| Docker installed         | `docker --version` succeeds                   |
-| Docker daemon running    | `docker info` succeeds                        |
-| Docker permissions       | User can run `docker ps`                      |
-| Internet connectivity    | Can reach api.anthropic.com                   |
-| GitHub access            | Can reach github.com                          |
-| Working directory        | ~/claude-runner exists                        |
-| Dockerfile present       | claude-runner.dockerfile is in place          |
-| Entrypoint present       | entrypoint.sh is in place                     |
-| Docker image built       | claude-runner:latest image exists             |
-| Disk space               | At least 5GB free                             |
-| Memory                   | At least 2GB available                        |
-
-**Commands:**
-
-```bash
-# Run verification
-chmod +x plugins/crunch/skills/setup-claude-runner/assets/verify-remote.sh
-./assets/verify-remote.sh remote-host
-
-# With custom user and key
-REMOTE_USER=deploy REMOTE_KEY=~/.ssh/mykey ./assets/verify-remote.sh remote-host
-```
-
-**Example output:**
-
-```
-=== Claude Runner Remote Verification ===
-Target: deploy@remote-host
-==========================================
-
-== Phase 1: SSH Connectivity ==
-Checking SSH connection...                  [OK]
-
-== Phase 2: Docker Installation ==
-Checking Docker installed...                [OK]
-  └─ Docker version 24.0.7, build afdd53b
-Checking Docker daemon running...           [OK]
-Checking Docker permissions...              [OK]
-
-== Phase 3: Network Access ==
-Checking Internet connectivity...           [OK]
-Checking GitHub access...                   [OK]
-
-== Phase 4: Working Directory ==
-Checking Working dir exists...              [FAILED]
-  └─ Will be created during setup
-Checking Dockerfile present...              [FAILED]
-  └─ Will be copied during setup
-Checking Entrypoint present...              [FAILED]
-  └─ Will be copied during setup
-
-== Phase 5: Docker Image ==
-Checking claude-runner image...             [FAILED]
-  └─ Will be built during setup
-
-== Phase 6: System Resources ==
-Checking Disk space (>5GB free)...          [OK]
-Checking Memory (>2GB)...                   [OK]
-
-==========================================
-Found 4 issue(s). Please fix before proceeding.
-```
-
----
-
-## Prerequisites for Remote Execution
-
-Before running on a remote machine, you need:
-
-| Requirement          | Description                                    |
-|----------------------|------------------------------------------------|
-| SSH access           | SSH key-based authentication to remote machine |
-| Remote user          | User with sudo or docker group membership      |
-| Network              | Remote can access git repos and Anthropic API  |
-
-## Phase 1: Configure SSH Access
-
-**1. Generate SSH key (if needed):**
-
-```bash
-ssh-keygen -t ed25519 -C "claude-runner"
-```
-
-**2. Copy public key to remote:**
-
-```bash
-ssh-copy-id -i ~/.ssh/id_ed25519.pub user@remote-host
-```
-
-**3. Test SSH connection:**
-
-```bash
-ssh user@remote-host "echo 'SSH connection successful'"
-```
-
-**4. (Optional) Add to SSH config:**
-
-```bash
-# ~/.ssh/config
-Host claude-runner-host
-    HostName 192.168.1.100
-    User deploy
-    IdentityFile ~/.ssh/id_ed25519
-```
-
----
-
-## Phase 2: Setup Remote Machine
-
-**Option A: Automated setup**
-
-```bash
-# Copy and run setup script on remote
-scp plugins/crunch/skills/setup-claude-runner/assets/remote-setup.sh user@remote-host:~
-ssh user@remote-host "chmod +x remote-setup.sh && ./remote-setup.sh"
-```
-
-**Option B: Manual setup**
-
-```bash
-# SSH to remote
-ssh user@remote-host
-
-# Install Docker
-curl -fsSL https://get.docker.com | sudo sh
-sudo usermod -aG docker $USER
-
-# Log out and back in for group changes
-exit
-ssh user@remote-host
-
-# Verify Docker
-docker --version
-docker run hello-world
-```
-
----
-
-## Phase 3: Build Image on Remote
-
-**Option A: Build on remote (recommended)**
-
-```bash
-# Create working directory on remote
-ssh user@remote-host "mkdir -p ~/claude-runner/assets"
-
-# Copy dockerfile and entrypoint
-scp plugins/crunch/skills/setup-claude-runner/assets/claude-runner.dockerfile user@remote-host:~/claude-runner/
-scp plugins/crunch/skills/setup-claude-runner/assets/entrypoint.sh user@remote-host:~/claude-runner/assets/
-
-# Build on remote
-ssh user@remote-host "cd ~/claude-runner && docker build -f claude-runner.dockerfile -t claude-runner:latest ."
-```
-
-**Option B: Use Docker registry**
-
-```bash
-# Build locally
-docker build -f claude-runner.dockerfile -t claude-runner:latest .
-
-# Tag for registry
-docker tag claude-runner:latest ghcr.io/your-org/claude-runner:latest
-
-# Push to registry
-docker push ghcr.io/your-org/claude-runner:latest
-
-# Pull on remote
-ssh user@remote-host "docker pull ghcr.io/your-org/claude-runner:latest"
-ssh user@remote-host "docker tag ghcr.io/your-org/claude-runner:latest claude-runner:latest"
-```
-
----
-
-## Phase 4: Configure API Key on Remote
-
-**IMPORTANT:** Never store API keys in plain text files or pass them as command arguments.
-
-**Option A: Pass via SSH (recommended for one-off runs)**
-
-The API key is passed through the SSH session, not stored on remote:
-
-```bash
-ssh user@remote-host "ANTHROPIC_API_KEY='$ANTHROPIC_API_KEY' docker run --rm \
-  -e ANTHROPIC_API_KEY \
-  -e GIT_REPO='https://github.com/user/repo.git' \
-  -e PROMPT='Your prompt' \
-  claude-runner:latest"
-```
-
-**Option B: Secrets file on remote (for persistent setup)**
-
-```bash
-# On remote machine, create secrets file with restricted permissions
-ssh user@remote-host "echo 'export ANTHROPIC_API_KEY=your-key-here' > ~/.claude-runner-secrets && chmod 600 ~/.claude-runner-secrets"
-
-# Source before running
-ssh user@remote-host "source ~/.claude-runner-secrets && docker run --rm \
-  -e ANTHROPIC_API_KEY \
-  -e GIT_REPO='...' \
-  -e PROMPT='...' \
-  claude-runner:latest"
-```
-
-**Option C: Docker secrets (for Docker Swarm)**
-
-```bash
-# Create secret
-echo "$ANTHROPIC_API_KEY" | docker secret create anthropic_api_key -
-
-# Use in service (Swarm mode only)
-docker service create --secret anthropic_api_key claude-runner:latest
-```
-
----
-
-## Phase 5: Run on Remote
-
-**Using run-remote.sh script:**
+## Quick Start
 
 ```bash
 # Make script executable
-chmod +x plugins/crunch/skills/setup-claude-runner/assets/run-remote.sh
+chmod +x plugins/crunch/skills/setup-claude-runner/assets/claude-runner.sh
+cd plugins/crunch/skills/setup-claude-runner/assets
+
+# Setup (local)
+./claude-runner.sh setup
+
+# Setup (remote)
+HOST=server.example.com ./claude-runner.sh setup
 
 # Run
 ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
-REMOTE_USER="deploy" \
-./plugins/crunch/skills/setup-claude-runner/assets/run-remote.sh \
-  "remote-host" \
-  "https://github.com/user/repo.git" \
-  "Explain the architecture"
-```
+GIT_REPO="https://github.com/user/repo.git" \
+PROMPT="Explain the project structure" \
+./claude-runner.sh run
 
-**Direct SSH command:**
-
-```bash
-ssh user@remote-host "
-  cd ~/claude-runner && \
-  docker run --rm \
-    -e ANTHROPIC_API_KEY='$ANTHROPIC_API_KEY' \
-    -e GIT_REPO='https://github.com/user/repo.git' \
-    -e GIT_BRANCH='main' \
-    -e PROMPT='Explain the project structure' \
-    claude-runner:latest
-"
+# Run on remote
+HOST=server.example.com \
+ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+GIT_REPO="https://github.com/user/repo.git" \
+PROMPT="Explain the project structure" \
+./claude-runner.sh run
 ```
 
 ---
 
-## Remote Configuration File
+## Environment Variables
 
-Create `remote-config.yaml` from template for persistent configuration:
+| Variable            | Required | Default         | Description                     |
+|---------------------|----------|-----------------|---------------------------------|
+| `HOST`              | No       | `localhost`     | Target host                     |
+| `REMOTE_USER`       | No       | `$USER`         | SSH user (for remote)           |
+| `REMOTE_KEY`        | No       | `~/.ssh/id_rsa` | SSH key path (for remote)       |
+| `WORK_DIR`          | No       | `claude-runner` | Working directory on host       |
+| `GIT_REPO`          | Yes*     | -               | Repository to clone             |
+| `GIT_BRANCH`        | No       | `main`          | Branch to checkout              |
+| `PROMPT`            | Yes*     | -               | Prompt for Claude Code          |
+| `ANTHROPIC_API_KEY` | Yes*     | -               | Anthropic API key               |
+
+*Required for `run` action
+
+---
+
+## Actions
+
+### verify
+
+Check all prerequisites on target host.
 
 ```bash
-cp plugins/crunch/skills/setup-claude-runner/assets/remote-config.yaml.template ./remote-config.yaml
+./claude-runner.sh verify
+HOST=remote-server ./claude-runner.sh verify
 ```
 
-**Example configuration:**
+**Checks performed:**
 
-```yaml
-remote:
-  host: "192.168.1.100"
-  user: "deploy"
-  port: 22
-  key_file: "~/.ssh/claude-runner"
+| Check              | Description                           |
+|--------------------|---------------------------------------|
+| SSH connectivity   | Can connect (remote only)             |
+| Docker installed   | `docker --version` works              |
+| Docker daemon      | `docker info` works                   |
+| Docker permissions | User can run `docker ps`              |
+| Internet access    | Can reach api.anthropic.com           |
+| Working directory  | ~/claude-runner exists                |
+| Dockerfile         | claude-runner.dockerfile present      |
+| Entrypoint         | entrypoint.sh present                 |
+| Docker image       | claude-runner:latest exists           |
 
-docker:
-  image_strategy: "build"
+---
 
-api_key:
-  method: "env"
+### setup
 
-work_dir: "~/claude-runner"
+Full setup: install Docker (if needed), copy files, build image.
+
+```bash
+# Local
+./claude-runner.sh setup
+
+# Remote
+HOST=remote-server REMOTE_USER=deploy ./claude-runner.sh setup
+```
+
+**What it does:**
+
+1. Checks if Docker is installed
+   - Local: prompts user to install if missing
+   - Remote: installs via `get.docker.com`
+2. Creates working directory (`~/claude-runner`)
+3. Copies `claude-runner.dockerfile` and `entrypoint.sh`
+4. Builds Docker image `claude-runner:latest`
+
+---
+
+### build
+
+Build (or rebuild) the Docker image.
+
+```bash
+./claude-runner.sh build
+HOST=remote-server ./claude-runner.sh build
 ```
 
 ---
 
-## Docker Context (Alternative Approach)
+### run
 
-Instead of SSH commands, you can use Docker contexts to control remote Docker:
-
-**1. Create context:**
+Execute the container with a prompt against a git repository.
 
 ```bash
-docker context create remote-runner \
-  --docker "host=ssh://user@remote-host"
+ANTHROPIC_API_KEY="sk-..." \
+GIT_REPO="https://github.com/user/repo.git" \
+GIT_BRANCH="main" \
+PROMPT="Explain the architecture" \
+./claude-runner.sh run
+
+# Remote
+HOST=remote-server \
+ANTHROPIC_API_KEY="sk-..." \
+GIT_REPO="https://github.com/user/repo.git" \
+PROMPT="List all API endpoints" \
+./claude-runner.sh run
 ```
 
-**2. Use context:**
+**Output:**
 
-```bash
-# Switch to remote context
-docker context use remote-runner
-
-# Now all docker commands run on remote
-docker build -f claude-runner.dockerfile -t claude-runner:latest .
-docker run --rm -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" ...
-
-# Switch back to local
-docker context use default
 ```
+[localhost] === Claude Runner ===
+[localhost] Repository: https://github.com/user/repo.git
+[localhost] Branch: main
+[localhost] Prompt: Explain the architecture
+[localhost] ====================
+Cloning into '/workspace/repo'...
+Repository cloned. Running Claude Code agent...
 
-**3. One-off command with context:**
+[Claude Code output here]
 
-```bash
-docker --context remote-runner run --rm \
-  -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
-  -e GIT_REPO="https://github.com/user/repo.git" \
-  -e PROMPT="Your prompt" \
-  claude-runner:latest
-```
-
----
-
-## Security Considerations
-
-| Concern                | Recommendation                                      |
-|------------------------|-----------------------------------------------------|
-| API key exposure       | Never log or echo API keys; use env vars            |
-| SSH security           | Use key-based auth, disable password auth           |
-| Docker socket          | Don't expose Docker daemon over TCP without TLS     |
-| Network isolation      | Use firewall to restrict access to Docker host      |
-| Image provenance       | Use signed images if using registry                 |
-| Secrets in images      | Never bake secrets into Docker images               |
-
----
-
-## Troubleshooting Remote
-
-| Error                           | Cause                         | Solution                              |
-|---------------------------------|-------------------------------|---------------------------------------|
-| `Permission denied (publickey)` | SSH key not configured        | Run `ssh-copy-id user@host`           |
-| `Cannot connect to Docker`      | User not in docker group      | `sudo usermod -aG docker $USER`       |
-| `Connection refused`            | Docker daemon not running     | `sudo systemctl start docker`         |
-| `Network unreachable`           | Firewall blocking             | Check firewall rules                  |
-| `Image not found`               | Image not built on remote     | Build or pull image on remote         |
-
----
-
-## Complete Remote Setup Checklist
-
-```markdown
-- [ ] SSH key generated and copied to remote
-- [ ] SSH connection tested successfully
-- [ ] Docker installed on remote machine
-- [ ] User added to docker group on remote
-- [ ] Working directory created on remote
-- [ ] Dockerfile and entrypoint.sh copied to remote
-- [ ] Docker image built on remote
-- [ ] API key handling method chosen and configured
-- [ ] Test run completed successfully
+=== Claude Runner Complete ===
 ```
 
 ---
 
-## Quick Reference
+### test
+
+Test container startup (doesn't require API key).
 
 ```bash
-# === Local ===
-docker build -f claude-runner.dockerfile -t claude-runner:latest .
-docker run --rm -e ANTHROPIC_API_KEY -e GIT_REPO="..." -e PROMPT="..." claude-runner:latest
+./claude-runner.sh test
+```
 
-# === Remote Setup ===
+---
+
+## Remote Host Configuration
+
+For remote hosts, configure SSH access first:
+
+```bash
+# Generate SSH key (if needed)
+ssh-keygen -t ed25519 -C "claude-runner"
+
+# Copy to remote
 ssh-copy-id user@remote-host
-scp assets/claude-runner.dockerfile assets/entrypoint.sh user@remote-host:~/claude-runner/
-ssh user@remote-host "cd ~/claude-runner && docker build -f claude-runner.dockerfile -t claude-runner:latest ."
 
-# === Remote Run ===
-ssh user@remote-host "ANTHROPIC_API_KEY='$ANTHROPIC_API_KEY' docker run --rm \
-  -e ANTHROPIC_API_KEY -e GIT_REPO='...' -e PROMPT='...' claude-runner:latest"
+# Test connection
+ssh user@remote-host "echo OK"
 
-# === Docker Context ===
-docker context create remote --docker "host=ssh://user@remote-host"
-docker --context remote run --rm -e ANTHROPIC_API_KEY -e GIT_REPO="..." -e PROMPT="..." claude-runner:latest
+# (Optional) Add to ~/.ssh/config
+cat >> ~/.ssh/config << EOF
+Host claude-runner
+    HostName 192.168.1.100
+    User deploy
+    IdentityFile ~/.ssh/id_ed25519
+EOF
+
+# Now use the alias
+HOST=claude-runner ./claude-runner.sh setup
+```
+
+---
+
+## Dockerfile Reference
+
+### claude-runner.dockerfile
+
+```dockerfile
+FROM ubuntu:22.04
+
+# Install Node.js 20.x and Claude Code CLI
+RUN apt-get update && apt-get install -y curl git ca-certificates gnupg
+RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | \
+    gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] \
+    https://deb.nodesource.com/node_20.x nodistro main" | \
+    tee /etc/apt/sources.list.d/nodesource.list
+RUN apt-get update && apt-get install -y nodejs
+RUN npm install -g @anthropic-ai/claude-code
+
+WORKDIR /workspace
+COPY assets/entrypoint.sh /entrypoint.sh
+
+ENV GIT_REPO="" GIT_BRANCH="main" PROMPT="" ANTHROPIC_API_KEY=""
+ENTRYPOINT ["/entrypoint.sh"]
+```
+
+### entrypoint.sh
+
+```bash
+#!/bin/bash
+set -e
+
+# Validate required parameters
+[ -z "$GIT_REPO" ] && echo "Error: GIT_REPO required" && exit 1
+[ -z "$PROMPT" ] && echo "Error: PROMPT required" && exit 1
+[ -z "$ANTHROPIC_API_KEY" ] && echo "Error: ANTHROPIC_API_KEY required" && exit 1
+
+# Clone repository
+git clone --depth=1 --branch "$GIT_BRANCH" "$GIT_REPO" /workspace/repo
+cd /workspace/repo
+
+# Run Claude Code agent
+claude --print --dangerously-skip-permissions "$PROMPT"
+```
+
+---
+
+## Security Notes
+
+| Concern              | Recommendation                                   |
+|----------------------|--------------------------------------------------|
+| API key exposure     | Pass via environment, never in commands          |
+| SSH security         | Use key-based auth, disable password             |
+| Remote Docker        | Don't expose daemon over TCP without TLS         |
+| Network isolation    | Use firewall on Docker host                      |
+| Secrets in images    | Never bake secrets into Docker images            |
+
+---
+
+## Troubleshooting
+
+| Error                           | Cause                    | Solution                              |
+|---------------------------------|--------------------------|---------------------------------------|
+| `Docker not found`              | Not installed            | Install Docker Desktop or use setup   |
+| `Permission denied`             | User not in docker group | `sudo usermod -aG docker $USER`       |
+| `Cannot connect to Docker`      | Daemon not running       | Start Docker Desktop / daemon         |
+| `SSH permission denied`         | Key not configured       | `ssh-copy-id user@host`               |
+| `Repository not found`          | Invalid URL or private   | Check URL, use token for private      |
+| `ANTHROPIC_API_KEY required`    | Key not set              | Export the environment variable       |
+
+---
+
+## Examples
+
+```bash
+# Verify local Docker setup
+./claude-runner.sh verify
+
+# Setup on remote server
+HOST=prod-server.example.com REMOTE_USER=deploy ./claude-runner.sh setup
+
+# Run analysis on a GitHub repo
+ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+GIT_REPO="https://github.com/anthropics/anthropic-cookbook.git" \
+PROMPT="What examples are included in this cookbook?" \
+./claude-runner.sh run
+
+# Run on remote with different branch
+HOST=worker-1 \
+ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+GIT_REPO="https://github.com/user/project.git" \
+GIT_BRANCH="feature-branch" \
+PROMPT="Review the changes in this branch" \
+./claude-runner.sh run
 ```
