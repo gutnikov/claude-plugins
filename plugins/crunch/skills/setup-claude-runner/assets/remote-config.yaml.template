@@ -1,0 +1,37 @@
+# Claude Runner Remote Configuration
+# Copy this file to remote-config.yaml and fill in your values
+
+# Remote machine SSH connection
+remote:
+  host: ""                    # Remote hostname or IP (required)
+  user: ""                    # SSH username (required)
+  port: 22                    # SSH port (default: 22)
+  key_file: "~/.ssh/id_rsa"   # Path to SSH private key
+
+# Docker configuration
+docker:
+  # How to make the image available on remote:
+  # - 'build': Copy dockerfile and build on remote (default)
+  # - 'registry': Push to registry, pull on remote
+  image_strategy: "build"
+
+  # Registry settings (only if image_strategy: registry)
+  registry:
+    url: ""                   # e.g., docker.io, ghcr.io, ecr.aws
+    image: "claude-runner"    # Image name
+    tag: "latest"             # Image tag
+
+# API Key handling
+# IMPORTANT: Never store API keys in this file!
+# Options for passing ANTHROPIC_API_KEY to remote:
+api_key:
+  # - 'env': Read from local ANTHROPIC_API_KEY env var, pass via SSH
+  # - 'remote_env': Expect key to be set in remote ~/.bashrc or ~/.profile
+  # - 'secrets_file': Read from a secrets file on remote machine
+  method: "env"
+
+  # If method is 'secrets_file', path on remote machine:
+  secrets_file: "~/.claude-runner-secrets"
+
+# Working directory on remote machine
+work_dir: "~/claude-runner"
