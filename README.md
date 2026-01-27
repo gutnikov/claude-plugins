@@ -34,34 +34,35 @@ The framework supports **15 project domains** organized into required and option
 
 ### Required Domains (8)
 
-| Domain                   | Has Vendor | Survey | Abstract |
-|--------------------------|------------|--------|----------|
-| **Project Info**         | No         | Yes    | No       |
-| **Tech Stack**           | No         | Yes    | No       |
-| **Configuration**        | Yes        | No     | No       |
-| **Secrets**              | Yes        | No     | No       |
-| **Pipelines**            | No         | No     | No       |
-| **Deploy Environments**  | No         | Yes    | No       |
-| **Task Management**      | Yes        | No     | Yes      |
-| **Agents & Orchestration** | No       | No     | No       |
+| Domain                     | Has Vendor | Survey | Abstract |
+| -------------------------- | ---------- | ------ | -------- |
+| **Project Info**           | No         | Yes    | No       |
+| **Tech Stack**             | No         | Yes    | No       |
+| **Configuration**          | Yes        | No     | No       |
+| **Secrets**                | Yes        | No     | No       |
+| **Pipelines**              | No         | No     | No       |
+| **Deploy Environments**    | No         | Yes    | No       |
+| **Task Management**        | Yes        | No     | Yes      |
+| **Agents & Orchestration** | No         | No     | No       |
 
 ### Optional Domains (7)
 
-| Domain                   | Has Vendor |
-|--------------------------|------------|
-| **Memory Management**    | Yes        |
-| **User Communication Bot** | Yes      |
-| **CI/CD**                | Yes        |
-| **Observability**        | Yes        |
-| **Problem Remediation**  | Yes        |
-| **Documentation**        | Yes        |
-| **Localization**         | Yes        |
+| Domain                     | Has Vendor |
+| -------------------------- | ---------- |
+| **Memory Management**      | Yes        |
+| **User Communication Bot** | Yes        |
+| **CI/CD**                  | Yes        |
+| **Observability**          | Yes        |
+| **Problem Remediation**    | Yes        |
+| **Documentation**          | Yes        |
+| **Localization**           | Yes        |
 
 ## Skills
 
 ### setup-project
 
 Main entry point for project configuration. Orchestrates domain setup with:
+
 - CLAUDE.md creation/detection
 - Domain status display (configured vs pending)
 - Survey collection (via `user-survey`)
@@ -84,6 +85,7 @@ Generic vendor setup wizard with 7-phase workflow:
 ### user-survey
 
 Conversational survey skill that:
+
 - Reads markdown description files
 - Asks open questions, then targeted follow-ups
 - Outputs collected info in markdown format
@@ -91,6 +93,7 @@ Conversational survey skill that:
 ### user-communication
 
 Two-way async messaging with users:
+
 - Supports DM (1-1) and channel (group chat) modes
 - Operations: start, poll, send, close
 - Works with any configured messaging vendor
@@ -107,10 +110,10 @@ Domains can define verification steps in `domains.yaml`:
 
 ```yaml
 domain_check:
-  general_check:    # Run during setup-project (after survey)
+  general_check: # Run during setup-project (after survey)
     - Verify Node.js is installed
     - Run npm install
-  vendor_check:     # Run during setup-domain-vendor (after install)
+  vendor_check: # Run during setup-domain-vendor (after install)
     - Create test secret
     - Read secret back
     - Delete test secret

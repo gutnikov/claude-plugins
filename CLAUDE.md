@@ -46,17 +46,17 @@ Each domain can have:
   key: task-management
   required: true
   has_vendor: true
-  survey: plugins/crunch/data/survey/task-management.md  # Optional
-  vendor_requirements:                                    # What vendor must support
+  survey: plugins/crunch/data/survey/task-management.md # Optional
+  vendor_requirements: # What vendor must support
     - It should allow to create a task
     - It should allow to read a task by id
   domain_check:
-    general_check:   # Run by setup-project after survey
+    general_check: # Run by setup-project after survey
       - Verify runtime is installed
-    vendor_check:    # Run by setup-domain-vendor after install
+    vendor_check: # Run by setup-domain-vendor after install
       - Create test task
       - Delete test task
-  vendors:           # Known vendors for this domain
+  vendors: # Known vendors for this domain
     - Linear
     - Jira
 ```
@@ -87,15 +87,17 @@ Align column widths with spaces for readability:
 
 ```markdown
 # Good - aligned columns
-| Minimal Task System | {task_backend} Equivalent  |
-|---------------------|----------------------------|
-| Input               | {backend_input_mapping}    |
-| Intent              | {backend_intent_mapping}   |
+
+| Minimal Task System | {task_backend} Equivalent |
+| ------------------- | ------------------------- |
+| Input               | {backend_input_mapping}   |
+| Intent              | {backend_intent_mapping}  |
 ```
 
 ### Skill Files
 
 Each skill has a `SKILL.md` with:
+
 - **Frontmatter**: name, description, arguments
 - **Definition of Done**: Explicit completion criteria
 - **Workflow**: Numbered phases with steps
@@ -110,6 +112,7 @@ Each skill has a `SKILL.md` with:
 ## Claude Models
 
 Current model IDs:
+
 - Sonnet: `claude-sonnet-4-5-20250929`
 - Haiku: `claude-haiku-4-5-20251001`
 - Opus: `claude-opus-4-5-20251101`

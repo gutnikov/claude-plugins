@@ -224,6 +224,50 @@ domains:
     has_vendor: true
     vendor_requirements: []
 
+  - name: Workflow Orchestration
+    key: workflow-orchestration
+    purpose: Durable workflow execution with retries, timeouts, and scheduling
+    required: false
+    has_vendor: true
+    vendor_requirements:
+      # Server operations
+      - It should allow to start a local development server
+      - It should allow to stop the local development server
+      - It should allow to check server health status
+      # Workflow operations
+      - It should allow to register/deploy a workflow definition
+      - It should allow to start a workflow execution
+      - It should allow to query workflow execution status
+      - It should allow to cancel a workflow execution
+      - It should allow to terminate a workflow execution
+      - It should allow to list workflow executions with filters
+      - It should allow to get workflow execution history
+      # Worker operations
+      - It should allow to start a worker process
+      - It should allow to stop a worker process
+      - It should allow to check worker health
+      # Scheduling operations
+      - It should allow to create a scheduled workflow
+      - It should allow to update a schedule
+      - It should allow to delete a schedule
+      - It should allow to list schedules
+    domain_check:
+      general_check:
+        - Verify Node.js runtime is installed (`node --version` >= 18)
+        - Verify npm or pnpm is installed
+      vendor_check:
+        - Start local development server (if not already running)
+        - Verify server is healthy via health endpoint
+        - Deploy test workflow from skill source code
+        - Start worker for test task queue
+        - Execute test workflow with sample input
+        - Query workflow execution and verify completion
+        - Verify workflow result matches expected output
+        - Stop worker
+        - Clean up test workflow execution (if supported)
+    vendors:
+      - Temporal
+
   - name: Problem Remediation
     key: problem-remediation
     purpose: Runbook automation, self-healing
