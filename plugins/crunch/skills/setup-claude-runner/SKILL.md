@@ -66,13 +66,13 @@ plugins/crunch/skills/setup-claude-runner/
 
 ## Arguments
 
-| Argument     | Required | Default     | Description                       |
-|--------------|----------|-------------|-----------------------------------|
-| `action`     | No       | `setup`     | Action to perform                 |
-| `host`       | No       | `localhost` | Target host (local or remote)     |
-| `git_repo`   | No       | -           | Git repository URL                |
-| `git_branch` | No       | `main`      | Git branch to checkout            |
-| `prompt`     | No       | -           | Prompt for Claude Code agent      |
+| Argument     | Required | Default     | Description                   |
+| ------------ | -------- | ----------- | ----------------------------- |
+| `action`     | No       | `setup`     | Action to perform             |
+| `host`       | No       | `localhost` | Target host (local or remote) |
+| `git_repo`   | No       | -           | Git repository URL            |
+| `git_branch` | No       | `main`      | Git branch to checkout        |
+| `prompt`     | No       | -           | Prompt for Claude Code agent  |
 
 ## Definition of Done
 
@@ -144,18 +144,18 @@ PROMPT="Explain the project structure" \
 
 ## Environment Variables
 
-| Variable            | Required | Default         | Description                     |
-|---------------------|----------|-----------------|---------------------------------|
-| `HOST`              | No       | `localhost`     | Target host                     |
-| `REMOTE_USER`       | No       | `$USER`         | SSH user (for remote)           |
-| `REMOTE_KEY`        | No       | `~/.ssh/id_rsa` | SSH key path (for remote)       |
-| `WORK_DIR`          | No       | `claude-runner` | Working directory on host       |
-| `GIT_REPO`          | Yes*     | -               | Repository to clone             |
-| `GIT_BRANCH`        | No       | `main`          | Branch to checkout              |
-| `PROMPT`            | Yes*     | -               | Prompt for Claude Code          |
-| `ANTHROPIC_API_KEY` | Yes*     | -               | Anthropic API key               |
+| Variable            | Required | Default         | Description               |
+| ------------------- | -------- | --------------- | ------------------------- |
+| `HOST`              | No       | `localhost`     | Target host               |
+| `REMOTE_USER`       | No       | `$USER`         | SSH user (for remote)     |
+| `REMOTE_KEY`        | No       | `~/.ssh/id_rsa` | SSH key path (for remote) |
+| `WORK_DIR`          | No       | `claude-runner` | Working directory on host |
+| `GIT_REPO`          | Yes\*    | -               | Repository to clone       |
+| `GIT_BRANCH`        | No       | `main`          | Branch to checkout        |
+| `PROMPT`            | Yes\*    | -               | Prompt for Claude Code    |
+| `ANTHROPIC_API_KEY` | Yes\*    | -               | Anthropic API key         |
 
-*Required for `run` action
+\*Required for `run` action
 
 ---
 
@@ -172,17 +172,17 @@ HOST=remote-server ./claude-runner.sh verify
 
 **Checks performed:**
 
-| Check              | Description                           |
-|--------------------|---------------------------------------|
-| SSH connectivity   | Can connect (remote only)             |
-| Docker installed   | `docker --version` works              |
-| Docker daemon      | `docker info` works                   |
-| Docker permissions | User can run `docker ps`              |
-| Internet access    | Can reach api.anthropic.com           |
-| Working directory  | ~/claude-runner exists                |
-| Dockerfile         | claude-runner.dockerfile present      |
-| Entrypoint         | entrypoint.sh present                 |
-| Docker image       | claude-runner:latest exists           |
+| Check              | Description                      |
+| ------------------ | -------------------------------- |
+| SSH connectivity   | Can connect (remote only)        |
+| Docker installed   | `docker --version` works         |
+| Docker daemon      | `docker info` works              |
+| Docker permissions | User can run `docker ps`         |
+| Internet access    | Can reach api.anthropic.com      |
+| Working directory  | ~/claude-runner exists           |
+| Dockerfile         | claude-runner.dockerfile present |
+| Entrypoint         | entrypoint.sh present            |
+| Docker image       | claude-runner:latest exists      |
 
 ---
 
@@ -342,26 +342,26 @@ claude --print --dangerously-skip-permissions "$PROMPT"
 
 ## Security Notes
 
-| Concern              | Recommendation                                   |
-|----------------------|--------------------------------------------------|
-| API key exposure     | Pass via environment, never in commands          |
-| SSH security         | Use key-based auth, disable password             |
-| Remote Docker        | Don't expose daemon over TCP without TLS         |
-| Network isolation    | Use firewall on Docker host                      |
-| Secrets in images    | Never bake secrets into Docker images            |
+| Concern           | Recommendation                           |
+| ----------------- | ---------------------------------------- |
+| API key exposure  | Pass via environment, never in commands  |
+| SSH security      | Use key-based auth, disable password     |
+| Remote Docker     | Don't expose daemon over TCP without TLS |
+| Network isolation | Use firewall on Docker host              |
+| Secrets in images | Never bake secrets into Docker images    |
 
 ---
 
 ## Troubleshooting
 
-| Error                           | Cause                    | Solution                              |
-|---------------------------------|--------------------------|---------------------------------------|
-| `Docker not found`              | Not installed            | Install Docker Desktop or use setup   |
-| `Permission denied`             | User not in docker group | `sudo usermod -aG docker $USER`       |
-| `Cannot connect to Docker`      | Daemon not running       | Start Docker Desktop / daemon         |
-| `SSH permission denied`         | Key not configured       | `ssh-copy-id user@host`               |
-| `Repository not found`          | Invalid URL or private   | Check URL, use token for private      |
-| `ANTHROPIC_API_KEY required`    | Key not set              | Export the environment variable       |
+| Error                        | Cause                    | Solution                            |
+| ---------------------------- | ------------------------ | ----------------------------------- |
+| `Docker not found`           | Not installed            | Install Docker Desktop or use setup |
+| `Permission denied`          | User not in docker group | `sudo usermod -aG docker $USER`     |
+| `Cannot connect to Docker`   | Daemon not running       | Start Docker Desktop / daemon       |
+| `SSH permission denied`      | Key not configured       | `ssh-copy-id user@host`             |
+| `Repository not found`       | Invalid URL or private   | Check URL, use token for private    |
+| `ANTHROPIC_API_KEY required` | Key not set              | Export the environment variable     |
 
 ---
 

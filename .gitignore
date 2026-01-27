@@ -16,3 +16,4 @@ docs/
 
 # Skill caches (runtime-generated)
 plugins/**/cache/
+.env

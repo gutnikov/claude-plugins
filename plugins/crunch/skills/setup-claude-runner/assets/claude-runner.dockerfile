@@ -28,12 +28,20 @@ RUN mkdir -p /etc/apt/keyrings \
 # Install Claude Code CLI globally
 RUN npm install -g @anthropic-ai/claude-code
 
-# Set working directory
-WORKDIR /workspace
-
-# Copy entrypoint script
+# Copy entrypoint script (before switching to non-root user)
 COPY assets/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
+# Create non-root user (Claude Code refuses --dangerously-skip-permissions as root)
+RUN useradd -m -s /bin/bash claude \
+    && mkdir -p /workspace \
+    && chown -R claude:claude /workspace
+
+# Switch to non-root user
+USER claude
+
+# Set working directory
+WORKDIR /workspace
 
 # Environment variables (can be overridden at runtime)
 ENV GIT_REPO=""
