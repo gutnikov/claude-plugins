@@ -33,6 +33,26 @@ arguments:
 This skill sets up a Docker-based Claude Code runner that can clone a git repository
 and execute Claude Code agent prompts against it. Works on local machine or remote hosts.
 
+## Execution
+
+When this skill is invoked, execute the `claude-runner.sh` script with the appropriate action:
+
+```bash
+# Path to script
+SCRIPT="plugins/crunch/skills/setup-claude-runner/assets/claude-runner.sh"
+
+# Execute based on action argument
+HOST="{host}" \
+GIT_REPO="{git_repo}" \
+GIT_BRANCH="{git_branch}" \
+PROMPT="{prompt}" \
+ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+"$SCRIPT" {action}
+```
+
+**Important:** Always run `verify` before `setup` to check prerequisites. If verification fails,
+help the user resolve issues before proceeding.
+
 ## Assets
 
 ```
@@ -60,6 +80,36 @@ plugins/crunch/skills/setup-claude-runner/
 2. Dockerfile and entrypoint are in place
 3. Docker image is built
 4. Container can clone a repo and run Claude Code agent
+
+---
+
+## Workflow
+
+When skill is invoked, follow these steps:
+
+### For action: setup (default)
+
+1. Run `./claude-runner.sh verify` to check prerequisites
+2. If verification fails:
+   - Show user which checks failed
+   - Help resolve issues (install Docker, configure SSH, etc.)
+   - Re-run verify until passes
+3. Run `./claude-runner.sh setup` to install and build
+4. Run `./claude-runner.sh test` to verify installation
+5. Report success to user
+
+### For action: run
+
+1. Validate required parameters (git_repo, prompt, ANTHROPIC_API_KEY)
+2. If setup not done, run setup first
+3. Run `./claude-runner.sh run` with environment variables
+4. Return output to user
+
+### For action: verify
+
+1. Run `./claude-runner.sh verify`
+2. Report results to user
+3. Offer to fix any issues found
 
 ---
 
